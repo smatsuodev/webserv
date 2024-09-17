@@ -1,4 +1,5 @@
 set(CMAKE_CXX_STANDARD 20)
+# gmock は使わないのでビルドしない
 set(BUILD_GMOCK OFF)
 
 include(FetchContent)
@@ -20,7 +21,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fakeit)
 
-#include_directories(${CMAKE_SOURCE_DIR}/src/lib)
+# テストの実行ファイルにリンクするライブラリ
 link_libraries(webserv_lib gtest_main FakeIt::FakeIt-gtest)
 
 # Tests
