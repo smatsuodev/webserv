@@ -1,5 +1,5 @@
 #include <iostream>
-#include "add.h"
+#include "add.hpp"
 
 int main() {
     std::cout << add(1, 2) << std::endl;

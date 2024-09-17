@@ -1,6 +1,6 @@
 #include <fakeit.hpp>
 #include <gtest/gtest.h>
-#include "add.h"
+#include "add.hpp"
 
 using namespace fakeit;
 
