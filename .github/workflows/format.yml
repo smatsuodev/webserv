@@ -1,0 +1,19 @@
+name: format
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+jobs:
+  format:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: clang-format
+          version: 1.0
+      - run: clang-format -i $(git ls-files '*.cpp' '*.hpp')
+      - run: git diff --exit-code

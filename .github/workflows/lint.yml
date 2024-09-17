@@ -1,0 +1,19 @@
+name: lint
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+jobs:
+  lint:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: clang-tidy parallel
+          version: 1.0
+      - run: cmake -B build
+      - run: git ls-files '*.cpp' '*.hpp' | grep -v '^scripts/template/' | parallel clang-tidy -p build -quiet
