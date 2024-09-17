@@ -21,7 +21,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(fakeit)
 
 #include_directories(${CMAKE_SOURCE_DIR}/src/lib)
-link_libraries(libwebserv gtest_main FakeIt::FakeIt-gtest)
+link_libraries(webserv_lib gtest_main FakeIt::FakeIt-gtest)
 
 # Tests
 add_executable(add_test add_test.cpp)
