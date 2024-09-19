@@ -1,0 +1,21 @@
+name: format
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+jobs:
+  format:
+    timeout-minutes: 10
+    # 24.04 は beta
+    # 新しい clang-format を簡単にインストールするために必要
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: clang-format-18
+          version: 1.0
+      - run: clang-format -i $(git ls-files '*.cpp' '*.hpp')
+      - run: git diff --exit-code
