@@ -53,3 +53,4 @@ TabWidth: 4
 AllowShortBlocksOnASingleLine: Empty
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: WithoutElse
+SortIncludes: Never
