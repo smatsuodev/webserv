@@ -1,6 +1,6 @@
 #include "connection.hpp"
 
-#include "utils/log.hpp"
+#include "utils/logger.hpp"
 
 Connection::Connection(const int fd):
     clientFd_(fd) {}

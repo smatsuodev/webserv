@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <cstdio>
 
-#include "utils/log.hpp"
+#include "utils/logger.hpp"
 
 Listener::Listener(const std::string &ip, const unsigned short port, const int backlog) :
     serverFd_(Listener::setupSocket(ip, port, backlog)) {}

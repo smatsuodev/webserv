@@ -1,8 +1,6 @@
-#include "log.hpp"
+#include "logger.hpp"
 #include <iostream>
 #include <ctime>
-
-using namespace log;
 
 Logger &Logger::instance() {
     static Logger instance;
