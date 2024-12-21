@@ -18,20 +18,20 @@ int Listener::getFd() const {
     return this->serverFd_.raw();
 }
 
-Connection *Listener::acceptConnection() const {
+Listener::AcceptConnectionResult Listener::acceptConnection() const {
     sockaddr_in clientAddr = {};
     int clientAddrLen = sizeof(clientAddr);
     const int fd =
         accept(this->getFd(), reinterpret_cast<sockaddr *>(&clientAddr), reinterpret_cast<socklen_t *>(&clientAddrLen));
     if (fd == -1) {
         LOG_WARNF("failed to accept connection: %s", std::strerror(errno));
-        return NULL;
+        return Err<std::string>("failed to accept connection");
     }
 
     LOG_DEBUGF("connection established from %s:%u (fd: %d)", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port),
                fd);
 
-    return new Connection(fd);
+    return Ok(new Connection(fd));
 }
 
 int Listener::setupSocket(const std::string &ip, const unsigned short port, const int backlog) {

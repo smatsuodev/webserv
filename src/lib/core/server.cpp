@@ -16,12 +16,13 @@ void Server::start(const unsigned short port) {
     LOG_INFOF("server started on port %u", port);
 
     while (true) {
-        const Connection *conn = lsn.acceptConnection();
-        if (conn == NULL) {
-            LOG_WARN("failed to accept connection");
+        const Listener::AcceptConnectionResult result = lsn.acceptConnection();
+        if (result.isErr()) {
+            LOG_WARN(result.unwrapErr());
             continue;
         }
 
+        const Connection *conn = result.unwrap();
         handleConnection(*conn);
 
         delete conn;

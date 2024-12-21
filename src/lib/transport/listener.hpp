@@ -3,9 +3,9 @@
 
 #include <string>
 #include <sys/socket.h>
-
 #include "utils/auto_close_fd.hpp"
 #include "connection.hpp"
+#include "utils/result.hpp"
 
 // サーバーソケットの抽象
 class Listener {
@@ -14,7 +14,9 @@ public:
     ~Listener();
 
     int getFd() const;
-    Connection *acceptConnection() const;
+
+    using AcceptConnectionResult = Result<Connection *, std::string>;
+    AcceptConnectionResult acceptConnection() const;
 
 private:
     AutoCloseFd serverFd_;
