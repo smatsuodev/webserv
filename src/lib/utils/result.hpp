@@ -191,11 +191,11 @@ private:
 
 #define TRY(expr) TRY_OR(expr, Err((e).unwrapErr()))
 
-#define TRY_OR(expr, defaultValue)                                                                                     \
-    ({                                                                                                                 \
-        typeof(expr) e = (expr);                                                                                       \
-        if (!(e).canUnwrap()) return defaultValue;  \
-    (e).unwrap();   \
-})
+#define TRY_OR(expr, defaultValue)                 \
+    ({                                             \
+        typeof(expr) e = (expr);                   \
+        if (!(e).canUnwrap()) return defaultValue; \
+        (e).unwrap();                              \
+    })
 
 #endif

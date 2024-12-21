@@ -1,8 +1,7 @@
 #include "connection.hpp"
 #include "utils/logger.hpp"
 
-Connection::Connection(const int fd):
-    clientFd_(fd) {}
+Connection::Connection(const int fd) : clientFd_(fd) {}
 
 Connection::~Connection() {
     LOG_DEBUG("Connection: destruct");

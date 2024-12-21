@@ -7,8 +7,7 @@ Logger &Logger::instance() {
     return instance;
 }
 
-Logger::Logger() :
-    logLevel_(kDebug) {}
+Logger::Logger() : logLevel_(kDebug) {}
 
 void Logger::setLevel(const LogLevel level) {
     this->logLevel_ = level;

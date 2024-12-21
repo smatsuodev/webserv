@@ -9,8 +9,7 @@ class NonCopyable {
     NonCopyable(const NonCopyable &);
 
 protected:
-    NonCopyable():
-        selfRef_(*this) {}
+    NonCopyable() : selfRef_(*this) {}
 
     ~NonCopyable() {}
 };

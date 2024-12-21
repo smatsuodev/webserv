@@ -7,8 +7,8 @@
 #include <cerrno>
 #include <cstring>
 
-Listener::Listener(const std::string &ip, const unsigned short port, const int backlog) :
-    serverFd_(Listener::setupSocket(ip, port, backlog)) {}
+Listener::Listener(const std::string &ip, const unsigned short port, const int backlog)
+    : serverFd_(Listener::setupSocket(ip, port, backlog)) {}
 
 Listener::~Listener() {
     LOG_DEBUG("Listener: destruct");

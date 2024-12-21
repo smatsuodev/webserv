@@ -9,7 +9,7 @@
  */
 class AutoCloseFd : public NonCopyable {
 public:
-    AutoCloseFd(int fd);
+    explicit AutoCloseFd(int fd);
     ~AutoCloseFd();
 
     int raw() const;
