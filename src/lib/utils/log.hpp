@@ -4,6 +4,8 @@
 #include <string>
 #include <sstream>
 
+#define SET_LOG_LEVEL(level) Log::Logger::instance().setLevel(level)
+
 #define LOG_DEBUG(msg) Log::Logger::instance().log(Log::DEBUG, msg)
 #define LOG_INFO(msg)  Log::Logger::instance().log(Log::INFO,  msg)
 #define LOG_WARN(msg)  Log::Logger::instance().log(Log::WARN,  msg)
