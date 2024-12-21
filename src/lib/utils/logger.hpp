@@ -1,6 +1,3 @@
-// ReSharper disable CppInconsistentNaming
-// CLion のバグ? enum に対する命名規約違反の weak warning が出るので無効化
-
 #ifndef SRC_LIB_UTILS_LOG_HPP
 #define SRC_LIB_UTILS_LOG_HPP
 
