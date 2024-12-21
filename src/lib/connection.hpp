@@ -7,6 +7,7 @@
 class Connection {
 public:
     Connection(int fd);
+    ~Connection();
 
     int getFd() const;
 

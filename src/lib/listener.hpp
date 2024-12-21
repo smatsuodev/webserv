@@ -11,6 +11,7 @@
 class Listener {
 public:
     Listener(const std::string &ip, unsigned short port, int backlog = SOMAXCONN);
+    ~Listener();
 
     int getFd() const;
     Connection *acceptConnection() const;

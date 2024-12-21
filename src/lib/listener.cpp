@@ -5,8 +5,14 @@
 #include <arpa/inet.h>
 #include <cstdio>
 
+#include "utils/log.hpp"
+
 Listener::Listener(const std::string &ip, const unsigned short port, const int backlog) :
     serverFd_(Listener::setupSocket(ip, port, backlog)) {}
+
+Listener::~Listener() {
+    LOG_DEBUG("Listener: destruct");
+}
 
 int Listener::getFd() const {
     return this->serverFd_.raw();
