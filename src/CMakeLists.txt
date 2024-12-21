@@ -7,6 +7,19 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 add_library(webserv_lib STATIC
         lib/add.cpp
         lib/add.hpp
+        lib/server.cpp
+        lib/server.hpp
+        lib/utils/non_copyable.hpp
+        lib/auto_close_fd.cpp
+        lib/auto_close_fd.hpp
+        lib/listener.cpp
+        lib/listener.hpp
+        lib/connection.cpp
+        lib/connection.hpp
+        lib/utils/logger.cpp
+        lib/utils/logger.hpp
+        lib/utils/string.cpp
+        lib/utils/string.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

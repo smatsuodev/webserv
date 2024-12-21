@@ -1,6 +1,5 @@
-#include <iostream>
-#include "add.hpp"
+#include <server.hpp>
 
 int main() {
-    std::cout << add(1, 2) << std::endl;
+    Server::start(8080);
 }
