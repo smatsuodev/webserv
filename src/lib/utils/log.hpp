@@ -4,19 +4,19 @@
 #include <string>
 #include <sstream>
 
-#define SET_LOG_LEVEL(level) Log::Logger::instance().setLevel(level)
+#define SET_LOG_LEVEL(level) log::Logger::instance().setLevel(level)
 
-#define LOG_DEBUG(msg) Log::Logger::instance().log(Log::DEBUG, msg)
-#define LOG_INFO(msg)  Log::Logger::instance().log(Log::INFO,  msg)
-#define LOG_WARN(msg)  Log::Logger::instance().log(Log::WARN,  msg)
-#define LOG_ERROR(msg) Log::Logger::instance().log(Log::ERROR, msg)
+#define LOG_DEBUG(msg) log::Logger::instance().log(log::kDebug, msg)
+#define LOG_INFO(msg)  log::Logger::instance().log(log::kInfo,  msg)
+#define LOG_WARN(msg)  log::Logger::instance().log(log::kWarn,  msg)
+#define LOG_ERROR(msg) log::Logger::instance().log(log::kError, msg)
 
-namespace Log {
+namespace log {
     enum LogLevel {
-        DEBUG,
-        INFO,
-        WARN,
-        ERROR
+        kDebug,
+        kInfo,
+        kWarn,
+        kError
     };
 
     class Logger {
@@ -27,12 +27,12 @@ namespace Log {
 
     private:
         enum LogColor {
-            COLOR_RESET  = 0,
-            COLOR_RED    = 31,
-            COLOR_GREEN  = 32,
-            COLOR_YELLOW = 33,
-            COLOR_BLUE   = 34,
-            COLOR_GRAY   = 37
+            kColorReset  = 0,
+            kColorRed    = 31,
+            kColorGreen  = 32,
+            kColorYellow = 33,
+            kColorBlue   = 34,
+            kColorGray   = 37
         };
 
         LogLevel logLevel_;

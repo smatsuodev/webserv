@@ -2,7 +2,7 @@
 #include <iostream>
 #include <ctime>
 
-using namespace Log;
+using namespace log;
 
 Logger &Logger::instance() {
     static Logger instance;
@@ -10,7 +10,7 @@ Logger &Logger::instance() {
 }
 
 Logger::Logger() :
-    logLevel_(DEBUG) {}
+    logLevel_(kDebug) {}
 
 void Logger::setLevel(const LogLevel level) {
     this->logLevel_ = level;
@@ -32,16 +32,16 @@ void Logger::log(const LogLevel level, const std::string &message) const {
 
 std::string Logger::levelToString(const LogLevel level) {
     switch (level) {
-        case DEBUG:
-            return colorize("DEBUG", COLOR_BLUE);
-        case INFO:
-            return colorize("INFO", COLOR_GREEN);
-        case WARN:
-            return colorize("WARN", COLOR_YELLOW);
-        case ERROR:
-            return colorize("ERROR", COLOR_RED);
+        case kDebug:
+            return colorize("DEBUG", kColorBlue);
+        case kInfo:
+            return colorize("INFO", kColorGreen);
+        case kWarn:
+            return colorize("WARN", kColorYellow);
+        case kError:
+            return colorize("ERROR", kColorRed);
         default:
-            return colorize("UNKNOWN", COLOR_GRAY);
+            return colorize("UNKNOWN", kColorGray);
     }
 }
 
