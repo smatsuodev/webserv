@@ -41,5 +41,5 @@ void Server::handleConnection(const Connection &conn) {
         return;
     }
 
-    LOG_INFO("response sent");
+    LOG_DEBUG("response sent");
 }
