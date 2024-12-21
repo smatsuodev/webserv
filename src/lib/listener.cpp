@@ -3,12 +3,29 @@
 #include <string>
 #include <stdexcept>
 #include <arpa/inet.h>
+#include <cstdio>
 
 Listener::Listener(const std::string &ip, const unsigned short port, const int backlog) :
     serverFd_(Listener::setupSocket(ip, port, backlog)) {}
 
 int Listener::getFd() const {
     return this->serverFd_.raw();
+}
+
+Connection *Listener::acceptConnection() const {
+    sockaddr_in clientAddr = {};
+    int clientAddrLen = sizeof(clientAddr);
+    const int fd = accept(
+        this->getFd(),
+        reinterpret_cast<sockaddr *>(&clientAddr),
+        reinterpret_cast<socklen_t *>(&clientAddrLen)
+        );
+    if (fd == -1) {
+        std::perror("accept");
+        return NULL;
+    }
+
+    return new Connection(fd);
 }
 
 int Listener::setupSocket(const std::string &ip, const unsigned short port, const int backlog) {
