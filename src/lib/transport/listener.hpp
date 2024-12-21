@@ -15,7 +15,7 @@ public:
 
     int getFd() const;
 
-    using AcceptConnectionResult = Result<Connection *, std::string>;
+    typedef Result<Connection *, std::string> AcceptConnectionResult;
     AcceptConnectionResult acceptConnection() const;
 
 private:
