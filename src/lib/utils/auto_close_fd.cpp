@@ -1,7 +1,7 @@
 #include "auto_close_fd.hpp"
 #include <unistd.h>
-#include "utils/logger.hpp"
-#include "utils/string.hpp"
+#include "logger.hpp"
+#include "string.hpp"
 
 AutoCloseFd::AutoCloseFd(const int fd):
     fd_(fd) {}

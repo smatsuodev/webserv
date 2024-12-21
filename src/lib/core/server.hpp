@@ -1,7 +1,7 @@
 #ifndef SRC_LIB_SERVER_HPP
 #define SRC_LIB_SERVER_HPP
 
-#include "connection.hpp"
+#include "transport/connection.hpp"
 
 class Server {
 public:

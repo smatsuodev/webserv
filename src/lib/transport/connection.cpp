@@ -1,5 +1,4 @@
 #include "connection.hpp"
-
 #include "utils/logger.hpp"
 
 Connection::Connection(const int fd):

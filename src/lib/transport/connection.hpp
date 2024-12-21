@@ -1,7 +1,7 @@
 #ifndef SRC_LIB_CONNECTION_HPP
 #define SRC_LIB_CONNECTION_HPP
 
-#include "auto_close_fd.hpp"
+#include "utils/auto_close_fd.hpp"
 
 // クライアントソケットの抽象
 class Connection {
