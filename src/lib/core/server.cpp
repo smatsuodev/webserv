@@ -1,5 +1,4 @@
 #include "server.hpp"
-
 #include <cstdio>
 #include <iostream>
 #include <sys/socket.h>
@@ -14,7 +13,7 @@ Server::~Server() {}
 void Server::start(const unsigned short port) {
     const Listener lsn("0.0.0.0", port);
 
-    LOG_INFO(utils::format("server started on port %u", port));
+    LOG_INFOF("server started on port %u", port);
 
     while (true) {
         const Connection *conn = lsn.acceptConnection();
@@ -31,12 +30,11 @@ void Server::start(const unsigned short port) {
 
 void Server::handleConnection(const Connection &conn) {
     // 適当なHTTPレスポンスを書き込む
-    const std::string responseString =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Length: 14\r\n"
-        "Content-Type: text/plain\r\n"
-        "\r\n"
-        "Hello, World!\n";
+    const std::string responseString = "HTTP/1.1 200 OK\r\n"
+                                       "Content-Length: 14\r\n"
+                                       "Content-Type: text/plain\r\n"
+                                       "\r\n"
+                                       "Hello, World!\n";
 
     if (send(conn.getFd(), responseString.c_str(), responseString.size(), 0) == -1) {
         LOG_WARN("failed to send response");
