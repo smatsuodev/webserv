@@ -83,7 +83,13 @@ public:
         (void)none;
     }
 
-    Option(const Option &other) : some_(other.some_) {}
+    Option(const Option &other) {
+        if (other.isSome()) {
+            some_ = new types::Some<T>(*other.some_);
+        } else {
+            some_ = NULL;
+        }
+    }
 
     ~Option() {
         delete some_;
