@@ -15,7 +15,7 @@ Listener::~Listener() {
 }
 
 int Listener::getFd() const {
-    return this->serverFd_.raw();
+    return this->serverFd_.get();
 }
 
 Listener::AcceptConnectionResult Listener::acceptConnection() const {
@@ -40,7 +40,7 @@ int Listener::setupSocket(const std::string &ip, const unsigned short port, cons
         LOG_ERRORF("failed to create socket: %s", std::strerror(errno));
         throw std::runtime_error("failed to create socket");
     }
-    AutoCloseFd fd(rawFd);
+    AutoFd fd(rawFd);
 
     const int opt = 1;
     if (setsockopt(rawFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
@@ -67,5 +67,5 @@ int Listener::setupSocket(const std::string &ip, const unsigned short port, cons
         throw std::runtime_error("failed to listen on socket");
     }
 
-    return fd.steal();
+    return fd.release();
 }

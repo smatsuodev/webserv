@@ -3,7 +3,7 @@
 
 #include <string>
 #include <sys/socket.h>
-#include "utils/auto_close_fd.hpp"
+#include "utils/auto_fd.hpp"
 #include "connection.hpp"
 #include "utils/types/result.hpp"
 
@@ -19,7 +19,7 @@ public:
     AcceptConnectionResult acceptConnection() const;
 
 private:
-    AutoCloseFd serverFd_;
+    AutoFd serverFd_;
 
     static int setupSocket(const std::string &ip, unsigned short port, int backlog);
 };

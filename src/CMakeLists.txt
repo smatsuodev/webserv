@@ -8,8 +8,8 @@ add_library(webserv_lib STATIC
         lib/core/server.cpp
         lib/core/server.hpp
         lib/utils/non_copyable.hpp
-        lib/utils/auto_close_fd.cpp
-        lib/utils/auto_close_fd.hpp
+        lib/utils/auto_fd.cpp
+        lib/utils/auto_fd.hpp
         lib/transport/listener.cpp
         lib/transport/listener.hpp
         lib/transport/connection.cpp

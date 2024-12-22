@@ -8,5 +8,5 @@ Connection::~Connection() {
 }
 
 int Connection::getFd() const {
-    return this->clientFd_.raw();
+    return this->clientFd_.get();
 }
