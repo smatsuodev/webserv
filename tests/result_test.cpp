@@ -14,6 +14,18 @@ TEST(ResultTest, constructErrString) {
     EXPECT_FALSE(target.isOk());
 }
 
+TEST(ResultTest, constructOkVoid) {
+    const Result<void, std::string> target = Ok();
+    EXPECT_TRUE(target.isOk());
+    EXPECT_FALSE(target.isErr());
+}
+
+TEST(ResultTest, voidErr) {
+    const Result<void, std::string> target = Err<std::string>("error");
+    EXPECT_FALSE(target.isOk());
+    EXPECT_TRUE(target.isErr());
+}
+
 TEST(ResultTest, eqSameOks) {
     EXPECT_TRUE(Ok(1) == Ok(1));
 }
@@ -146,25 +158,6 @@ TEST(ResultTest, tryOrOk) {
 TEST(ResultTest, tryOrErr) {
     const Result<int, std::string> target = Err<std::string>("error");
     EXPECT_EQ(doubleIf(target, 0), 0);
-}
-
-// どうしても Ok() は必要
-Result<void, int> doNothing() {
-    return Ok();
-}
-
-TEST(ResultTest, voidOk) {
-    const Result<void, int> target = doNothing();
-    EXPECT_TRUE(target.isOk());
-}
-
-Result<void, int> doError() {
-    return Err(1);
-}
-
-TEST(ResultTest, voidErr) {
-    const Result<void, int> target = doError();
-    EXPECT_TRUE(target.isErr());
 }
 
 Result<void, int> doNothingIf(const Result<void, int> &res) {
