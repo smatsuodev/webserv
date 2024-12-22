@@ -1,8 +1,9 @@
 <component name="InspectionProjectProfileManager">
   <profile version="1.0">
     <option name="myName" value="Project Default" />
-    <inspection_tool class="CppAccessSpecifierWithNoDeclarations" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="CppClassCanBeFinal" enabled="false" level="HINT" enabled_by_default="false" />
+    <inspection_tool class="CppEnforceOverridingDestructorStyle" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="CppEnforceOverridingFunctionStyle" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="CppInconsistentNaming" enabled="true" level="HINT" enabled_by_default="true" />
-    <inspection_tool class="CppNonExplicitConvertingConstructor" enabled="false" level="HINT" enabled_by_default="false" />
   </profile>
 </component>
