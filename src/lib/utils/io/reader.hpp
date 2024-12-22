@@ -3,6 +3,7 @@
 
 #include "../types/result.hpp"
 #include "utils/auto_fd.hpp"
+#include "utils/types/unit.hpp"
 
 namespace io {
     class IReader {
@@ -32,7 +33,7 @@ namespace io {
 namespace bufio {
     class Reader : public io::IReader {
     public:
-        explicit Reader(io::IReader &reader);
+        explicit Reader(io::IReader &reader, std::size_t bufCapacity = kDefaultBufSize);
         virtual ~Reader();
 
         virtual ReadResult read(char *buf, std::size_t nbyte);
@@ -43,6 +44,17 @@ namespace bufio {
 
         typedef Result<std::string, std::string> ReadAllResult;
         ReadAllResult readAll();
+
+        // バッファを消費せず、指定したバイト数を読む
+        typedef Result<std::string, std::string> PeekResult;
+        PeekResult peek(std::size_t nbyte);
+
+        /**
+         * 指定したバイト数を読み捨てる
+         * 実際に読み捨てたバイト数を返す
+         */
+        typedef Result<std::size_t, std::string> DiscardResult;
+        DiscardResult discard(std::size_t nbyte);
 
     private:
         static const std::size_t kDefaultBufSize = 4096;
@@ -57,7 +69,17 @@ namespace bufio {
 
         // 読み取っていないバッファの量
         std::size_t unreadBufSize() const;
+        /**
+         * バッファを埋める
+         * バッファに追加されたバイト数を返す
+         */
         Result<std::size_t, std::string> fillBuf();
+        /**
+         * 未読み取りのバッファを nbyte 以上に "できる" ことを保証する
+         * バッファを埋めるのは caller の責任
+         * バッファの拡張や、未読み取りデータの移動を行う
+         */
+        Result<types::Unit, std::string> ensureBufSize(std::size_t nbyte);
     };
 }
 

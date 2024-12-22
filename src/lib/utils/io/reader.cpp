@@ -32,8 +32,8 @@ namespace io {
 }
 
 namespace bufio {
-    Reader::Reader(io::IReader &reader)
-        : reader_(reader), bufCapacity_(kDefaultBufSize), buf_(new char[bufCapacity_]), bufSize_(0), bufPos_(0) {}
+    Reader::Reader(io::IReader &reader, const std::size_t bufCapacity)
+        : reader_(reader), bufCapacity_(bufCapacity), buf_(new char[bufCapacity_]), bufSize_(0), bufPos_(0) {}
 
     Reader::~Reader() {
         delete[] buf_;
@@ -127,6 +127,25 @@ namespace bufio {
         return Ok(result);
     }
 
+    Reader::PeekResult Reader::peek(const std::size_t nbyte) {
+        // NOTE: fillBuf() の結果によっては、nbyte に足りない可能性がある
+        TRY(this->ensureBufSize(nbyte));
+        TRY(this->fillBuf());
+
+        const std::size_t bytesToPeek = std::min(nbyte, this->unreadBufSize());
+        return Ok(std::string(buf_ + bufPos_, bytesToPeek));
+    }
+
+    Reader::DiscardResult Reader::discard(const std::size_t nbyte) {
+        // NOTE: fillBuf() の結果によっては、nbyte に足りない可能性がある
+        TRY(this->ensureBufSize(nbyte));
+        TRY(this->fillBuf());
+
+        const std::size_t bytesToDiscard = std::min(nbyte, this->unreadBufSize());
+        bufPos_ += bytesToDiscard;
+        return Ok(bytesToDiscard);
+    }
+
     std::size_t Reader::unreadBufSize() const {
         return this->bufSize_ - this->bufPos_;
     }
@@ -148,5 +167,38 @@ namespace bufio {
         const std::size_t bytesRead = TRY(reader_.read(buf_ + bufPos_, remainingCapacity));
         bufSize_ += bytesRead;
         return Ok(bytesRead);
+    }
+
+    Result<types::Unit, std::string> Reader::ensureBufSize(const std::size_t nbyte) {
+        if (nbyte <= this->unreadBufSize()) {
+            return Ok(unit);
+        }
+
+        const size_t currentUnreadBufSize = this->unreadBufSize();
+        if (bufCapacity_ < nbyte) {
+            // バッファを拡張
+            std::size_t newCapacity = bufCapacity_;
+            while (newCapacity < nbyte) {
+                newCapacity *= 2;
+            }
+
+            // バッファの確保、詰め替え
+            char *newBuf = new char[newCapacity];
+            std::memcpy(newBuf, buf_ + bufPos_, currentUnreadBufSize);
+            delete[] buf_;
+
+            buf_ = newBuf;
+            bufCapacity_ = newCapacity;
+            bufSize_ = currentUnreadBufSize;
+            bufPos_ = 0;
+        } else if (bufCapacity_ - bufPos_ < nbyte) {
+            // capacity は足りているが、bufPos_ からの空きが足りない
+            // 未読み取りのデータをバッファの先頭に移動
+            std::memmove(buf_, buf_ + bufPos_, currentUnreadBufSize);
+            bufSize_ = currentUnreadBufSize;
+            bufPos_ = 0;
+        }
+
+        return Ok(unit);
     }
 }
