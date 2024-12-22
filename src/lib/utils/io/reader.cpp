@@ -169,9 +169,9 @@ namespace bufio {
         return Ok(bytesRead);
     }
 
-    Result<types::Unit, std::string> Reader::ensureBufSize(const std::size_t nbyte) {
+    Result<void, std::string> Reader::ensureBufSize(const std::size_t nbyte) {
         if (nbyte <= this->unreadBufSize()) {
-            return Ok(unit);
+            return Ok();
         }
 
         const size_t currentUnreadBufSize = this->unreadBufSize();
@@ -199,6 +199,6 @@ namespace bufio {
             bufPos_ = 0;
         }
 
-        return Ok(unit);
+        return Ok();
     }
 }
