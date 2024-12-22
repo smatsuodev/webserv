@@ -20,6 +20,7 @@ add_library(webserv_lib STATIC
         lib/utils/string.hpp
         lib/utils/option.hpp
         lib/utils/result.hpp
+        lib/utils/unit.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
