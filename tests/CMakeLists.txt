@@ -27,3 +27,9 @@ link_libraries(webserv_lib gtest_main FakeIt::FakeIt-gtest)
 # Tests
 add_executable(reader_test reader_test.cpp)
 gtest_discover_tests(reader_test)
+
+add_executable(option_test option_test.cpp)
+gtest_discover_tests(option_test)
+
+add_executable(result_test result_test.cpp)
+gtest_discover_tests(result_test)
