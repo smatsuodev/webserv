@@ -118,12 +118,10 @@ namespace bufio {
         while (true) {
             char buf[4096];
             const ssize_t bytesRead = TRY(this->read(buf, sizeof(buf)));
-
-            result.append(buf, bytesRead);
-
-            if (bytesRead < sizeof(buf)) {
+            if (bytesRead == 0) {
                 break;
             }
+            result.append(buf, bytesRead);
         }
 
         return Ok(result);
