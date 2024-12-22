@@ -132,8 +132,21 @@ namespace bufio {
     }
 
     Result<std::size_t, std::string> Reader::fillBuf() {
-        bufSize_ = TRY(reader_.read(buf_, bufCapacity_));
-        bufPos_ = 0;
-        return Ok(bufSize_);
+        const size_t remainingCapacity = this->bufCapacity_ - this->bufSize_;
+        if (remainingCapacity == 0) {
+            if (this->unreadBufSize() > 0) {
+                // 既にバッファが埋まっていて、読み取っていないデータがある場合、何もしない
+                return Ok<std::size_t>(0);
+            }
+            // バッファを入れ替える
+            bufSize_ = TRY(reader_.read(buf_, bufCapacity_));
+            bufPos_ = 0;
+            return Ok(bufSize_);
+        }
+
+        // カーソルはそのままで、バッファを埋める
+        const std::size_t bytesRead = TRY(reader_.read(buf_ + bufPos_, remainingCapacity));
+        bufSize_ += bytesRead;
+        return Ok(bytesRead);
     }
 }
