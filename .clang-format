@@ -6,6 +6,10 @@ AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignOperands: false
 AlignTrailingComments: false
+AlignEscapedNewlines: Left
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: WithoutElse
 AlwaysBreakTemplateDeclarations: Yes
 BraceWrapping:
   AfterCaseLabel: false
@@ -25,8 +29,7 @@ BraceWrapping:
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
 BreakBeforeBraces: Custom
-BreakConstructorInitializers: AfterColon
-BreakConstructorInitializersBeforeComma: false
+BreakConstructorInitializers: BeforeColon
 ColumnLimit: 120
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 IncludeCategories:
@@ -44,13 +47,11 @@ MacroBlockBegin: ''
 MacroBlockEnd: ''
 MaxEmptyLinesToKeep: 2
 NamespaceIndentation: All
+SortIncludes: Never
 SpaceInEmptyParentheses: false
 SpacesInAngles: false
 SpacesInConditionalStatement: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 TabWidth: 4
-AllowShortBlocksOnASingleLine: Empty
-AllowShortFunctionsOnASingleLine: Empty
-AllowShortIfStatementsOnASingleLine: WithoutElse
-SortIncludes: Never
+FixNamespaceComments: false

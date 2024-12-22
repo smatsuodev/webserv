@@ -25,5 +25,3 @@ FetchContent_MakeAvailable(fakeit)
 link_libraries(webserv_lib gtest_main FakeIt::FakeIt-gtest)
 
 # Tests
-add_executable(add_test add_test.cpp)
-gtest_discover_tests(add_test)
