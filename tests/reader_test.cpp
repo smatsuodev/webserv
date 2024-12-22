@@ -149,3 +149,25 @@ TEST(ReaderTest, Peek) {
     ASSERT_TRUE(result.isOk());
     EXPECT_EQ(result2.unwrap(), "Hello");
 }
+
+// Reader::discard のテスト
+TEST(ReaderTest, Discard) {
+    const std::string mockData = "Hello, World!";
+
+    // インスタンス
+    StringReader reader(mockData);
+    bufio::Reader bufReader(reader);
+
+    // discard
+    const auto result = bufReader.discard(5);
+
+    // 結果を検証
+    ASSERT_TRUE(result.isOk());
+    EXPECT_EQ(result.unwrap(), 5);
+
+    // 残りを読み取る
+    const auto restResult = bufReader.readAll();
+
+    ASSERT_TRUE(result.isOk());
+    EXPECT_EQ(restResult.unwrap(), ", World!");
+}
