@@ -30,6 +30,10 @@ TEST(ResultTest, eqSameOks) {
     EXPECT_TRUE(Ok(1) == Ok(1));
 }
 
+TEST(ResultTest, eqSameOksVoid) {
+    EXPECT_TRUE(Ok() == Ok());
+}
+
 TEST(ResultTest, eqDistinctOks) {
     EXPECT_FALSE(Ok(1) == Ok(2));
 }
@@ -53,6 +57,12 @@ TEST(ResultTest, neErrs) {
 TEST(ResultTest, eqSameOkResults) {
     const Result<int, std::string> res1 = Ok(1);
     const Result<int, std::string> res2 = Ok(1);
+    EXPECT_TRUE(res1 == res2);
+}
+
+TEST(ResultTest, eqSameOkResultsVoid) {
+    const Result<void, std::string> res1 = Ok();
+    const Result<void, std::string> res2 = Ok();
     EXPECT_TRUE(res1 == res2);
 }
 
@@ -80,15 +90,34 @@ TEST(ResultTest, eqErrResults) {
     EXPECT_TRUE(res1 == res2);
 }
 
+TEST(ResultTest, eqErrResultsVoid) {
+    const Result<void, std::string> res1 = Err<std::string>("error");
+    const Result<void, std::string> res2 = Err<std::string>("error");
+    EXPECT_TRUE(res1 == res2);
+}
+
 TEST(ResultTest, neErrResults) {
     const Result<int, std::string> res1 = Err<std::string>("error");
     const Result<int, std::string> res2 = Err<std::string>("error");
     EXPECT_FALSE(res1 != res2);
 }
 
+TEST(ResultTest, neErrResultsVoid) {
+    const Result<void, std::string> res1 = Err<std::string>("error");
+    const Result<void, std::string> res2 = Err<std::string>("error");
+    EXPECT_FALSE(res1 != res2);
+}
+
 TEST(ResultTest, eqOkAndErrResults) {
     const Result<int, std::string> res1 = Ok(1);
     const Result<int, std::string> res2 = Err<std::string>("error");
+    EXPECT_FALSE(res1 == res2);
+    EXPECT_FALSE(res2 == res1);
+}
+
+TEST(ResultTest, eqOkAndErrResultsVoid) {
+    const Result<void, std::string> res1 = Ok();
+    const Result<void, std::string> res2 = Err<std::string>("error");
     EXPECT_FALSE(res1 == res2);
     EXPECT_FALSE(res2 == res1);
 }
@@ -100,13 +129,30 @@ TEST(ResultTest, neOkAndErrResults) {
     EXPECT_TRUE(res2 != res1);
 }
 
+TEST(ResultTest, neOkAndErrResultsVoid) {
+    const Result<void, std::string> res1 = Ok();
+    const Result<void, std::string> res2 = Err<std::string>("error");
+    EXPECT_TRUE(res1 != res2);
+    EXPECT_TRUE(res2 != res1);
+}
+
 TEST(ResultTest, unwrapOnOk) {
     const Result<int, std::string> target = Ok(1);
     EXPECT_EQ(target.unwrap(), 1);
 }
 
+TEST(ResultTest, unwrapOnOkVoid) {
+    const Result<void, std::string> target = Ok();
+    EXPECT_NO_THROW(target.unwrap());
+}
+
 TEST(ResultTest, unwrapOnErr) {
     const Result<int, std::string> target = Err<std::string>("error");
+    EXPECT_THROW(target.unwrap(), std::runtime_error);
+}
+
+TEST(ResultTest, unwrapOnErrVoid) {
+    const Result<void, std::string> target = Err<std::string>("error");
     EXPECT_THROW(target.unwrap(), std::runtime_error);
 }
 
@@ -125,8 +171,18 @@ TEST(ResultTest, unwrapErrOnErr) {
     EXPECT_EQ(target.unwrapErr(), "error");
 }
 
+TEST(ResultTest, unwrapErrOnErrVoid) {
+    const Result<void, std::string> target = Err<std::string>("error");
+    EXPECT_EQ(target.unwrapErr(), "error");
+}
+
 TEST(ResultTest, unwrapErrOnOk) {
     const Result<int, std::string> target = Ok(1);
+    EXPECT_THROW(target.unwrapErr(), std::runtime_error);
+}
+
+TEST(ResultTest, unwrapErrOnOkVoid) {
+    const Result<void, std::string> target = Ok();
     EXPECT_THROW(target.unwrapErr(), std::runtime_error);
 }
 
