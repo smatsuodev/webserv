@@ -16,11 +16,11 @@ types::None tryDefault(const Option<T> &) {
 
 #define TRY(expr) TRY_OR(expr, tryDefault(expr))
 
-#define TRY_OR(expr, defaultValue)                 \
-    ({                                             \
-        typeof(expr) e = (expr);                   \
-        if (!(e).canUnwrap()) return defaultValue; \
-        (e).unwrap();                              \
+#define TRY_OR(expr, defaultValue)                                               \
+    ({                                                                           \
+        typeof(expr) e = (expr); /* NOLINT(*-unnecessary-copy-initialization) */ \
+        if (!(e).canUnwrap()) return defaultValue;                               \
+        (e).unwrap();                                                            \
     })
 
 #endif

@@ -40,6 +40,31 @@ namespace types {
         T val_;
     };
 
+    template <>
+    class Ok<void> {
+    public:
+        explicit Ok() {}
+
+        Ok(const Ok &) {}
+
+        ~Ok() {}
+
+        Ok &operator=(const Ok &) {
+            return *this;
+        }
+
+        // ReSharper disable once CppMemberFunctionMayBeStatic
+        void val() {}
+
+        bool operator==(const Ok &) const {
+            return true;
+        }
+
+        bool operator!=(const Ok &) const {
+            return false;
+        }
+    };
+
     template <class E>
     class Err {
     public:
@@ -78,6 +103,9 @@ template <class T>
 types::Ok<T> Ok(T val) {
     return types::Ok<T>(val);
 }
+
+// ReSharper disable once CppInconsistentNaming
+types::Ok<void> Ok();
 
 template <class E>
 // ReSharper disable once CppInconsistentNaming
@@ -186,6 +214,95 @@ public:
 
 private:
     types::Ok<T> *ok_;
+    types::Err<E> *err_;
+};
+
+template <class E>
+class Result<void, E> {
+public:
+    Result() : err_(NULL) {}
+
+    explicit Result(types::Ok<void> *) : err_(NULL) {}
+
+    explicit Result(types::Err<E> *err) : err_(err) {}
+
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    Result(const types::Ok<void> &) : err_(NULL) {}
+
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    Result(types::Err<E> err) : err_(new types::Err<E>(err)) {}
+
+    Result(const Result &other) {
+        this->err_ = other.isErr() ? new types::Err<E>(*other.err_) : NULL;
+    }
+
+    ~Result() {
+        delete err_;
+    }
+
+    Result &operator=(const Result &other) {
+        if (this != &other) {
+            if (other.isOk()) {
+                err_ = NULL;
+            } else if (other.isErr()) {
+                if (err_ == NULL) {
+                    err_ = new types::Err<E>(*other.err_);
+                } else {
+                    *err_ = *other.err_;
+                }
+            }
+        }
+        return *this;
+    }
+
+    bool operator==(const Result &other) const {
+        if (isOk() && other.isOk()) {
+            return true;
+        }
+        if (isErr() && other.isErr()) {
+            return *err_ == *other.err_;
+        }
+        return false;
+    }
+
+    bool operator!=(const Result &other) const {
+        if (isOk() && other.isOk()) {
+            return false;
+        }
+        if (isErr() && other.isErr()) {
+            return *err_ != *other.err_;
+        }
+        return true;
+    }
+
+    bool isOk() const {
+        return err_ == NULL;
+    }
+
+    bool isErr() const {
+        return err_ != NULL;
+    }
+
+    void unwrap() const {
+        if (isErr()) {
+            throw std::runtime_error("called `Result::unwrap()` on an `Err` value");
+        }
+    }
+
+    // unwrapOr は意味のある定義にならないので実装しない
+
+    E unwrapErr() const {
+        if (isOk()) {
+            throw std::runtime_error("called `Result::unwrapErr()` on an `Ok` value");
+        }
+        return err_->error();
+    }
+
+    bool canUnwrap() const {
+        return isOk();
+    }
+
+private:
     types::Err<E> *err_;
 };
 

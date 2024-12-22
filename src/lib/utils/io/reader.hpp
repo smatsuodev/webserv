@@ -3,7 +3,6 @@
 
 #include "../types/result.hpp"
 #include "utils/auto_fd.hpp"
-#include "utils/types/unit.hpp"
 
 namespace io {
     class IReader {
@@ -79,7 +78,7 @@ namespace bufio {
          * バッファを埋めるのは caller の責任
          * バッファの拡張や、未読み取りデータの移動を行う
          */
-        Result<types::Unit, std::string> ensureBufSize(std::size_t nbyte);
+        Result<void, std::string> ensureBufSize(std::size_t nbyte);
     };
 }
 
