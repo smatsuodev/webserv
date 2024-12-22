@@ -147,3 +147,35 @@ TEST(ResultTest, tryOrErr) {
     const Result<int, std::string> target = Err<std::string>("error");
     EXPECT_EQ(doubleIf(target, 0), 0);
 }
+
+// どうしても Ok() は必要
+Result<void, int> doNothing() {
+    return Ok();
+}
+
+TEST(ResultTest, voidOk) {
+    const Result<void, int> target = doNothing();
+    EXPECT_TRUE(target.isOk());
+}
+
+Result<void, int> doError() {
+    return Err(1);
+}
+
+TEST(ResultTest, voidErr) {
+    const Result<void, int> target = doError();
+    EXPECT_TRUE(target.isErr());
+}
+
+Result<void, int> doNothingIf(const Result<void, int> &res) {
+    TRY(res);
+    return Ok();
+}
+
+TEST(ResultTest, tryVoidOk) {
+    EXPECT_TRUE(doNothingIf(Ok()).isOk());
+}
+
+TEST(ResultTest, tryVoidErr) {
+    EXPECT_TRUE(doNothingIf(Err(1)).isErr());
+}

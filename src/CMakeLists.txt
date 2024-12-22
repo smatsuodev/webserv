@@ -24,6 +24,7 @@ add_library(webserv_lib STATIC
         lib/utils/types/try.hpp
         lib/utils/io/reader.cpp
         lib/utils/io/reader.hpp
+        lib/utils/types/result.cpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
