@@ -5,6 +5,7 @@
 #include "transport/listener.hpp"
 #include "utils/string.hpp"
 #include "utils/logger.hpp"
+#include <string>
 
 Server::Server() {}
 
@@ -30,14 +31,16 @@ void Server::start(const unsigned short port) {
 }
 
 void Server::handleConnection(const Connection &conn) {
-    // 適当なHTTPレスポンスを書き込む
-    const std::string responseString = "HTTP/1.1 200 OK\r\n"
-                                       "Content-Length: 14\r\n"
-                                       "Content-Type: text/plain\r\n"
-                                       "\r\n"
-                                       "Hello, World!\n";
+    bufio::Reader reader(conn.getReader());
 
-    if (send(conn.getFd(), responseString.c_str(), responseString.size(), 0) == -1) {
+    const bufio::Reader::ReadAllResult result = reader.readAll();
+    if (result.isErr()) {
+        LOG_WARN(result.unwrapErr());
+        return;
+    }
+    const std::string content = result.unwrap();
+
+    if (send(conn.getFd(), content.c_str(), content.size(), 0) == -1) {
         LOG_WARN("failed to send response");
         return;
     }
