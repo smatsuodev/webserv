@@ -1,5 +1,5 @@
-#ifndef SRC_LIB_UTILS_OPTION_HPP
-#define SRC_LIB_UTILS_OPTION_HPP
+#ifndef SRC_LIB_UTILS_TYPES_OPTION_HPP
+#define SRC_LIB_UTILS_TYPES_OPTION_HPP
 
 #include <cstddef>
 #include <stdexcept>

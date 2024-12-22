@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 #include "utils/auto_close_fd.hpp"
 #include "connection.hpp"
-#include "utils/result.hpp"
+#include "utils/types/result.hpp"
 
 // サーバーソケットの抽象
 class Listener {

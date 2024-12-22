@@ -18,9 +18,9 @@ add_library(webserv_lib STATIC
         lib/utils/logger.hpp
         lib/utils/string.cpp
         lib/utils/string.hpp
-        lib/utils/option.hpp
-        lib/utils/result.hpp
-        lib/utils/unit.hpp
+        lib/utils/types/option.hpp
+        lib/utils/types/result.hpp
+        lib/utils/types/unit.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

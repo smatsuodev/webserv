@@ -1,5 +1,5 @@
-#ifndef SRC_LIB_UTILS_UNIT_HPP
-#define SRC_LIB_UTILS_UNIT_HPP
+#ifndef SRC_LIB_UTILS_TYPES_UNIT_HPP
+#define SRC_LIB_UTILS_TYPES_UNIT_HPP
 
 namespace types {
     struct Unit {};
