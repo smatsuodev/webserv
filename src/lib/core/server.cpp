@@ -8,6 +8,7 @@
 #include <string>
 #include <sys/epoll.h>
 #include <cstring>
+#include <fcntl.h>
 #include <map>
 
 Server::Server(): epollFd_(-1) {}
@@ -27,6 +28,7 @@ void Server::start(const unsigned short port) {
     LOG_DEBUGF("epoll fd created (fd: %d)", epollFd_.get());
 
     const Listener lsn("0.0.0.0", port);
+    Server::setNonBlocking(lsn.getFd());
     this->addToEpoll(lsn.getFd());
 
     LOG_INFOF("server started on port %u", port);
@@ -52,7 +54,8 @@ void Server::start(const unsigned short port) {
                 }
                 Connection *conn = result.unwrap();
                 connections[conn->getFd()] = conn;
-                addToEpoll(conn->getFd());
+                Server::setNonBlocking(conn->getFd());
+                this->addToEpoll(conn->getFd());
             } else {
                 LOG_DEBUGF("event arrived on client fd %d", ev.data.fd);
                 const Connection *conn = connections[ev.data.fd];
@@ -93,4 +96,9 @@ void Server::addToEpoll(const int fd) const {
     }
 
     LOG_DEBUGF("fd %d added to epoll", fd);
+}
+
+void Server::setNonBlocking(const int fd){
+    const int flags = fcntl(fd, F_GETFL, 0);
+    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }

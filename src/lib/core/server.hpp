@@ -14,6 +14,7 @@ private:
 
     static void handleConnection(const Connection &conn);
     void addToEpoll(int fd) const;
+    static void setNonBlocking(int fd);
 };
 
 #endif
