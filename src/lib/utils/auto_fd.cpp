@@ -24,13 +24,13 @@ int AutoFd::release() {
     return tmp;
 }
 
-void AutoFd::reset(const int fd){
+void AutoFd::reset(const int fd) {
     if (fd_ != -1) {
         close(fd_);
     }
     fd_ = fd;
 }
 
-AutoFd::operator int() const{
+AutoFd::operator int() const {
     return this->get();
 }
