@@ -40,6 +40,7 @@ int Listener::setupSocket(const std::string &ip, const unsigned short port, cons
         LOG_ERRORF("failed to create socket: %s", std::strerror(errno));
         throw std::runtime_error("failed to create socket");
     }
+    LOG_DEBUGF("server socket created (fd: %d)", rawFd);
     AutoFd fd(rawFd);
 
     const int opt = 1;
@@ -66,6 +67,8 @@ int Listener::setupSocket(const std::string &ip, const unsigned short port, cons
         LOG_ERRORF("failed to listen on socket: %s", std::strerror(errno));
         throw std::runtime_error("failed to listen on socket");
     }
+
+    LOG_DEBUGF("listening on socket (fd: %d)", rawFd);
 
     return fd.release();
 }
