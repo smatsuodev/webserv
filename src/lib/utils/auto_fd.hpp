@@ -20,6 +20,9 @@ public:
     // リソースを解放し、新たなリソースの所有権を設定する
     void reset(int fd = -1);
 
+    // 暗黙の型変換を利用して、autoFd == -1 のように書けるようにする
+    operator int() const; // NOLINT(*-explicit-constructor)
+
 private:
     int fd_;
 };

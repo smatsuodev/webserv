@@ -20,11 +20,11 @@ void Server::start(const unsigned short port) {
      * Since Linux 2.6.8, the size argument is ignored, but must be greater than zero.
      */
     epollFd_.reset(epoll_create(1));
-    if (epollFd_.get() == -1) {
+    if (epollFd_ == -1) {
         LOG_ERRORF("failed to create epoll fd: %s", std::strerror(errno));
         return;
     }
-    LOG_DEBUGF("epoll fd created (fd: %d)", epollFd_.get());
+    LOG_DEBUGF("epoll fd created (fd: %d)", epollFd_);
 
     const Listener lsn("0.0.0.0", port);
     this->addToEpoll(lsn.getFd());
@@ -35,7 +35,7 @@ void Server::start(const unsigned short port) {
     std::map<int, Connection *> connections;
 
     while (true) {
-        const int nfds = epoll_wait(epollFd_.get(), events, 1024, -1);
+        const int nfds = epoll_wait(epollFd_, events, 1024, -1);
         if (nfds == -1) {
             LOG_ERROR("epoll_wait failed");
             continue;
@@ -87,7 +87,7 @@ void Server::addToEpoll(const int fd) const {
     epoll_event ev = {};
     ev.events = EPOLLIN;
     ev.data.fd = fd;
-    if (epoll_ctl(epollFd_.get(), EPOLL_CTL_ADD, fd, &ev) == -1) {
+    if (epoll_ctl(epollFd_, EPOLL_CTL_ADD, fd, &ev) == -1) {
         LOG_ERROR("failed to add to epoll fd");
         return;
     }

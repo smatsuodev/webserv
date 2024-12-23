@@ -22,7 +22,7 @@ Listener::AcceptConnectionResult Listener::acceptConnection() const {
     sockaddr_in clientAddr = {};
     int clientAddrLen = sizeof(clientAddr);
     const int fd =
-        accept(this->getFd(), reinterpret_cast<sockaddr *>(&clientAddr), reinterpret_cast<socklen_t *>(&clientAddrLen));
+        accept(serverFd_, reinterpret_cast<sockaddr *>(&clientAddr), reinterpret_cast<socklen_t *>(&clientAddrLen));
     if (fd == -1) {
         LOG_WARNF("failed to accept connection: %s", std::strerror(errno));
         return Err<std::string>("failed to accept connection");

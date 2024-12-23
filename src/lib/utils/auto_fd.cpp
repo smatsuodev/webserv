@@ -30,3 +30,7 @@ void AutoFd::reset(const int fd){
     }
     fd_ = fd;
 }
+
+AutoFd::operator int() const{
+    return this->get();
+}

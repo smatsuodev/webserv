@@ -16,7 +16,7 @@ namespace io {
     FdReader::~FdReader() {}
 
     Result<std::size_t, std::string> FdReader::read(char *buf, const std::size_t nbyte) {
-        const ssize_t bytesRead = ::read(fd_.get(), buf, nbyte);
+        const ssize_t bytesRead = ::read(fd_, buf, nbyte);
         if (bytesRead == -1) {
             return Err(utils::format("failed to read: %s", std::strerror(errno)));
         }
