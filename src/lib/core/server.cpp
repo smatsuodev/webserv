@@ -61,8 +61,9 @@ void Server::start(const unsigned short port) {
                 const Connection *conn = connections[ev.data.fd];
                 const Result<HandleConnectionState, error::AppError> result = handleConnection(*conn);
                 if (result.isErr() || result.unwrap() == kComplete) {
-                    delete conn;
+                    this->removeFromEpoll(ev.data.fd);
                     connections.erase(ev.data.fd);
+                    delete conn;
                 }
             }
         }
@@ -92,14 +93,22 @@ Result<Server::HandleConnectionState, error::AppError> Server::handleConnection(
 
 void Server::addToEpoll(const int fd) const {
     epoll_event ev = {};
-    ev.events = EPOLLIN;
+    ev.events = EPOLLIN | EPOLLET;
     ev.data.fd = fd;
     if (epoll_ctl(epollFd_, EPOLL_CTL_ADD, fd, &ev) == -1) {
-        LOG_ERROR("failed to add to epoll fd");
+        LOG_ERRORF("failed to add to epoll fd: %s", std::strerror(errno));
         return;
     }
 
     LOG_DEBUGF("fd %d added to epoll", fd);
+}
+
+void Server::removeFromEpoll(const int fd) const {
+    if (epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, NULL) == -1) {
+        LOG_WARNF("failed to remove from epoll fd: %s", std::strerror(errno));
+        return;
+    }
+    LOG_DEBUGF("fd %d removed from epoll", fd);
 }
 
 void Server::setNonBlocking(const int fd) {
