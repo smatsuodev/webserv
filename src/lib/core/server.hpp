@@ -12,9 +12,14 @@ public:
 private:
     AutoFd epollFd_;
 
-    static void handleConnection(const Connection &conn);
     void addToEpoll(int fd) const;
     static void setNonBlocking(int fd);
+
+    enum HandleConnectionState {
+        kSuspend,
+        kComplete,
+    };
+    static Result<HandleConnectionState, error::AppError> handleConnection(const Connection &conn);
 };
 
 #endif

@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <map>
 
-Server::Server(): epollFd_(-1) {}
+Server::Server() : epollFd_(-1) {}
 
 Server::~Server() {}
 
@@ -59,31 +59,35 @@ void Server::start(const unsigned short port) {
             } else {
                 LOG_DEBUGF("event arrived on client fd %d", ev.data.fd);
                 const Connection *conn = connections[ev.data.fd];
-                handleConnection(*conn);
-                delete conn;
-                connections.erase(ev.data.fd);
+                const Result<HandleConnectionState, error::AppError> result = handleConnection(*conn);
+                if (result.isErr() || result.unwrap() == kComplete) {
+                    delete conn;
+                    connections.erase(ev.data.fd);
+                }
             }
         }
     }
 }
 
-void Server::handleConnection(const Connection &conn) {
-    bufio::Reader reader(conn.getReader());
-
-    const bufio::Reader::ReadAllResult result = reader.readAll();
+Result<Server::HandleConnectionState, error::AppError> Server::handleConnection(const Connection &conn) {
+    const bufio::Reader::ReadAllResult result = conn.getReader().readAll();
     if (result.isErr()) {
-        LOG_WARN(result.unwrapErr());
-        return;
+        const error::AppError err = result.unwrapErr();
+        if (err == error::kIOWouldBlock) {
+            return Ok(kSuspend);
+        }
+        return Err(err);
     }
     LOG_DEBUG("finish Reader::readAll");
     const std::string content = result.unwrap();
 
     if (send(conn.getFd(), content.c_str(), content.size(), 0) == -1) {
         LOG_WARN("failed to send response");
-        return;
+        return Err(error::kUnknown);
     }
 
     LOG_DEBUG("response sent");
+    return Ok(kComplete);
 }
 
 void Server::addToEpoll(const int fd) const {
@@ -98,7 +102,7 @@ void Server::addToEpoll(const int fd) const {
     LOG_DEBUGF("fd %d added to epoll", fd);
 }
 
-void Server::setNonBlocking(const int fd){
+void Server::setNonBlocking(const int fd) {
     const int flags = fcntl(fd, F_GETFL, 0);
     fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }
