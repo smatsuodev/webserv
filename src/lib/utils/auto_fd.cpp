@@ -3,6 +3,8 @@
 #include "logger.hpp"
 #include "string.hpp"
 
+AutoFd::AutoFd() : fd_(-1) {}
+
 AutoFd::AutoFd(const int fd) : fd_(fd) {}
 
 AutoFd::~AutoFd() {
@@ -13,11 +15,22 @@ AutoFd::~AutoFd() {
 }
 
 int AutoFd::get() const {
-    return this->fd_;
+    return fd_;
 }
 
 int AutoFd::release() {
-    const int tmp = this->fd_;
-    this->fd_ = -1;
+    const int tmp = fd_;
+    fd_ = -1;
     return tmp;
+}
+
+void AutoFd::reset(const int fd) {
+    if (fd_ != -1) {
+        close(fd_);
+    }
+    fd_ = fd;
+}
+
+AutoFd::operator int() const {
+    return this->get();
 }

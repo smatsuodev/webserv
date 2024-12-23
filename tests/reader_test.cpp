@@ -9,7 +9,7 @@ class StringReader : public io::IReader {
 public:
     explicit StringReader(const std::string &data) : data_(data), pos_(0) {}
 
-    ReadResult read(char *buf, std::size_t nbyte) override {
+    ReadResult read(char *buf, const std::size_t nbyte) override {
         const std::size_t bytesToRead = std::min(nbyte, data_.size() - pos_);
         std::memcpy(buf, data_.c_str() + pos_, bytesToRead);
         pos_ += bytesToRead;
@@ -30,12 +30,34 @@ public:
     BrokenReader() = default;
 
     ReadResult read(char *, std::size_t) override {
-        return Err<std::string>("Read error");
+        return Err(error::kUnknown);
     }
 
     bool eof() override {
         return false;
     }
+};
+
+class WouldBlockReader : public io::IReader {
+public:
+    // n 回目に error::kIOWouldBlock を返す
+    WouldBlockReader(io::IReader &reader, const int n) : reader_(reader), n_(n), counter_(0) {}
+
+    ReadResult read(char *buf, const std::size_t nbyte) {
+        if (++counter_ == n_) {
+            return Err(error::kIOWouldBlock);
+        }
+        return reader_.read(buf, nbyte);
+    }
+
+    bool eof() {
+        return reader_.eof();
+    }
+
+private:
+    io::IReader &reader_;
+    int n_;
+    int counter_;
 };
 
 // bufio::Reader::read が正常にデータを読み取るか確認
@@ -170,4 +192,115 @@ TEST(ReaderTest, Discard) {
 
     ASSERT_TRUE(result.isOk());
     EXPECT_EQ(restResult.unwrap(), ", World!");
+}
+
+// 途中で EWOULDBLOCK が発生しても、正しく読み込める
+TEST(ReaderTest, WouldBlockReadAll) {
+    const std::string mockData = "Hello, World!";
+
+    StringReader sReader(mockData);
+    // 2回目に EWOULDBLOCK が発生する
+    WouldBlockReader reader(sReader, 2);
+    // 2回以上のreadが必要なバッファサイズにする
+    bufio::Reader bufReader(reader, 4);
+
+    const auto result = bufReader.readAll();
+
+    // 途中で EWOULDBLOCK が発生し、エラーになる
+    ASSERT_TRUE(result.isErr());
+
+    // リトライ後は成功する
+    const auto result2 = bufReader.readAll();
+
+    ASSERT_TRUE(result2.isOk());
+    EXPECT_EQ(result2.unwrap(), mockData);
+}
+
+TEST(ReaderTest, WouldBlockReadAllWithLargeBuf) {
+    const std::string mockData = "Hello, World!";
+
+    StringReader sReader(mockData);
+    WouldBlockReader reader(sReader, 2);
+    bufio::Reader bufReader(reader);
+
+    const auto result = bufReader.readAll();
+
+    // 途中で EWOULDBLOCK が発生し、エラーになる
+    ASSERT_TRUE(result.isErr());
+
+    // リトライ後は成功する
+    const auto result2 = bufReader.readAll();
+
+    ASSERT_TRUE(result2.isOk());
+    EXPECT_EQ(result2.unwrap(), mockData);
+}
+
+TEST(ReaderTest, WouldBlockReaderRead) {
+    const std::string mockData = "Hello";
+
+    StringReader sReader(mockData);
+    WouldBlockReader reader(sReader, 2);
+    bufio::Reader bufReader(reader, 1);
+
+    char buf[6] = {0};
+    const auto r = bufReader.read(buf, 5);
+
+    // 途中で EWOULDBLOCK が起こる
+    ASSERT_TRUE(r.isErr());
+
+    const auto r2 = bufReader.read(buf, 5);
+
+    ASSERT_TRUE(r2.isOk());
+    ASSERT_STREQ(buf, "Hello");
+}
+
+TEST(ReaderTest, WouldBlockReaderReadWithLargeBuf) {
+    const std::string mockData = "Hello";
+
+    StringReader sReader(mockData);
+    WouldBlockReader reader(sReader, 2);
+    bufio::Reader bufReader(reader);
+
+    char buf[6] = {0};
+    const auto r2 = bufReader.read(buf, 5);
+
+    ASSERT_TRUE(r2.isOk());
+    ASSERT_STREQ(buf, "Hello");
+}
+
+TEST(ReaderTest, WouldBlockReaderReadUntil) {
+    const std::string mockData = "first line\nsecond line\n";
+
+    StringReader sReader(mockData);
+    WouldBlockReader reader(sReader, 2);
+    bufio::Reader bufReader(reader, 4);
+
+    const auto r = bufReader.readUntil("\n");
+
+    // 途中で EWOULDBLOCK
+    ASSERT_TRUE(r.isErr());
+
+    const auto r2 = bufReader.readUntil("\n");
+    const auto r3 = bufReader.readUntil("\n");
+
+    ASSERT_TRUE(r2.isOk());
+    ASSERT_TRUE(r3.isOk());
+    ASSERT_EQ(r2.unwrap(), "first line\n");
+    ASSERT_EQ(r3.unwrap(), "second line\n");
+}
+
+TEST(ReaderTest, WouldBlockReaderReadUntilWithLargeBuf) {
+    const std::string mockData = "first line\nsecond line\n";
+
+    StringReader sReader(mockData);
+    WouldBlockReader reader(sReader, 2);
+    bufio::Reader bufReader(reader);
+
+    const auto r2 = bufReader.readUntil("\n");
+    const auto r3 = bufReader.readUntil("\n");
+
+    ASSERT_TRUE(r2.isOk());
+    ASSERT_TRUE(r3.isOk());
+    ASSERT_EQ(r2.unwrap(), "first line\n");
+    ASSERT_EQ(r3.unwrap(), "second line\n");
 }

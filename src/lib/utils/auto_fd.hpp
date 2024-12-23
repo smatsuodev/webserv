@@ -9,16 +9,19 @@
  */
 class AutoFd : public NonCopyable {
 public:
+    AutoFd();
     explicit AutoFd(int fd);
     ~AutoFd();
 
     // 生の fd を取得する
     int get() const;
-    /**
-     * std::auto_ptr と同じく、所有権を譲渡する
-     * close はしない
-     */
+    // リソースの所有権を放棄する (close はしない)
     int release();
+    // リソースを解放し、新たなリソースの所有権を設定する
+    void reset(int fd = -1);
+
+    // 暗黙の型変換を利用して、autoFd == -1 のように書けるようにする
+    operator int() const; // NOLINT(*-explicit-constructor)
 
 private:
     int fd_;

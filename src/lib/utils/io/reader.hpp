@@ -3,13 +3,14 @@
 
 #include "../types/result.hpp"
 #include "utils/auto_fd.hpp"
+#include "utils/types/error.hpp"
 
 namespace io {
     class IReader {
     public:
         virtual ~IReader();
 
-        typedef Result<std::size_t, std::string> ReadResult;
+        typedef Result<std::size_t, error::AppError> ReadResult;
         virtual ReadResult read(char *buf, std::size_t nbyte) = 0;
         virtual bool eof() = 0;
     };
@@ -38,21 +39,23 @@ namespace bufio {
         virtual ReadResult read(char *buf, std::size_t nbyte);
         virtual bool eof();
 
-        typedef Result<std::string, std::string> ReadUntilResult;
+        typedef Result<std::string, error::AppError> ReadUntilResult;
         ReadUntilResult readUntil(const std::string &delimiter);
 
-        typedef Result<std::string, std::string> ReadAllResult;
+        typedef Result<std::string, error::AppError> ReadAllResult;
         ReadAllResult readAll();
 
         // バッファを消費せず、指定したバイト数を読む
-        typedef Result<std::string, std::string> PeekResult;
+        // NOTE: nbyte より短い文字列が返され得る実装になっている
+        typedef Result<std::string, error::AppError> PeekResult;
         PeekResult peek(std::size_t nbyte);
 
         /**
          * 指定したバイト数を読み捨てる
          * 実際に読み捨てたバイト数を返す
          */
-        typedef Result<std::size_t, std::string> DiscardResult;
+        // NOTE: eof に達しない限り、必ず nbyte 読み捨てるように実装できそう (現状そうはなっていない)
+        typedef Result<std::size_t, error::AppError> DiscardResult;
         DiscardResult discard(std::size_t nbyte);
 
     private:
@@ -72,13 +75,20 @@ namespace bufio {
          * バッファを埋める
          * バッファに追加されたバイト数を返す
          */
-        Result<std::size_t, std::string> fillBuf();
+        Result<std::size_t, error::AppError> fillBuf();
         /**
          * 未読み取りのバッファを nbyte 以上に "できる" ことを保証する
          * バッファを埋めるのは caller の責任
          * バッファの拡張や、未読み取りデータの移動を行う
          */
-        Result<void, std::string> ensureBufSize(std::size_t nbyte);
+        Result<void, error::AppError> ensureBufSize(std::size_t nbyte);
+        /**
+         * 最大 nbyte 分、バッファから移す。バッファは消費される。
+         * 戻り値は実際に移されたバイト数
+         */
+        std::size_t consumeAndCopyBuf(char *buf, std::size_t nbyte);
+        // バッファの先頭にデータを追加する
+        Result<void, error::AppError> prependBuf(const char *buf, std::size_t nbyte);
     };
 }
 

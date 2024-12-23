@@ -1,7 +1,6 @@
 #include "reader.hpp"
 
 #include "utils/logger.hpp"
-#include "utils/string.hpp"
 #include "utils/types/try.hpp"
 
 #include <cerrno>
@@ -15,10 +14,13 @@ namespace io {
 
     FdReader::~FdReader() {}
 
-    Result<std::size_t, std::string> FdReader::read(char *buf, const std::size_t nbyte) {
-        const ssize_t bytesRead = ::read(fd_.get(), buf, nbyte);
+    FdReader::ReadResult FdReader::read(char *buf, const std::size_t nbyte) {
+        const ssize_t bytesRead = ::read(fd_, buf, nbyte);
         if (bytesRead == -1) {
-            return Err(utils::format("failed to read: %s", std::strerror(errno)));
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                return Err(error::kIOWouldBlock);
+            }
+            return Err(error::kIOUnknown);
         }
         if (bytesRead == 0) {
             eof_ = true;
@@ -39,30 +41,33 @@ namespace bufio {
         delete[] buf_;
     }
 
-    Result<std::size_t, std::string> Reader::read(char *buf, const std::size_t nbyte) {
-        if (buf == NULL) {
-            return Err<std::string>("buf cannot be NULL");
-        }
-        if (nbyte == 0) {
-            return Ok<std::size_t>(0);
+    Reader::ReadResult Reader::read(char *buf, const std::size_t nbyte) {
+        if (buf == NULL || nbyte == 0) {
+            return Err(error::kValidationInvalidArgs);
         }
 
         std::size_t totalBytesRead = 0;
         const Result<int, std::string> r = Ok(1);
         while (totalBytesRead < nbyte) {
             if (this->unreadBufSize() == 0) {
-                if (TRY(this->fillBuf()) == 0) {
-                    // reader_ からこれ以上読み取れないので終了
+                const Result<size_t, error::AppError> fillBufResult = this->fillBuf();
+                if (fillBufResult.isErr()) {
+                    // 引数の buf に書き込まれたデータが失われないように、バッファに戻す
+                    if (totalBytesRead > 0) {
+                        this->prependBuf(buf, totalBytesRead);
+                    }
+                    return Err(fillBufResult.unwrapErr());
+                }
+
+                if (fillBufResult.unwrap() == 0) {
+                    // reader_ からこれ以上読み込めない
                     break;
                 }
             }
 
             // 内部バッファから引数の buf にコピー
-            const std::size_t bytesToCopy = std::min(nbyte - totalBytesRead, this->unreadBufSize());
-            std::memcpy(buf + totalBytesRead, buf_ + bufPos_, bytesToCopy);
-
-            bufPos_ += bytesToCopy;
-            totalBytesRead += bytesToCopy;
+            const std::size_t bytesCopied = this->consumeAndCopyBuf(buf + totalBytesRead, nbyte - totalBytesRead);
+            totalBytesRead += bytesCopied;
         }
 
         return Ok(totalBytesRead);
@@ -75,7 +80,7 @@ namespace bufio {
     Reader::ReadUntilResult Reader::readUntil(const std::string &delimiter) {
         const size_t delimiterLen = delimiter.length();
         if (delimiterLen == 0) {
-            return Err<std::string>("delimiter cannot be empty");
+            return Err(error::kValidationInvalidArgs);
         }
 
         std::string result;
@@ -89,8 +94,15 @@ namespace bufio {
 
         while (true) {
             char ch;
-            const ssize_t bytesRead = TRY(this->read(&ch, 1));
-            if (bytesRead == 0) {
+            const ReadResult readResult = this->read(&ch, 1);
+            if (readResult.isErr()) {
+                // std::string result が失われないように、バッファに戻す
+                if (!result.empty()) {
+                    this->prependBuf(result.data(), result.size());
+                }
+                return Err(readResult.unwrapErr());
+            }
+            if (readResult.unwrap() == 0) {
                 // EOF に達した場合
                 break;
             }
@@ -117,7 +129,16 @@ namespace bufio {
 
         while (true) {
             char buf[4096];
-            const ssize_t bytesRead = TRY(this->read(buf, sizeof(buf)));
+            const ReadResult readResult = this->read(buf, sizeof(buf));
+            if (readResult.isErr()) {
+                // ここまで読み込んだ分をバッファに戻す
+                if (!result.empty()) {
+                    this->prependBuf(result.data(), result.size());
+                }
+                return Err(readResult.unwrapErr());
+            }
+
+            const size_t bytesRead = readResult.unwrap();
             if (bytesRead == 0) {
                 break;
             }
@@ -128,18 +149,35 @@ namespace bufio {
     }
 
     Reader::PeekResult Reader::peek(const std::size_t nbyte) {
+        if (this->unreadBufSize() >= nbyte) {
+            return Ok(std::string(buf_ + bufPos_, nbyte));
+        }
+
         // NOTE: fillBuf() の結果によっては、nbyte に足りない可能性がある
-        TRY(this->ensureBufSize(nbyte));
-        TRY(this->fillBuf());
+        {
+            const Result<void, error::AppError> r1 = this->ensureBufSize(nbyte);
+            const Result<size_t, error::AppError> r2 = this->fillBuf();
+            TRY(r1);
+            TRY(r2);
+        }
 
         const std::size_t bytesToPeek = std::min(nbyte, this->unreadBufSize());
         return Ok(std::string(buf_ + bufPos_, bytesToPeek));
     }
 
     Reader::DiscardResult Reader::discard(const std::size_t nbyte) {
+        if (this->unreadBufSize() >= nbyte) {
+            bufPos_ += nbyte;
+            return Ok(nbyte);
+        }
+
         // NOTE: fillBuf() の結果によっては、nbyte に足りない可能性がある
-        TRY(this->ensureBufSize(nbyte));
-        TRY(this->fillBuf());
+        {
+            const Result<void, error::AppError> r1 = this->ensureBufSize(nbyte);
+            const Result<size_t, error::AppError> r2 = this->fillBuf();
+            TRY(r1);
+            TRY(r2);
+        }
 
         const std::size_t bytesToDiscard = std::min(nbyte, this->unreadBufSize());
         bufPos_ += bytesToDiscard;
@@ -150,7 +188,7 @@ namespace bufio {
         return this->bufSize_ - this->bufPos_;
     }
 
-    Result<std::size_t, std::string> Reader::fillBuf() {
+    Result<std::size_t, error::AppError> Reader::fillBuf() {
         const size_t remainingCapacity = this->bufCapacity_ - this->bufSize_;
         if (remainingCapacity == 0) {
             if (this->unreadBufSize() > 0) {
@@ -158,18 +196,20 @@ namespace bufio {
                 return Ok<std::size_t>(0);
             }
             // バッファを入れ替える
-            bufSize_ = TRY(reader_.read(buf_, bufCapacity_));
+            const ReadResult readResult = reader_.read(buf_, bufCapacity_);
+            bufSize_ = TRY(readResult);
             bufPos_ = 0;
             return Ok(bufSize_);
         }
 
         // カーソルはそのままで、バッファを埋める
-        const std::size_t bytesRead = TRY(reader_.read(buf_ + bufPos_, remainingCapacity));
+        const ReadResult readResult = reader_.read(buf_ + bufPos_, remainingCapacity);
+        const std::size_t bytesRead = TRY(readResult);
         bufSize_ += bytesRead;
         return Ok(bytesRead);
     }
 
-    Result<void, std::string> Reader::ensureBufSize(const std::size_t nbyte) {
+    Result<void, error::AppError> Reader::ensureBufSize(const std::size_t nbyte) {
         if (nbyte <= this->unreadBufSize()) {
             return Ok();
         }
@@ -198,6 +238,46 @@ namespace bufio {
             bufSize_ = currentUnreadBufSize;
             bufPos_ = 0;
         }
+
+        return Ok();
+    }
+
+    std::size_t Reader::consumeAndCopyBuf(char *buf, const std::size_t nbyte) {
+        const size_t bytesToCopy = std::min(nbyte, this->unreadBufSize());
+        if (bytesToCopy > 0) {
+            std::memcpy(buf, buf_ + bufPos_, bytesToCopy);
+            bufPos_ += bytesToCopy;
+        }
+        return bytesToCopy;
+    }
+
+
+    Result<void, error::AppError> Reader::prependBuf(const char *buf, const std::size_t nbyte) {
+        const size_t newBufSize = this->unreadBufSize() + nbyte;
+        {
+            const Result<void, error::AppError> r = this->ensureBufSize(newBufSize);
+            TRY(r);
+        }
+
+        if (bufSize_ == 0) {
+            std::memcpy(buf_, buf, nbyte);
+            bufSize_ += nbyte;
+            return Ok();
+        }
+
+        if (bufPos_ < nbyte) {
+            // bufPos_ >= nbyte を満たすように、既存のデータを後ろにずらす
+            const size_t moveAmount = nbyte - bufPos_;
+            std::memmove(buf_ + bufPos_ + moveAmount, buf_ + bufPos_, moveAmount);
+            bufPos_ += moveAmount;
+        }
+
+        // この時点で bufPos_ >= nbyte を満たすはず
+        // カーソルを nbyte 戻して、そこに書き込む
+        bufPos_ -= nbyte;
+        std::memcpy(buf_ + bufPos_, buf, nbyte);
+
+        bufSize_ = newBufSize;
 
         return Ok();
     }
