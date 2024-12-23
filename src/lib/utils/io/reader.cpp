@@ -253,12 +253,13 @@ namespace bufio {
 
 
     Result<void, error::AppError> Reader::prependBuf(const char *buf, const std::size_t nbyte) {
+        const size_t newBufSize = this->unreadBufSize() + nbyte;
         {
-            const Result<void, error::AppError> r = this->ensureBufSize(this->unreadBufSize() + nbyte);
+            const Result<void, error::AppError> r = this->ensureBufSize(newBufSize);
             TRY(r);
         }
 
-        if (bufPos_ == 0) {
+        if (bufSize_ == 0) {
             std::memcpy(buf_, buf, nbyte);
             bufSize_ += nbyte;
             return Ok();
@@ -275,7 +276,8 @@ namespace bufio {
         // カーソルを nbyte 戻して、そこに書き込む
         bufPos_ -= nbyte;
         std::memcpy(buf_ + bufPos_, buf, nbyte);
-        bufSize_ += nbyte;
+
+        bufSize_ = newBufSize;
 
         return Ok();
     }
