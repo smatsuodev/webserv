@@ -7,10 +7,13 @@ class Server {
 public:
     Server();
     ~Server();
-    static void start(unsigned short port);
+    void start(unsigned short port);
 
 private:
+    AutoFd epollFd_;
+
     static void handleConnection(const Connection &conn);
+    void addToEpoll(int fd) const;
 };
 
 #endif

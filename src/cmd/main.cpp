@@ -1,5 +1,6 @@
 #include "core/server.hpp"
 
 int main() {
-    Server::start(8080);
+    Server server;
+    server.start(8080);
 }
