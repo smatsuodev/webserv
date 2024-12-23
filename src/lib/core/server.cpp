@@ -24,7 +24,7 @@ void Server::start(const unsigned short port) {
         LOG_ERRORF("failed to create epoll fd: %s", std::strerror(errno));
         return;
     }
-    LOG_DEBUGF("epoll fd created (fd: %d)", epollFd_);
+    LOG_DEBUGF("epoll fd created (fd: %d)", epollFd_.get());
 
     const Listener lsn("0.0.0.0", port);
     this->addToEpoll(lsn.getFd());
