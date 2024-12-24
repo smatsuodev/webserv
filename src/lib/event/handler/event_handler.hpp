@@ -3,8 +3,11 @@
 
 #include "utils/types/error.hpp"
 #include "utils/types/result.hpp"
-#include "transport/connection.hpp"
+#include "utils/types/option.hpp"
 #include "event/event.hpp"
+
+class Server;
+class Connection;
 
 // イベントハンドラーに呼び出された文脈を提供する
 /**
@@ -12,17 +15,22 @@
  * なぜなら、"呼び出された文脈" には関係ないから
  * また、EventNotifier は常に固定なので、毎回渡し直す必要がない
  * (Connection や Event は状態遷移がある)
+ *
+ * 個々のハンドラーの実装に必要なものはコンストラクタで注入する
  */
 // Connection がコピー禁止なので、Context もコピー禁止
 class Context {
 public:
-    Context(Connection &conn, const Event &event);
+    Context(Server &server, const Option<Connection &> &conn, const Event &event);
 
-    const Connection &getConnection() const;
+    Option<Connection &> getConnection() const;
     const Event &getEvent() const;
 
 private:
-    Connection &conn_;
+    // どのサーバーの、どのコネクションの、何のイベントなのかを特定する必要がある
+    Server &server_;
+    // accept 前は connection は存在しない
+    Option<Connection &> conn_;
     Event event_;
 };
 
