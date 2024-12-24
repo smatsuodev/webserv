@@ -10,8 +10,6 @@ public:
     static void start(unsigned short port);
 
 private:
-    static void setNonBlocking(int fd);
-
     enum HandleConnectionState {
         kSuspend,
         kComplete,

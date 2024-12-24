@@ -1,4 +1,7 @@
 #include "listener.hpp"
+
+#include "utils/fd.hpp"
+
 #include <string>
 #include <stdexcept>
 #include <arpa/inet.h>
@@ -28,6 +31,12 @@ Listener::AcceptConnectionResult Listener::acceptConnection() const {
         return Err<std::string>("failed to accept connection");
     }
 
+    const Result<void, error::AppError> result = utils::setNonBlocking(fd);
+    if (result.isErr()) {
+        LOG_ERROR("failed to set non-blocking fd");
+        return Err<std::string>("failed to set non-blocking fd");
+    }
+
     LOG_DEBUGF("connection established from %s:%u (fd: %d)", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port),
                fd);
 
@@ -42,6 +51,12 @@ int Listener::setupSocket(const std::string &ip, const unsigned short port, cons
     }
     LOG_DEBUGF("server socket created (fd: %d)", rawFd);
     AutoFd fd(rawFd);
+
+    const Result<void, error::AppError> setNonBlockingResult = utils::setNonBlocking(rawFd);
+    if (setNonBlockingResult.isErr()) {
+        LOG_ERROR("failed to set non blocking mode");
+        throw std::runtime_error("failed to set non blocking mode");
+    }
 
     const int opt = 1;
     if (setsockopt(rawFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {

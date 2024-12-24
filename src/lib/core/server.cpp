@@ -13,7 +13,6 @@ void Server::start(const unsigned short port) {
     const EventNotifier notifier;
 
     const Listener lsn("0.0.0.0", port);
-    Server::setNonBlocking(lsn.getFd());
     notifier.registerEvent(Event(lsn.getFd()));
 
     LOG_INFOF("server started on port %u", port);
@@ -39,7 +38,6 @@ void Server::start(const unsigned short port) {
                 }
                 Connection *conn = result.unwrap();
                 connections[conn->getFd()] = conn;
-                Server::setNonBlocking(conn->getFd());
                 notifier.registerEvent(Event(conn->getFd()));
             } else {
                 LOG_DEBUGF("event arrived on client fd %d", ev.getFd());
@@ -74,9 +72,4 @@ Result<Server::HandleConnectionState, error::AppError> Server::handleConnection(
 
     LOG_DEBUG("response sent");
     return Ok(kComplete);
-}
-
-void Server::setNonBlocking(const int fd) {
-    const int flags = fcntl(fd, F_GETFL, 0);
-    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }
