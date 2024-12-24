@@ -32,6 +32,8 @@ add_library(webserv_lib STATIC
         lib/event/event.hpp
         lib/utils/fd.cpp
         lib/utils/fd.hpp
+        lib/event/handler/event_handler.cpp
+        lib/event/handler/event_handler.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
