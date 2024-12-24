@@ -7,13 +7,9 @@ class Server {
 public:
     Server();
     ~Server();
-    void start(unsigned short port);
+    static void start(unsigned short port);
 
 private:
-    AutoFd epollFd_;
-
-    void addToEpoll(int fd) const;
-    void removeFromEpoll(int fd) const;
     static void setNonBlocking(int fd);
 
     enum HandleConnectionState {
