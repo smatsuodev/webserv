@@ -17,8 +17,6 @@ void Server::start(const unsigned short port) {
 
     LOG_INFOF("server started on port %u", port);
 
-    std::map<int, Connection *> connections;
-
     while (true) {
         const EventNotifier::WaitEventsResult waitResult = notifier.waitEvents();
         if (waitResult.isErr()) {
@@ -37,20 +35,30 @@ void Server::start(const unsigned short port) {
                     continue;
                 }
                 Connection *conn = result.unwrap();
-                connections[conn->getFd()] = conn;
+                connections_[conn->getFd()] = conn;
                 notifier.registerEvent(Event(conn->getFd()));
             } else {
                 LOG_DEBUGF("event arrived on client fd %d", ev.getFd());
-                const Connection *conn = connections[ev.getFd()];
+                const Connection *conn = connections_[ev.getFd()];
                 const Result<HandleConnectionState, error::AppError> result = handleConnection(*conn);
                 if (result.isErr() || result.unwrap() == kComplete) {
                     notifier.unregisterEvent(ev);
-                    connections.erase(ev.getFd());
+                    connections_.erase(ev.getFd());
                     delete conn;
                 }
             }
         }
     }
+}
+
+void Server::addConnection(Connection *conn) {
+    LOG_DEBUGF("new connection added to server");
+    connections_[conn->getFd()] = conn;
+}
+
+void Server::registerEventHandler(const Connection *conn, IEventHandler *handler) {
+    LOG_DEBUGF("event handler added to fd %d", conn->getFd());
+    eventHandlers_[conn->getFd()] = handler;
 }
 
 Result<Server::HandleConnectionState, error::AppError> Server::handleConnection(const Connection &conn) {
