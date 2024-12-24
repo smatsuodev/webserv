@@ -4,7 +4,7 @@
 Context::Context(Server &server, const Option<Connection &> &conn, const Event &event)
     : server_(server), conn_(conn), event_(event) {}
 
-const Server &Context::getServer() const {
+Server &Context::getServer() const {
     return server_;
 }
 
