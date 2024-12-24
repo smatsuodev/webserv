@@ -1,52 +1,36 @@
 #include "server.hpp"
-#include <sys/socket.h>
+#include "event/event_notifier.hpp"
 #include "transport/listener.hpp"
-#include "utils/string.hpp"
 #include "utils/logger.hpp"
-
-#include <cerrno>
-#include <string>
-#include <sys/epoll.h>
-#include <cstring>
 #include <fcntl.h>
 #include <map>
 
-Server::Server() : epollFd_(-1) {}
+Server::Server() {}
 
 Server::~Server() {}
 
 void Server::start(const unsigned short port) {
-    /**
-     * epoll_create() creates a new epoll(7) instance.
-     * Since Linux 2.6.8, the size argument is ignored, but must be greater than zero.
-     */
-    epollFd_.reset(epoll_create(1));
-    if (epollFd_ == -1) {
-        LOG_ERRORF("failed to create epoll fd: %s", std::strerror(errno));
-        return;
-    }
-    LOG_DEBUGF("epoll fd created (fd: %d)", epollFd_.get());
+    const EventNotifier notifier;
 
     const Listener lsn("0.0.0.0", port);
-    Server::setNonBlocking(lsn.getFd());
-    this->addToEpoll(lsn.getFd());
+    notifier.registerEvent(Event(lsn.getFd()));
 
     LOG_INFOF("server started on port %u", port);
 
-    epoll_event events[1024];
     std::map<int, Connection *> connections;
 
     while (true) {
-        const int nfds = epoll_wait(epollFd_, events, 1024, -1);
-        if (nfds == -1) {
-            LOG_ERROR("epoll_wait failed");
+        const EventNotifier::WaitEventsResult waitResult = notifier.waitEvents();
+        if (waitResult.isErr()) {
+            LOG_ERRORF("EventNotifier::waitEvents failed");
             continue;
         }
 
-        for (int i = 0; i < nfds; i++) {
-            epoll_event &ev = events[i];
-            if (ev.data.fd == lsn.getFd()) {
-                LOG_DEBUGF("event arrived on listener (fd: %d)", ev.data.fd);
+        const std::vector<Event> events = waitResult.unwrap();
+        for (std::size_t i = 0; i < events.size(); i++) {
+            const Event &ev = events[i];
+            if (ev.getFd() == lsn.getFd()) {
+                LOG_DEBUGF("event arrived on listener (fd: %d)", ev.getFd());
                 const Listener::AcceptConnectionResult result = lsn.acceptConnection();
                 if (result.isErr()) {
                     LOG_WARN(result.unwrapErr());
@@ -54,15 +38,14 @@ void Server::start(const unsigned short port) {
                 }
                 Connection *conn = result.unwrap();
                 connections[conn->getFd()] = conn;
-                Server::setNonBlocking(conn->getFd());
-                this->addToEpoll(conn->getFd());
+                notifier.registerEvent(Event(conn->getFd()));
             } else {
-                LOG_DEBUGF("event arrived on client fd %d", ev.data.fd);
-                const Connection *conn = connections[ev.data.fd];
+                LOG_DEBUGF("event arrived on client fd %d", ev.getFd());
+                const Connection *conn = connections[ev.getFd()];
                 const Result<HandleConnectionState, error::AppError> result = handleConnection(*conn);
                 if (result.isErr() || result.unwrap() == kComplete) {
-                    this->removeFromEpoll(ev.data.fd);
-                    connections.erase(ev.data.fd);
+                    notifier.unregisterEvent(ev);
+                    connections.erase(ev.getFd());
                     delete conn;
                 }
             }
@@ -89,29 +72,4 @@ Result<Server::HandleConnectionState, error::AppError> Server::handleConnection(
 
     LOG_DEBUG("response sent");
     return Ok(kComplete);
-}
-
-void Server::addToEpoll(const int fd) const {
-    epoll_event ev = {};
-    ev.events = EPOLLIN | EPOLLET;
-    ev.data.fd = fd;
-    if (epoll_ctl(epollFd_, EPOLL_CTL_ADD, fd, &ev) == -1) {
-        LOG_ERRORF("failed to add to epoll fd: %s", std::strerror(errno));
-        return;
-    }
-
-    LOG_DEBUGF("fd %d added to epoll", fd);
-}
-
-void Server::removeFromEpoll(const int fd) const {
-    if (epoll_ctl(epollFd_, EPOLL_CTL_DEL, fd, NULL) == -1) {
-        LOG_WARNF("failed to remove from epoll fd: %s", std::strerror(errno));
-        return;
-    }
-    LOG_DEBUGF("fd %d removed from epoll", fd);
-}
-
-void Server::setNonBlocking(const int fd) {
-    const int flags = fcntl(fd, F_GETFL, 0);
-    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }

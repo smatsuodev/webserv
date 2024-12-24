@@ -26,6 +26,12 @@ add_library(webserv_lib STATIC
         lib/utils/io/reader.hpp
         lib/utils/types/result.cpp
         lib/utils/types/error.hpp
+        lib/event/event_notifier.cpp
+        lib/event/event_notifier.hpp
+        lib/event/event.cpp
+        lib/event/event.hpp
+        lib/utils/fd.cpp
+        lib/utils/fd.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
