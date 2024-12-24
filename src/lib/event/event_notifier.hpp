@@ -19,7 +19,7 @@ public:
     void unregisterEvent(const Event &event) const;
 
     typedef Result<std::vector<Event>, error::AppError> WaitEventsResult;
-    WaitEventsResult waitEvents()const;
+    WaitEventsResult waitEvents() const;
 
 private:
     AutoFd epollFd_;
