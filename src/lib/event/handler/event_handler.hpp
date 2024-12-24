@@ -23,6 +23,7 @@ class Context {
 public:
     Context(Server &server, const Option<Connection &> &conn, const Event &event);
 
+    const Server &getServer() const;
     Option<Connection &> getConnection() const;
     const Event &getEvent() const;
 
