@@ -21,17 +21,18 @@ class Connection;
 // Connection がコピー禁止なので、Context もコピー禁止
 class Context {
 public:
-    Context(Server &server, const Option<Connection &> &conn, const Event &event);
+    // Connection は参照で受け取りたいが、Option<T &> が無理
+    Context(Server &server, const Option<Connection *> &conn, const Event &event);
 
     Server &getServer() const;
-    Option<Connection &> getConnection() const;
+    Option<Connection *> getConnection() const;
     const Event &getEvent() const;
 
 private:
     // どのサーバーの、どのコネクションの、何のイベントなのかを特定する必要がある
     Server &server_;
     // accept 前は connection は存在しない
-    Option<Connection &> conn_;
+    Option<Connection *> conn_;
     Event event_;
 };
 

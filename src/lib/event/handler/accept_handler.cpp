@@ -20,7 +20,7 @@ Result<void, error::AppError> AcceptHandler::invoke(Context &ctx) {
     notifier_.registerEvent(eventToRegister);
     ctx.getServer().addConnection(newConnection);
     // TODO: 適切なオブジェクトを登録
-    ctx.getServer().registerEventHandler(newConnection, NULL);
+    ctx.getServer().registerEventHandler(newConnection->getFd(), NULL);
 
     return Ok();
 }

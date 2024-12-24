@@ -12,7 +12,7 @@ public:
 
     void start(unsigned short port);
     void addConnection(Connection *conn);
-    void registerEventHandler(const Connection *conn, IEventHandler *handler);
+    void registerEventHandler(int targetFd, IEventHandler *handler);
 
 private:
     std::map<int, Connection *> connections_;

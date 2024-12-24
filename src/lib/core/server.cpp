@@ -1,5 +1,6 @@
 #include "server.hpp"
 #include "event/event_notifier.hpp"
+#include "event/handler/accept_handler.hpp"
 #include "transport/listener.hpp"
 #include "utils/logger.hpp"
 #include <fcntl.h>
@@ -10,10 +11,11 @@ Server::Server() {}
 Server::~Server() {}
 
 void Server::start(const unsigned short port) {
-    const EventNotifier notifier;
+    EventNotifier notifier;
 
-    const Listener lsn("0.0.0.0", port);
+    Listener lsn("0.0.0.0", port);
     notifier.registerEvent(Event(lsn.getFd()));
+    this->registerEventHandler(lsn.getFd(), new AcceptHandler(notifier, lsn));
 
     LOG_INFOF("server started on port %u", port);
 
@@ -29,14 +31,11 @@ void Server::start(const unsigned short port) {
             const Event &ev = events[i];
             if (ev.getFd() == lsn.getFd()) {
                 LOG_DEBUGF("event arrived on listener (fd: %d)", ev.getFd());
-                const Listener::AcceptConnectionResult result = lsn.acceptConnection();
-                if (result.isErr()) {
-                    LOG_WARN(result.unwrapErr());
-                    continue;
+                IEventHandler *handler = eventHandlers_[ev.getFd()];
+                if (handler) {
+                    Context ctx(*this, None, ev);
+                    handler->invoke(ctx);
                 }
-                Connection *conn = result.unwrap();
-                connections_[conn->getFd()] = conn;
-                notifier.registerEvent(Event(conn->getFd()));
             } else {
                 LOG_DEBUGF("event arrived on client fd %d", ev.getFd());
                 const Connection *conn = connections_[ev.getFd()];
@@ -56,9 +55,9 @@ void Server::addConnection(Connection *conn) {
     connections_[conn->getFd()] = conn;
 }
 
-void Server::registerEventHandler(const Connection *conn, IEventHandler *handler) {
-    LOG_DEBUGF("event handler added to fd %d", conn->getFd());
-    eventHandlers_[conn->getFd()] = handler;
+void Server::registerEventHandler(const int targetFd, IEventHandler *handler) {
+    LOG_DEBUGF("event handler added to fd %d", targetFd);
+    eventHandlers_[targetFd] = handler;
 }
 
 Result<Server::HandleConnectionState, error::AppError> Server::handleConnection(const Connection &conn) {
