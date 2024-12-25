@@ -38,6 +38,8 @@ add_library(webserv_lib STATIC
         lib/event/handler/accept_handler.hpp
         lib/event/handler/echo_handler.cpp
         lib/event/handler/echo_handler.hpp
+        lib/core/action.cpp
+        lib/core/action.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

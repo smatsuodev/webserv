@@ -18,16 +18,14 @@ Server::~Server() {
 }
 
 void Server::start(const unsigned short port) {
-    EventNotifier notifier;
-
     Listener lsn("0.0.0.0", port);
-    notifier.registerEvent(Event(lsn.getFd()));
-    this->registerEventHandler(lsn.getFd(), new AcceptHandler(notifier, lsn));
+    notifier_.registerEvent(Event(lsn.getFd()));
+    this->registerEventHandler(lsn.getFd(), new AcceptHandler(notifier_, lsn));
 
     LOG_INFOF("server started on port %u", port);
 
     while (true) {
-        const EventNotifier::WaitEventsResult waitResult = notifier.waitEvents();
+        const EventNotifier::WaitEventsResult waitResult = notifier_.waitEvents();
         if (waitResult.isErr()) {
             LOG_ERRORF("EventNotifier::waitEvents failed");
             continue;
@@ -43,14 +41,14 @@ void Server::start(const unsigned short port) {
             }
             IEventHandler *handler = maybeHandler.unwrap();
             Option<Connection *> maybeConnection = this->findConnection(ev.getFd());
-            Context ctx(*this, maybeConnection, ev);
+            Context ctx(maybeConnection, ev);
 
             const IEventHandler::InvokeResult result = handler->invoke(ctx);
             if (ev.getFd() != lsn.getFd()) {
                 // listening socket 以外の後処理
                 if (result.isOk() || result.unwrapErr() != error::kIOWouldBlock) {
                     // kIOWouldBlock 以外は connection を削除する
-                    notifier.unregisterEvent(ev);
+                    notifier_.unregisterEvent(ev);
                     connections_.erase(ev.getFd());
                     delete maybeConnection.unwrap();
                 }
@@ -64,9 +62,19 @@ void Server::addConnection(Connection *conn) {
     connections_[conn->getFd()] = conn;
 }
 
+void Server::removeConnection(const Connection *conn) {
+    LOG_DEBUGF("connection removed from server");
+    connections_.erase(conn->getFd());
+    delete conn;
+}
+
 void Server::registerEventHandler(const int targetFd, IEventHandler *handler) {
     LOG_DEBUGF("event handler added to fd %d", targetFd);
     eventHandlers_[targetFd] = handler;
+}
+
+EventNotifier &Server::getEventNotifier() {
+    return notifier_;
 }
 
 Option<Connection *> Server::findConnection(const int fd) const {
