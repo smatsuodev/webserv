@@ -8,7 +8,14 @@
 
 Server::Server() {}
 
-Server::~Server() {}
+Server::~Server() {
+    for (std::map<int, Connection *>::iterator it = connections_.begin(); it != connections_.end(); ++it) {
+        delete it->second;
+    }
+    for (std::map<int, IEventHandler *>::iterator it = eventHandlers_.begin(); it != eventHandlers_.end(); ++it) {
+        delete it->second;
+    }
+}
 
 void Server::start(const unsigned short port) {
     EventNotifier notifier;
@@ -29,21 +36,23 @@ void Server::start(const unsigned short port) {
         const std::vector<Event> events = waitResult.unwrap();
         for (std::size_t i = 0; i < events.size(); i++) {
             const Event &ev = events[i];
-            if (ev.getFd() == lsn.getFd()) {
-                LOG_DEBUGF("event arrived on listener (fd: %d)", ev.getFd());
-                IEventHandler *handler = eventHandlers_[ev.getFd()];
-                if (handler) {
-                    Context ctx(*this, None, ev);
-                    handler->invoke(ctx);
-                }
-            } else {
-                LOG_DEBUGF("event arrived on client fd %d", ev.getFd());
-                const Connection *conn = connections_[ev.getFd()];
-                const Result<HandleConnectionState, error::AppError> result = handleConnection(*conn);
-                if (result.isErr() || result.unwrap() == kComplete) {
+            Option<IEventHandler *> maybeHandler = this->findEventHandler(ev.getFd());
+            if (maybeHandler.isNone()) {
+                LOG_DEBUGF("event handler for fd %d is not registered", ev.getFd());
+                continue;
+            }
+            IEventHandler *handler = maybeHandler.unwrap();
+            Option<Connection *> maybeConnection = this->findConnection(ev.getFd());
+            Context ctx(*this, maybeConnection, ev);
+
+            const IEventHandler::InvokeResult result = handler->invoke(ctx);
+            if (ev.getFd() != lsn.getFd()) {
+                // listening socket 以外の後処理
+                if (result.isOk() || result.unwrapErr() != error::kIOWouldBlock) {
+                    // kIOWouldBlock 以外は connection を削除する
                     notifier.unregisterEvent(ev);
                     connections_.erase(ev.getFd());
-                    delete conn;
+                    delete maybeConnection.unwrap();
                 }
             }
         }
@@ -60,23 +69,18 @@ void Server::registerEventHandler(const int targetFd, IEventHandler *handler) {
     eventHandlers_[targetFd] = handler;
 }
 
-Result<Server::HandleConnectionState, error::AppError> Server::handleConnection(const Connection &conn) {
-    const bufio::Reader::ReadAllResult result = conn.getReader().readAll();
-    if (result.isErr()) {
-        const error::AppError err = result.unwrapErr();
-        if (err == error::kIOWouldBlock) {
-            return Ok(kSuspend);
-        }
-        return Err(err);
+Option<Connection *> Server::findConnection(const int fd) const {
+    const std::map<int, Connection *>::const_iterator it = connections_.find(fd);
+    if (it == connections_.end()) {
+        return None;
     }
-    LOG_DEBUG("finish Reader::readAll");
-    const std::string content = result.unwrap();
+    return Some(it->second);
+}
 
-    if (send(conn.getFd(), content.c_str(), content.size(), 0) == -1) {
-        LOG_WARN("failed to send response");
-        return Err(error::kUnknown);
+Option<IEventHandler *> Server::findEventHandler(int fd) {
+    const std::map<int, IEventHandler *>::const_iterator it = eventHandlers_.find(fd);
+    if (it == eventHandlers_.end()) {
+        return None;
     }
-
-    LOG_DEBUG("response sent");
-    return Ok(kComplete);
+    return Some(it->second);
 }

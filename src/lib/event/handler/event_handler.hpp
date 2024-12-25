@@ -39,6 +39,8 @@ private:
 class IEventHandler {
 public:
     virtual ~IEventHandler();
+
+    typedef Result<void, error::AppError> InvokeResult;
     virtual Result<void, error::AppError> invoke(Context &ctx) = 0;
 };
 

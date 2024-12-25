@@ -18,11 +18,8 @@ private:
     std::map<int, Connection *> connections_;
     std::map<int, IEventHandler *> eventHandlers_;
 
-    enum HandleConnectionState {
-        kSuspend,
-        kComplete,
-    };
-    static Result<HandleConnectionState, error::AppError> handleConnection(const Connection &conn);
+    Option<Connection *> findConnection(int fd) const;
+    Option<IEventHandler *> findEventHandler(int fd);
 };
 
 #endif
