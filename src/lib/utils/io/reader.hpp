@@ -31,6 +31,11 @@ namespace io {
 }
 
 namespace bufio {
+    /**
+     * NOTE: 途中で EAGAIN などが返った場合、エラーを返すようにしているが、
+     * 部分的に読み取った結果を返せるようにするべき?
+     * (読み取ったデータが失われないようにはなっている)
+     */
     class Reader : public io::IReader {
     public:
         explicit Reader(io::IReader &reader, std::size_t bufCapacity = kDefaultBufSize);
