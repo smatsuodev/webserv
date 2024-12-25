@@ -21,6 +21,16 @@ void RemoveConnectionAction::execute(Server &server) {
     }
 }
 
+UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection *conn, IEventHandler *handler)
+    : conn_(conn), handler_(handler), executed_(false) {}
+
+void UnregisterEventHandlerAction::execute(Server &server) {
+    if (!executed_) {
+        server.unregisterEventHandler(conn_->getFd(), handler_);
+        executed_ = true;
+    }
+}
+
 RegisterEventAction::RegisterEventAction(const Event &event) : event_(event), executed_(false) {}
 
 void RegisterEventAction::execute(Server &server) {

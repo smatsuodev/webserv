@@ -15,6 +15,7 @@ public:
     void addConnection(Connection *conn);
     void removeConnection(const Connection *conn);
     void registerEventHandler(int targetFd, IEventHandler *handler);
+    void unregisterEventHandler(int targetFd, const IEventHandler *handler);
     EventNotifier &getEventNotifier();
 
 private:

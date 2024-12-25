@@ -26,6 +26,17 @@ private:
     Connection *conn_;
 };
 
+class UnregisterEventHandlerAction : public IAction {
+public:
+    explicit UnregisterEventHandlerAction(Connection *conn, IEventHandler *handler);
+    void execute(Server &server);
+
+private:
+    Connection *conn_;
+    IEventHandler *handler_;
+    bool executed_;
+};
+
 class RegisterEventAction : public IAction {
 public:
     explicit RegisterEventAction(const Event &event);

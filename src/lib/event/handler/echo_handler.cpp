@@ -14,7 +14,7 @@ EchoHandler::InvokeResult EchoHandler::invoke(const Context &ctx) {
         LOG_INFO("no connection");
         return Err(error::kValidationInvalidArgs);
     }
-    const Connection *conn = ctx.getConnection().unwrap();
+    Connection *conn = ctx.getConnection().unwrap();
 
     const bufio::Reader::ReadAllResult result = conn->getReader().readAll();
     const std::string content = TRY(result);
@@ -29,6 +29,7 @@ EchoHandler::InvokeResult EchoHandler::invoke(const Context &ctx) {
 
     std::vector<IAction *> actions;
     actions.push_back(new UnregisterEventAction(ctx.getEvent()));
+    actions.push_back(new UnregisterEventHandlerAction(conn, this));
     actions.push_back(new RemoveConnectionAction(ctx.getConnection().unwrap()));
 
     return Ok(actions);

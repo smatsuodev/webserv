@@ -97,6 +97,12 @@ void Server::registerEventHandler(const int targetFd, IEventHandler *handler) {
     LOG_DEBUGF("event handler added to fd %d", targetFd);
 }
 
+void Server::unregisterEventHandler(const int targetFd, const IEventHandler *handler) {
+    eventHandlers_.erase(targetFd);
+    delete handler;
+    LOG_DEBUGF("event handler removed from fd %d", targetFd);
+}
+
 EventNotifier &Server::getEventNotifier() {
     return notifier_;
 }
