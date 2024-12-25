@@ -45,6 +45,7 @@ public:
 
     ReadResult read(char *buf, const std::size_t nbyte) {
         if (++counter_ == n_) {
+            errno = EAGAIN;
             return Err(error::kIOWouldBlock);
         }
         return reader_.read(buf, nbyte);
