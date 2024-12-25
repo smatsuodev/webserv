@@ -33,3 +33,9 @@ gtest_discover_tests(option_test)
 
 add_executable(result_test result_test.cpp)
 gtest_discover_tests(result_test)
+
+add_executable(http_method_test http_method_test.cpp)
+gtest_discover_tests(http_method_test)
+
+add_executable(http_status_test http_status_test.cpp)
+gtest_discover_tests(http_status_test)
