@@ -44,6 +44,8 @@ add_library(webserv_lib STATIC
         lib/http/method.hpp
         lib/http/status.cpp
         lib/http/status.hpp
+        lib/http/request.cpp
+        lib/http/request.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
