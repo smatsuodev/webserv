@@ -4,7 +4,7 @@
 #include "utils/types/error.hpp"
 #include "utils/types/result.hpp"
 #include "utils/types/option.hpp"
-#include "event/event.hpp"
+#include "event.hpp"
 
 #include <vector>
 

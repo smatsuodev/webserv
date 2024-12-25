@@ -1,5 +1,4 @@
 #include "echo_handler.hpp"
-
 #include "core/action.hpp"
 #include "transport/connection.hpp"
 #include "utils/logger.hpp"

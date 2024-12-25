@@ -2,7 +2,7 @@
 #define SRC_LIB_SERVER_HPP
 
 #include "event/event_notifier.hpp"
-#include "event/handler/event_handler.hpp"
+#include "event/event_handler.hpp"
 #include "transport/connection.hpp"
 #include <map>
 
