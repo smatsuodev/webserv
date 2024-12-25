@@ -1,12 +1,7 @@
 #include "event_handler.hpp"
 #include "utils/types/try.hpp"
 
-Context::Context(Server &server, const Option<Connection *> &conn, const Event &event)
-    : server_(server), conn_(conn), event_(event) {}
-
-Server &Context::getServer() const {
-    return server_;
-}
+Context::Context(const Option<Connection *> &conn, const Event &event) : conn_(conn), event_(event) {}
 
 Option<Connection *> Context::getConnection() const {
     return conn_;

@@ -4,11 +4,7 @@
 
 class EchoHandler : public IEventHandler {
 public:
-    EchoHandler();
-
-    Result<void, error::AppError> invoke(Context &ctx);
-
-private:
+    InvokeResult invoke(const Context &ctx);
 };
 
 #endif

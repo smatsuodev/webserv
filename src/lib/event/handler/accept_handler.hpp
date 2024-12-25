@@ -7,12 +7,11 @@
 
 class AcceptHandler : public IEventHandler {
 public:
-    explicit AcceptHandler(EventNotifier &notifier, Listener &listener);
+    explicit AcceptHandler(Listener &listener);
 
-    Result<void, error::AppError> invoke(Context &ctx);
+    InvokeResult invoke(const Context &ctx);
 
 private:
-    EventNotifier &notifier_;
     Listener &listener_;
 };
 

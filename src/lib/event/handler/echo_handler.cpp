@@ -1,13 +1,13 @@
 #include "echo_handler.hpp"
+
+#include "core/action.hpp"
 #include "transport/connection.hpp"
 #include "utils/logger.hpp"
 #include "utils/io/reader.hpp"
 #include "utils/types/try.hpp"
 #include <sys/socket.h>
 
-EchoHandler::EchoHandler() {}
-
-Result<void, error::AppError> EchoHandler::invoke(Context &ctx) {
+EchoHandler::InvokeResult EchoHandler::invoke(const Context &ctx) {
     LOG_DEBUGF("start EchoHandler::invoke");
 
     if (ctx.getConnection().isNone()) {
@@ -27,5 +27,9 @@ Result<void, error::AppError> EchoHandler::invoke(Context &ctx) {
 
     LOG_DEBUG("response sent");
 
-    return Ok();
+    std::vector<IAction *> actions;
+    actions.push_back(new UnregisterEventAction(ctx.getEvent()));
+    actions.push_back(new RemoveConnectionAction(ctx.getConnection().unwrap()));
+
+    return Ok(actions);
 }

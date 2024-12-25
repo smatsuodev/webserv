@@ -1,9 +1,10 @@
 #include "server.hpp"
+
+#include "action.hpp"
 #include "event/event_notifier.hpp"
 #include "event/handler/accept_handler.hpp"
 #include "transport/listener.hpp"
 #include "utils/logger.hpp"
-#include <fcntl.h>
 #include <map>
 
 Server::Server() {}
@@ -20,7 +21,7 @@ Server::~Server() {
 void Server::start(const unsigned short port) {
     Listener lsn("0.0.0.0", port);
     notifier_.registerEvent(Event(lsn.getFd()));
-    this->registerEventHandler(lsn.getFd(), new AcceptHandler(notifier_, lsn));
+    this->registerEventHandler(lsn.getFd(), new AcceptHandler(lsn));
 
     LOG_INFOF("server started on port %u", port);
 
@@ -34,24 +35,39 @@ void Server::start(const unsigned short port) {
         const std::vector<Event> events = waitResult.unwrap();
         for (std::size_t i = 0; i < events.size(); i++) {
             const Event &ev = events[i];
-            Option<IEventHandler *> maybeHandler = this->findEventHandler(ev.getFd());
-            if (maybeHandler.isNone()) {
+            LOG_DEBUGF("event arrived for fd %d", ev.getFd());
+
+            Option<IEventHandler *> handler = this->findEventHandler(ev.getFd());
+            if (handler.isNone()) {
                 LOG_DEBUGF("event handler for fd %d is not registered", ev.getFd());
                 continue;
             }
-            IEventHandler *handler = maybeHandler.unwrap();
-            Option<Connection *> maybeConnection = this->findConnection(ev.getFd());
-            Context ctx(maybeConnection, ev);
+            Option<Connection *> connection = this->findConnection(ev.getFd());
+            Context ctx(connection, ev);
 
-            const IEventHandler::InvokeResult result = handler->invoke(ctx);
-            if (ev.getFd() != lsn.getFd()) {
-                // listening socket 以外の後処理
-                if (result.isOk() || result.unwrapErr() != error::kIOWouldBlock) {
-                    // kIOWouldBlock 以外は connection を削除する
-                    notifier_.unregisterEvent(ev);
-                    connections_.erase(ev.getFd());
-                    delete maybeConnection.unwrap();
+            const IEventHandler::InvokeResult result = handler.unwrap()->invoke(ctx);
+            if (result.isErr()) {
+                const error::AppError err = result.unwrapErr();
+                if (err == error::kIOWouldBlock) {
+                    continue;
                 }
+
+                LOG_WARNF("handler error");
+                // kIOWouldBlock 以外のエラーはコネクションを閉じる
+                if (ev.getFd() != lsn.getFd()) {
+                    notifier_.unregisterEvent(ev);
+                    if (connection.isSome()) {
+                        this->removeConnection(connection.unwrap());
+                    }
+                }
+                continue;
+            }
+
+            const std::vector<IAction *> actions = result.unwrap();
+            for (std::vector<IAction *>::const_iterator it = actions.begin(); it != actions.end(); ++it) {
+                IAction *action = *it;
+                action->execute(*this);
+                delete action;
             }
         }
     }

@@ -1,13 +1,13 @@
 #include "accept_handler.hpp"
-
 #include "echo_handler.hpp"
+#include "core/action.hpp"
 #include "core/server.hpp"
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
 
-AcceptHandler::AcceptHandler(EventNotifier &notifier, Listener &listener) : notifier_(notifier), listener_(listener) {}
+AcceptHandler::AcceptHandler(Listener &listener) : listener_(listener) {}
 
-Result<void, error::AppError> AcceptHandler::invoke(Context &ctx) {
+IEventHandler::InvokeResult AcceptHandler::invoke(const Context &) {
     // TODO: accept がブロックしたら?
     const Listener::AcceptConnectionResult result = listener_.acceptConnection();
     if (result.isErr()) {
@@ -18,14 +18,11 @@ Result<void, error::AppError> AcceptHandler::invoke(Context &ctx) {
     Connection *newConnection = result.unwrap();
     const Event eventToRegister = Event(newConnection->getFd());
 
-    // 各種登録
-    /**
-     * TODO: newConnection を戻り値で返したい
-     * accept する役割は既に終えているので、これらの処理は Server でやりたい
-     */
-    notifier_.registerEvent(eventToRegister);
-    ctx.getServer().addConnection(newConnection);
-    ctx.getServer().registerEventHandler(newConnection->getFd(), new EchoHandler());
+    // caller が処理すべき action を返す
+    std::vector<IAction *> actions;
+    actions.push_back(new RegisterEventAction(eventToRegister));
+    actions.push_back(new AddConnectionAction(newConnection));
+    actions.push_back(new RegisterEventHandlerAction(newConnection, new EchoHandler()));
 
-    return Ok();
+    return Ok(actions);
 }
