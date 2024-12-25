@@ -13,14 +13,6 @@ class Server;
 class Connection;
 
 // イベントハンドラーに呼び出された文脈を提供する
-/**
- * EventNotifier への参照は意図的に含めていない
- * なぜなら、"呼び出された文脈" には関係ないから
- * また、EventNotifier は常に固定なので、毎回渡し直す必要がない
- * (Connection や Event は状態遷移がある)
- *
- * 個々のハンドラーの実装に必要なものはコンストラクタで注入する
- */
 // Connection がコピー禁止なので、Context もコピー禁止
 class Context {
 public:
