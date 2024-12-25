@@ -1,7 +1,9 @@
 #ifndef SRC_LIB_CORE_ACTION_HPP
 #define SRC_LIB_CORE_ACTION_HPP
+
 #include "server.hpp"
 
+// IEventHandler が返す Command オブジェクト
 class IAction {
 public:
     virtual ~IAction();
