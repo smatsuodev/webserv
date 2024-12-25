@@ -36,7 +36,10 @@ namespace bufio {
         explicit Reader(io::IReader &reader, std::size_t bufCapacity = kDefaultBufSize);
         virtual ~Reader();
 
-        // 途中で EAGAIN が起きたら、読み込めた分の結果を返す
+        /**
+         * 途中で EAGAIN が起きたら、読み込めた分の結果を返す
+         * 最初に EAGAIN が起きたら kWouldBlock エラーを返す
+         */
         virtual ReadResult read(char *buf, std::size_t nbyte);
         virtual bool eof();
 
