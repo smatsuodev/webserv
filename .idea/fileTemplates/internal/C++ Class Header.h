@@ -4,7 +4,10 @@
 ${NAMESPACES_OPEN}
 
 class ${NAME} {
-
+public:
+    ${NAME}();
+    ~${NAME}();
+private:
 };
 
 ${NAMESPACES_CLOSE}
