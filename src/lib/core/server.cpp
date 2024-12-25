@@ -74,19 +74,27 @@ void Server::start(const unsigned short port) {
 }
 
 void Server::addConnection(Connection *conn) {
-    LOG_DEBUGF("new connection added to server");
+    if (connections_[conn->getFd()]) {
+        LOG_DEBUGF("outdated Connection object found for fd %d", conn->getFd());
+        delete connections_[conn->getFd()];
+    }
     connections_[conn->getFd()] = conn;
+    LOG_DEBUGF("new connection added to server");
 }
 
 void Server::removeConnection(const Connection *conn) {
-    LOG_DEBUGF("connection removed from server");
     connections_.erase(conn->getFd());
     delete conn;
+    LOG_DEBUGF("connection removed from server");
 }
 
 void Server::registerEventHandler(const int targetFd, IEventHandler *handler) {
-    LOG_DEBUGF("event handler added to fd %d", targetFd);
+    if (eventHandlers_[targetFd]) {
+        LOG_DEBUGF("outdated event handler found for fd %d", targetFd);
+        delete eventHandlers_[targetFd];
+    }
     eventHandlers_[targetFd] = handler;
+    LOG_DEBUGF("event handler added to fd %d", targetFd);
 }
 
 EventNotifier &Server::getEventNotifier() {
