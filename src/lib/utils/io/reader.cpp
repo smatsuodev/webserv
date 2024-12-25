@@ -1,8 +1,6 @@
 #include "reader.hpp"
-
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
-
 #include <cerrno>
 #include <unistd.h>
 #include <cstring>
@@ -52,11 +50,16 @@ namespace bufio {
             if (this->unreadBufSize() == 0) {
                 const Result<size_t, error::AppError> fillBufResult = this->fillBuf();
                 if (fillBufResult.isErr()) {
+                    const error::AppError err = fillBufResult.unwrapErr();
+                    if (err == error::kIOWouldBlock) {
+                        return Ok(totalBytesRead);
+                    }
+
                     // 引数の buf に書き込まれたデータが失われないように、バッファに戻す
                     if (totalBytesRead > 0) {
                         this->prependBuf(buf, totalBytesRead);
                     }
-                    return Err(fillBufResult.unwrapErr());
+                    return Err(err);
                 }
 
                 if (fillBufResult.unwrap() == 0) {
@@ -145,7 +148,6 @@ namespace bufio {
                 bytesRead = readResult.unwrap();
             }
 
-            const size_t bytesRead = readResult.unwrap();
             if (bytesRead == 0) {
                 break;
             }
