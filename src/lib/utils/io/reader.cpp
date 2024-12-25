@@ -129,13 +129,20 @@ namespace bufio {
 
         while (true) {
             char buf[4096];
-            const ReadResult readResult = this->read(buf, sizeof(buf));
-            if (readResult.isErr()) {
-                // ここまで読み込んだ分をバッファに戻す
-                if (!result.empty()) {
-                    this->prependBuf(result.data(), result.size());
+            std::size_t bytesRead;
+            // readUntil と同じ理由で、read 先を使い分ける
+            if (this->unreadBufSize() > 0) {
+                bytesRead = this->consumeAndCopyBuf(buf, sizeof(buf));
+            } else {
+                const ReadResult readResult = reader_.read(buf, sizeof(buf));
+                if (readResult.isErr()) {
+                    // ここまで読み込んだ分をバッファに戻す
+                    if (!result.empty()) {
+                        this->prependBuf(result.data(), result.size());
+                    }
+                    return Err(readResult.unwrapErr());
                 }
-                return Err(readResult.unwrapErr());
+                bytesRead = readResult.unwrap();
             }
 
             const size_t bytesRead = readResult.unwrap();
