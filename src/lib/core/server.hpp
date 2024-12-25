@@ -12,11 +12,6 @@ public:
     ~Server();
 
     void start(unsigned short port);
-    void addConnection(Connection *conn);
-    void removeConnection(const Connection *conn);
-    void registerEventHandler(int targetFd, IEventHandler *handler);
-    void unregisterEventHandler(int targetFd, const IEventHandler *handler);
-    EventNotifier &getEventNotifier();
 
 private:
     // NOTE: Server の作成と一緒に EventNotifier が初期化される。それでよいのか?
@@ -26,6 +21,18 @@ private:
 
     Option<Connection *> findConnection(int fd) const;
     Option<IEventHandler *> findEventHandler(int fd);
+
+    friend class AddConnectionAction;
+    friend class RemoveConnectionAction;
+    friend class RegisterEventHandlerAction;
+    friend class UnregisterEventHandlerAction;
+    friend class RegisterEventAction;
+    friend class UnregisterEventAction;
+    void addConnection(Connection *conn);
+    void removeConnection(const Connection *conn);
+    void registerEventHandler(int targetFd, IEventHandler *handler);
+    void unregisterEventHandler(int targetFd, const IEventHandler *handler);
+    EventNotifier &getEventNotifier();
 };
 
 #endif

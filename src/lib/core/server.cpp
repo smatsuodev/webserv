@@ -36,15 +36,16 @@ void Server::start(const unsigned short port) {
             const Event &ev = events[i];
             LOG_DEBUGF("event arrived for fd %d", ev.getFd());
 
-            Option<IEventHandler *> handler = this->findEventHandler(ev.getFd());
-            if (handler.isNone()) {
+            Option<IEventHandler *> maybeHandler = this->findEventHandler(ev.getFd());
+            if (maybeHandler.isNone()) {
                 LOG_DEBUGF("event handler for fd %d is not registered", ev.getFd());
                 continue;
             }
+            IEventHandler *handler = maybeHandler.unwrap();
             Option<Connection *> connection = this->findConnection(ev.getFd());
             Context ctx(connection, ev);
 
-            const IEventHandler::InvokeResult result = handler.unwrap()->invoke(ctx);
+            const IEventHandler::InvokeResult result = handler->invoke(ctx);
             if (result.isErr()) {
                 const error::AppError err = result.unwrapErr();
                 if (err == error::kIOWouldBlock) {
@@ -55,6 +56,7 @@ void Server::start(const unsigned short port) {
                 // kIOWouldBlock 以外のエラーはコネクションを閉じる
                 if (ev.getFd() != lsn.getFd()) {
                     notifier_.unregisterEvent(ev);
+                    this->unregisterEventHandler(ev.getFd(), handler);
                     if (connection.isSome()) {
                         this->removeConnection(connection.unwrap());
                     }
