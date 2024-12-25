@@ -45,6 +45,7 @@ public:
 
     ReadResult read(char *buf, const std::size_t nbyte) {
         if (++counter_ == n_) {
+            errno = EAGAIN;
             return Err(error::kIOWouldBlock);
         }
         return reader_.read(buf, nbyte);
@@ -194,6 +195,22 @@ TEST(ReaderTest, Discard) {
     EXPECT_EQ(restResult.unwrap(), ", World!");
 }
 
+TEST(ReaderTest, WouldBlockRead) {
+    const std::string mockData = "Hello";
+
+    StringReader sReader(mockData);
+    WouldBlockReader reader(sReader, 2);
+    bufio::Reader bufReader(reader, 3);
+
+    char buf[6] = {0};
+    const auto result = bufReader.read(buf, 5);
+
+    // 1回目のバッファリングで読み込めた3文字だけ返る
+    ASSERT_TRUE(result.isOk());
+    EXPECT_EQ(result.unwrap(), 3);
+    EXPECT_STREQ(buf, "Hel");
+}
+
 // 途中で EWOULDBLOCK が発生しても、正しく読み込める
 TEST(ReaderTest, WouldBlockReadAll) {
     const std::string mockData = "Hello, World!";
@@ -235,26 +252,7 @@ TEST(ReaderTest, WouldBlockReadAllWithLargeBuf) {
     EXPECT_EQ(result2.unwrap(), mockData);
 }
 
-TEST(ReaderTest, WouldBlockReaderRead) {
-    const std::string mockData = "Hello";
-
-    StringReader sReader(mockData);
-    WouldBlockReader reader(sReader, 2);
-    bufio::Reader bufReader(reader, 1);
-
-    char buf[6] = {0};
-    const auto r = bufReader.read(buf, 5);
-
-    // 途中で EWOULDBLOCK が起こる
-    ASSERT_TRUE(r.isErr());
-
-    const auto r2 = bufReader.read(buf, 5);
-
-    ASSERT_TRUE(r2.isOk());
-    ASSERT_STREQ(buf, "Hello");
-}
-
-TEST(ReaderTest, WouldBlockReaderReadWithLargeBuf) {
+TEST(ReaderTest, WouldBlockReadWithLargeBuf) {
     const std::string mockData = "Hello";
 
     StringReader sReader(mockData);
@@ -268,7 +266,7 @@ TEST(ReaderTest, WouldBlockReaderReadWithLargeBuf) {
     ASSERT_STREQ(buf, "Hello");
 }
 
-TEST(ReaderTest, WouldBlockReaderReadUntil) {
+TEST(ReaderTest, WouldBlockReadUntil) {
     const std::string mockData = "first line\nsecond line\n";
 
     StringReader sReader(mockData);
@@ -289,7 +287,7 @@ TEST(ReaderTest, WouldBlockReaderReadUntil) {
     ASSERT_EQ(r3.unwrap(), "second line\n");
 }
 
-TEST(ReaderTest, WouldBlockReaderReadUntilWithLargeBuf) {
+TEST(ReaderTest, WouldBlockReadUntilWithLargeBuf) {
     const std::string mockData = "first line\nsecond line\n";
 
     StringReader sReader(mockData);

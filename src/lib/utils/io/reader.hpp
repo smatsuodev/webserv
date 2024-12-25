@@ -31,22 +31,20 @@ namespace io {
 }
 
 namespace bufio {
-    /**
-     * NOTE: 途中で EAGAIN などが返った場合、エラーを返すようにしているが、
-     * 部分的に読み取った結果を返せるようにするべき?
-     * (読み取ったデータが失われないようにはなっている)
-     */
     class Reader : public io::IReader {
     public:
         explicit Reader(io::IReader &reader, std::size_t bufCapacity = kDefaultBufSize);
         virtual ~Reader();
 
+        // 途中で EAGAIN が起きたら、読み込めた分の結果を返す
         virtual ReadResult read(char *buf, std::size_t nbyte);
         virtual bool eof();
 
+        // 途中で EAGAIN が起きたら、エラーを返す
         typedef Result<std::string, error::AppError> ReadUntilResult;
         ReadUntilResult readUntil(const std::string &delimiter);
 
+        // 途中で EAGAIN が起きたら、エラーを返す
         typedef Result<std::string, error::AppError> ReadAllResult;
         ReadAllResult readAll();
 

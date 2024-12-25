@@ -1,8 +1,6 @@
 #include "reader.hpp"
-
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
-
 #include <cerrno>
 #include <unistd.h>
 #include <cstring>
@@ -15,6 +13,7 @@ namespace io {
     FdReader::~FdReader() {}
 
     FdReader::ReadResult FdReader::read(char *buf, const std::size_t nbyte) {
+        errno = 0;
         const ssize_t bytesRead = ::read(fd_, buf, nbyte);
         if (bytesRead == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -47,16 +46,20 @@ namespace bufio {
         }
 
         std::size_t totalBytesRead = 0;
-        const Result<int, std::string> r = Ok(1);
         while (totalBytesRead < nbyte) {
             if (this->unreadBufSize() == 0) {
                 const Result<size_t, error::AppError> fillBufResult = this->fillBuf();
                 if (fillBufResult.isErr()) {
+                    const error::AppError err = fillBufResult.unwrapErr();
+                    if (err == error::kIOWouldBlock) {
+                        return Ok(totalBytesRead);
+                    }
+
                     // 引数の buf に書き込まれたデータが失われないように、バッファに戻す
                     if (totalBytesRead > 0) {
                         this->prependBuf(buf, totalBytesRead);
                     }
-                    return Err(fillBufResult.unwrapErr());
+                    return Err(err);
                 }
 
                 if (fillBufResult.unwrap() == 0) {
@@ -94,13 +97,22 @@ namespace bufio {
 
         while (true) {
             char ch;
+            errno = 0;
             const ReadResult readResult = this->read(&ch, 1);
-            if (readResult.isErr()) {
-                // std::string result が失われないように、バッファに戻す
+            /**
+             * this->read だとバッファリングの都合で、読み込めたところまでの部分的な結果が返ってくる
+             * 部分的な読込結果なのか、eof なのか区別するために、errno を確認する
+             *
+             * ただし、途中で errno がリセットがリセットされる可能性もあるので、あまりよくない
+             */
+            if (readResult.isErr() || (errno == EAGAIN || errno == EWOULDBLOCK)) {
                 if (!result.empty()) {
                     this->prependBuf(result.data(), result.size());
                 }
-                return Err(readResult.unwrapErr());
+                if (readResult.isErr()) {
+                    return Err(readResult.unwrapErr());
+                }
+                return Err(error::kIOWouldBlock);
             }
             if (readResult.unwrap() == 0) {
                 // EOF に達した場合
@@ -129,16 +141,22 @@ namespace bufio {
 
         while (true) {
             char buf[4096];
-            const ReadResult readResult = this->read(buf, sizeof(buf));
-            if (readResult.isErr()) {
-                // ここまで読み込んだ分をバッファに戻す
-                if (!result.empty()) {
-                    this->prependBuf(result.data(), result.size());
+            std::size_t bytesRead;
+            // readUntil と同じ理由で、read 先を使い分ける
+            if (this->unreadBufSize() > 0) {
+                bytesRead = this->consumeAndCopyBuf(buf, sizeof(buf));
+            } else {
+                const ReadResult readResult = reader_.read(buf, sizeof(buf));
+                if (readResult.isErr()) {
+                    // ここまで読み込んだ分をバッファに戻す
+                    if (!result.empty()) {
+                        this->prependBuf(result.data(), result.size());
+                    }
+                    return Err(readResult.unwrapErr());
                 }
-                return Err(readResult.unwrapErr());
+                bytesRead = readResult.unwrap();
             }
 
-            const size_t bytesRead = readResult.unwrap();
             if (bytesRead == 0) {
                 break;
             }
