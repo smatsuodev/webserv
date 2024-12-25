@@ -13,9 +13,7 @@ namespace types {
     public:
         explicit Some(T val) : val_(val) {}
 
-        Some(const Some &other) {
-            *this = other;
-        }
+        Some(const Some &other) : val_(other.val_) {}
 
         ~Some() {}
 

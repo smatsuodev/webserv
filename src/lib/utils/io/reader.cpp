@@ -51,7 +51,7 @@ namespace bufio {
                 const Result<size_t, error::AppError> fillBufResult = this->fillBuf();
                 if (fillBufResult.isErr()) {
                     const error::AppError err = fillBufResult.unwrapErr();
-                    if (err == error::kIOWouldBlock) {
+                    if (err == error::kIOWouldBlock && totalBytesRead > 0) {
                         return Ok(totalBytesRead);
                     }
 
