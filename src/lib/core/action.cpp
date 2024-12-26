@@ -26,7 +26,7 @@ UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection *conn, IEv
 
 void UnregisterEventHandlerAction::execute(Server &server) {
     if (!executed_) {
-        server.unregisterEventHandler(conn_->getFd(), handler_);
+        server.unregisterEventHandler(conn_->getFd());
         executed_ = true;
     }
 }
