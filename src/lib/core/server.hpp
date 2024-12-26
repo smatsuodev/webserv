@@ -1,12 +1,10 @@
 #ifndef SRC_LIB_SERVER_HPP
 #define SRC_LIB_SERVER_HPP
 
+#include "repository.hpp"
 #include "event/event_notifier.hpp"
 #include "event/event_handler.hpp"
-#include "transport/connection.hpp"
 #include "transport/listener.hpp"
-
-#include <map>
 
 class Server {
 public:
@@ -23,26 +21,22 @@ private:
     Listener listener_;
     // NOTE: Server の作成と一緒に EventNotifier が初期化される。それでよいのか?
     EventNotifier notifier_;
-    std::map<int, Connection *> connections_;
-    std::map<int, IEventHandler *> eventHandlers_;
+    ConnectionRepository connRepo_;
+    EventHandlerRepository handlerRepo_;
 
     void onHandlerError(const Context &ctx, error::AppError err);
     void executeActions(std::vector<IAction *> actions);
 
-    Option<Connection *> findConnection(int fd) const;
-    Option<IEventHandler *> findEventHandler(int fd);
-
+    /**
+     * IAction::execute に this を渡して、メンバを操作させてる
+     * できれば friend をやめたい
+     */
     friend class AddConnectionAction;
     friend class RemoveConnectionAction;
     friend class RegisterEventHandlerAction;
     friend class UnregisterEventHandlerAction;
     friend class RegisterEventAction;
     friend class UnregisterEventAction;
-    void addConnection(Connection *conn);
-    void removeConnection(const Connection *conn);
-    void registerEventHandler(int targetFd, IEventHandler *handler);
-    void unregisterEventHandler(int targetFd);
-    EventNotifier &getEventNotifier();
 };
 
 #endif

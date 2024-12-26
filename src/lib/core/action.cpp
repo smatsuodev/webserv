@@ -6,7 +6,7 @@ AddConnectionAction::AddConnectionAction(Connection *conn) : conn_(conn) {}
 
 void AddConnectionAction::execute(Server &server) {
     if (conn_) {
-        server.addConnection(conn_);
+        server.connRepo_.set(conn_->getFd(), conn_);
         // 2回以上実行できないようにする
         conn_ = NULL;
     }
@@ -16,7 +16,7 @@ RemoveConnectionAction::RemoveConnectionAction(Connection *conn) : conn_(conn) {
 
 void RemoveConnectionAction::execute(Server &server) {
     if (conn_) {
-        server.removeConnection(conn_);
+        server.connRepo_.remove(conn_->getFd());
         conn_ = NULL;
     }
 }
@@ -26,7 +26,7 @@ UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection *conn, IEv
 
 void UnregisterEventHandlerAction::execute(Server &server) {
     if (!executed_) {
-        server.unregisterEventHandler(conn_->getFd());
+        server.handlerRepo_.remove(conn_->getFd());
         executed_ = true;
     }
 }
@@ -35,7 +35,7 @@ RegisterEventAction::RegisterEventAction(const Event &event) : event_(event), ex
 
 void RegisterEventAction::execute(Server &server) {
     if (!executed_) {
-        server.getEventNotifier().registerEvent(event_);
+        server.notifier_.registerEvent(event_);
         executed_ = true;
     }
 }
@@ -44,7 +44,7 @@ UnregisterEventAction::UnregisterEventAction(const Event &event) : event_(event)
 
 void UnregisterEventAction::execute(Server &server) {
     if (!executed_) {
-        server.getEventNotifier().unregisterEvent(event_);
+        server.notifier_.unregisterEvent(event_);
         executed_ = true;
     }
 }
@@ -54,7 +54,7 @@ RegisterEventHandlerAction::RegisterEventHandlerAction(Connection *conn, IEventH
 
 void RegisterEventHandlerAction::execute(Server &server) {
     if (!executed_) {
-        server.registerEventHandler(conn_->getFd(), handler_);
+        server.handlerRepo_.set(conn_->getFd(), handler_);
         executed_ = true;
     }
 }
