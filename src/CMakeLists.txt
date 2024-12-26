@@ -44,14 +44,14 @@ add_library(webserv_lib STATIC
         lib/http/method.hpp
         lib/http/status.cpp
         lib/http/status.hpp
-        lib/http/request.cpp
-        lib/http/request.hpp
-        lib/http/request_parser.cpp
-        lib/http/request_parser.hpp
+        lib/http/request/request.cpp
+        lib/http/request/request.hpp
+        lib/http/request/request_parser.cpp
+        lib/http/request/request_parser.hpp
         lib/core/handler/read_request_handler.cpp
         lib/core/handler/read_request_handler.hpp
-        lib/http/request_reader.cpp
-        lib/http/request_reader.hpp
+        lib/http/request/request_reader.cpp
+        lib/http/request/request_reader.hpp
         lib/core/server_state.cpp
         lib/core/server_state.hpp
 )

@@ -1,7 +1,7 @@
 #ifndef SRC_LIB_HTTP_REQUEST_HPP
 #define SRC_LIB_HTTP_REQUEST_HPP
 
-#include "method.hpp"
+#include "http/method.hpp"
 #include "utils/types/option.hpp"
 #include <map>
 

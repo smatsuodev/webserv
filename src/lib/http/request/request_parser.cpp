@@ -1,5 +1,4 @@
 #include "request_parser.hpp"
-#include "method.hpp"
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
 
