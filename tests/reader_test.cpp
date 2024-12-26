@@ -1,65 +1,10 @@
 #include "utils/io/reader.hpp"
 #include "utils/types/result.hpp"
+#include "./utils/reader.hpp"
 #include <fakeit.hpp>
 #include <gtest/gtest.h>
 
 using namespace fakeit;
-
-class StringReader : public io::IReader {
-public:
-    explicit StringReader(const std::string &data) : data_(data), pos_(0) {}
-
-    ReadResult read(char *buf, const std::size_t nbyte) override {
-        const std::size_t bytesToRead = std::min(nbyte, data_.size() - pos_);
-        std::memcpy(buf, data_.c_str() + pos_, bytesToRead);
-        pos_ += bytesToRead;
-        return Ok(bytesToRead);
-    }
-
-    bool eof() override {
-        return pos_ == data_.size();
-    }
-
-private:
-    std::string data_;
-    std::size_t pos_;
-};
-
-class BrokenReader : public io::IReader {
-public:
-    BrokenReader() = default;
-
-    ReadResult read(char *, std::size_t) override {
-        return Err(error::kUnknown);
-    }
-
-    bool eof() override {
-        return false;
-    }
-};
-
-class WouldBlockReader : public io::IReader {
-public:
-    // n 回目に error::kIOWouldBlock を返す
-    WouldBlockReader(io::IReader &reader, const int n) : reader_(reader), n_(n), counter_(0) {}
-
-    ReadResult read(char *buf, const std::size_t nbyte) {
-        if (++counter_ == n_) {
-            errno = EAGAIN;
-            return Err(error::kIOWouldBlock);
-        }
-        return reader_.read(buf, nbyte);
-    }
-
-    bool eof() {
-        return reader_.eof();
-    }
-
-private:
-    io::IReader &reader_;
-    int n_;
-    int counter_;
-};
 
 // bufio::Reader::read が正常にデータを読み取るか確認
 TEST(ReaderTest, ReadSuccess) {

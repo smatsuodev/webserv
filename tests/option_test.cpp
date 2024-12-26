@@ -142,3 +142,28 @@ TEST(OptionTest, tryOrNone) {
     const auto res = plusOneOr(op, 0);
     EXPECT_EQ(res, 0);
 }
+
+TEST(OptionTest, assignSome2Some) {
+    Option<int> op = Some(1);
+    op = Some(1);
+    EXPECT_EQ(op.unwrap(), 1);
+}
+
+// メモリリークが起きたことがある
+TEST(OptionTest, assignSome2None) {
+    Option<int> op = Some(1);
+    op = None;
+    EXPECT_EQ(op, None);
+}
+
+TEST(OptionTest, assignNone2None) {
+    Option<int> op = None;
+    op = None;
+    EXPECT_EQ(op, None);
+}
+
+TEST(OptionTest, assignNone2Some) {
+    Option<int> op = None;
+    op = Some(1);
+    EXPECT_EQ(op.unwrap(), 1);
+}

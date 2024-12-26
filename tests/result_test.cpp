@@ -228,3 +228,29 @@ TEST(ResultTest, tryVoidOk) {
 TEST(ResultTest, tryVoidErr) {
     EXPECT_TRUE(doNothingIf(Err(1)).isErr());
 }
+
+TEST(ResultTest, assignOk2Ok) {
+    Result<int, int> r = Ok(1);
+    r = Ok(1);
+    EXPECT_EQ(r.unwrap(), 1);
+}
+
+// メモリリークが起きたことがある
+TEST(ResultTest, assignOk2Err) {
+    Result<int, int> r = Ok(1);
+    r = Err(1);
+    EXPECT_EQ(r.unwrapErr(), 1);
+}
+
+TEST(ResultTest, assignErr2Err) {
+    Result<int, int> r = Err(1);
+    r = Err(1);
+    EXPECT_EQ(r.unwrapErr(), 1);
+}
+
+// メモリリークが起きたことがある
+TEST(ResultTest, assignErr2Ok) {
+    Result<int, int> r = Err(1);
+    r = Ok(1);
+    EXPECT_EQ(r.unwrap(), 1);
+}

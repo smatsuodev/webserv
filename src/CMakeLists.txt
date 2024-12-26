@@ -40,6 +40,18 @@ add_library(webserv_lib STATIC
         lib/core/handler/echo_handler.hpp
         lib/core/action.cpp
         lib/core/action.hpp
+        lib/http/method.cpp
+        lib/http/method.hpp
+        lib/http/status.cpp
+        lib/http/status.hpp
+        lib/http/request.cpp
+        lib/http/request.hpp
+        lib/http/request_parser.cpp
+        lib/http/request_parser.hpp
+        lib/core/handler/read_request_handler.cpp
+        lib/core/handler/read_request_handler.hpp
+        lib/http/request_reader.cpp
+        lib/http/request_reader.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

@@ -21,6 +21,10 @@ namespace error {
         // Validation
         kValidationUnknown,
         kValidationInvalidArgs,
+
+        // Parse
+        // 出し分けてもあんまり意味はないので、分類してない
+        kParseUnknown,
     };
 }
 

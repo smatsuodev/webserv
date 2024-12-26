@@ -5,7 +5,11 @@
 
 class EchoHandler : public IEventHandler {
 public:
+    explicit EchoHandler(const std::string &content);
     InvokeResult invoke(const Context &ctx);
+
+private:
+    std::string content_;
 };
 
 #endif

@@ -56,7 +56,7 @@ void Server::start(const unsigned short port) {
                 // kIOWouldBlock 以外のエラーはコネクションを閉じる
                 if (ev.getFd() != lsn.getFd()) {
                     notifier_.unregisterEvent(ev);
-                    this->unregisterEventHandler(ev.getFd(), handler);
+                    this->unregisterEventHandler(ev.getFd());
                     if (connection.isSome()) {
                         this->removeConnection(connection.unwrap());
                     }
@@ -98,9 +98,14 @@ void Server::registerEventHandler(const int targetFd, IEventHandler *handler) {
     LOG_DEBUGF("event handler added to fd %d", targetFd);
 }
 
-void Server::unregisterEventHandler(const int targetFd, const IEventHandler *handler) {
+void Server::unregisterEventHandler(const int targetFd) {
+    const Option<IEventHandler *> h = this->findEventHandler(targetFd);
+    if (h.isNone()) {
+        LOG_DEBUG("unregisterEventHandler: handler not found");
+        return;
+    }
+    delete h.unwrap();
     eventHandlers_.erase(targetFd);
-    delete handler;
     LOG_DEBUGF("event handler removed from fd %d", targetFd);
 }
 
@@ -116,7 +121,7 @@ Option<Connection *> Server::findConnection(const int fd) const {
     return Some(it->second);
 }
 
-Option<IEventHandler *> Server::findEventHandler(int fd) {
+Option<IEventHandler *> Server::findEventHandler(const int fd) {
     const std::map<int, IEventHandler *>::const_iterator it = eventHandlers_.find(fd);
     if (it == eventHandlers_.end()) {
         return None;
