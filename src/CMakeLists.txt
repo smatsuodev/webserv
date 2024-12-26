@@ -54,6 +54,9 @@ add_library(webserv_lib STATIC
         lib/http/request/request_reader.hpp
         lib/core/server_state.cpp
         lib/core/server_state.hpp
+        lib/http/header.hpp
+        lib/http/response/response.cpp
+        lib/http/response/response.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
