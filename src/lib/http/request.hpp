@@ -13,6 +13,8 @@ namespace http {
                          const std::string &httpVersion = "HTTP/1.1",
                          const Headers &headers = std::map<std::string, std::string>(), const std::string &body = "");
 
+        bool operator==(const Request &other) const;
+
         HttpMethod getMethod() const;
         const std::string &getRequestTarget() const;
         const std::string &getHttpVersion() const;

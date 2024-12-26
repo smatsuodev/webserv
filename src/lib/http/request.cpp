@@ -4,6 +4,11 @@ http::Request::Request(const HttpMethod method, const std::string &requestTarget
                        const Headers &headers, const std::string &body)
     : method_(method), requestTarget_(requestTarget), httpVersion_(httpVersion), headers_(headers), body_(body) {}
 
+bool http::Request::operator==(const Request &other) const {
+    return method_ == other.method_ && requestTarget_ == other.requestTarget_ && httpVersion_ == other.httpVersion_ &&
+        headers_ == other.headers_ && body_ == other.body_;
+}
+
 http::HttpMethod http::Request::getMethod() const {
     return method_;
 }
