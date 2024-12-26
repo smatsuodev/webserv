@@ -31,7 +31,7 @@ namespace http {
         static bool isValidFieldName(const std::string &fieldName);
         static bool isValidFieldValue(const std::string &fieldValue);
         static bool isValidHttpVersion(const std::string &httpVersion);
-};
+    };
 }
 
 #endif

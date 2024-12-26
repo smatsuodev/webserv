@@ -148,11 +148,11 @@ namespace http {
     bool RequestParser::isValidHttpVersion(const std::string &httpVersion) {
         // HTTP/1.1 の形式, 8文字
         if (!(httpVersion.size() == 8 && utils::startsWith(httpVersion, "HTTP/"))) {
-        return false;
+            return false;
+        }
+        // バージョンをチェック
+        const char major = httpVersion[5];
+        const char minor = httpVersion[7];
+        return httpVersion[6] == '.' && std::isdigit(major) && std::isdigit(minor);
     }
-    // バージョンをチェック
-    const char major = httpVersion[5];
-    const char minor = httpVersion[7];
-    return httpVersion[6] == '.' && std::isdigit(major) && std::isdigit(minor);
-}
 }
