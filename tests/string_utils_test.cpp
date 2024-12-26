@@ -50,3 +50,69 @@ TEST(EndsWith, suffixLongerThanStr) {
     EXPECT_FALSE(utils::endsWith("a", "ab"));
     EXPECT_FALSE(utils::endsWith("abc", "abcdef"));
 }
+
+TEST(StoulErr, emptyStr) {
+    const auto result = utils::stoul("");
+    EXPECT_TRUE(result.isErr());
+}
+
+TEST(StoulErr, nonDigit) {
+    const auto result = utils::stoul("a");
+    EXPECT_TRUE(result.isErr());
+}
+
+TEST(StoulErr, leadingSpace) {
+    const auto result = utils::stoul(" 123");
+    EXPECT_TRUE(result.isErr());
+}
+
+TEST(StoulErr, trailingSpace) {
+    const auto result = utils::stoul("123 ");
+    EXPECT_TRUE(result.isErr());
+}
+
+TEST(StoulErr, leadingAndTrailingSpace) {
+    const auto result = utils::stoul(" 123 ");
+    EXPECT_TRUE(result.isErr());
+}
+
+TEST(StoulErr, leadingMinus) {
+    const auto result = utils::stoul("-123");
+    EXPECT_TRUE(result.isErr());
+}
+
+TEST(StoulErr, leadingPlus) {
+    const auto result = utils::stoul("+123");
+    EXPECT_TRUE(result.isErr());
+}
+
+TEST(StoulErr, overflow) {
+    constexpr auto ulMax = std::numeric_limits<unsigned long>::max();
+    const auto result = utils::stoul(std::to_string(ulMax) + "0");
+    EXPECT_TRUE(result.isErr());
+}
+
+TEST(StoulOk, zero) {
+    const auto result = utils::stoul("0");
+    EXPECT_TRUE(result.isOk());
+    EXPECT_EQ(0, result.unwrap());
+}
+
+TEST(StoulOk, one) {
+    const auto result = utils::stoul("1");
+    EXPECT_TRUE(result.isOk());
+    EXPECT_EQ(1, result.unwrap());
+}
+
+TEST(StoulOk, normal) {
+    const auto result = utils::stoul("123");
+    EXPECT_TRUE(result.isOk());
+    EXPECT_EQ(123, result.unwrap());
+}
+
+TEST(StoulOk, max) {
+    constexpr auto ulMax = std::numeric_limits<unsigned long>::max();
+    const auto result = utils::stoul(std::to_string(ulMax));
+    EXPECT_TRUE(result.isOk());
+    EXPECT_EQ(ulMax, result.unwrap());
+}
