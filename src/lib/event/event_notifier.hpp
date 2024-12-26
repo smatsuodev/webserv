@@ -18,11 +18,18 @@ public:
     void registerEvent(const Event &event) const;
     void unregisterEvent(const Event &event) const;
 
+    /**
+     * 擬似的にイベントが起きたことにして、waitEvents から返されるようにする
+     * 順番は保証しない
+     */
+    void triggerPseudoEvent(const Event &event);
+
     typedef Result<std::vector<Event>, error::AppError> WaitEventsResult;
-    WaitEventsResult waitEvents() const;
+    WaitEventsResult waitEvents();
 
 private:
     AutoFd epollFd_;
+    std::vector<Event> pseudoEvents_;
 };
 
 #endif

@@ -39,7 +39,11 @@ void EventNotifier::unregisterEvent(const Event &event) const {
     LOG_DEBUGF("fd %d removed from epoll", targetFd);
 }
 
-EventNotifier::WaitEventsResult EventNotifier::waitEvents() const {
+void EventNotifier::triggerPseudoEvent(const Event &event) {
+    pseudoEvents_.push_back(event);
+}
+
+EventNotifier::WaitEventsResult EventNotifier::waitEvents() {
     epoll_event evs[1024];
     const int numEvents = epoll_wait(epollFd_.get(), evs, 1024, -1);
     if (numEvents == -1) {
@@ -50,6 +54,11 @@ EventNotifier::WaitEventsResult EventNotifier::waitEvents() const {
     std::vector<Event> events(numEvents);
     for (int i = 0; i < numEvents; i++) {
         events[i] = Event(evs[i].data.fd);
+    }
+
+    while (!pseudoEvents_.empty()) {
+        events.push_back(pseudoEvents_.back());
+        pseudoEvents_.pop_back();
     }
 
     return Ok(events);

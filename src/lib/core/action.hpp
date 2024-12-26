@@ -63,4 +63,14 @@ private:
     bool executed_;
 };
 
+class TriggerPseudoEventAction : public IAction {
+public:
+    explicit TriggerPseudoEventAction(const Event &event);
+    void execute(ServerState &state);
+
+private:
+    Event event_;
+    bool executed_;
+};
+
 #endif
