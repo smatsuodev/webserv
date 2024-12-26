@@ -21,8 +21,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fakeit)
 
+# テスト用の utility
+add_library(test_utils STATIC
+        utils/reader.cpp
+        utils/reader.hpp
+)
+target_link_libraries(test_utils PUBLIC webserv_lib)
+
 # テストの実行ファイルにリンクするライブラリ
-link_libraries(webserv_lib gtest_main FakeIt::FakeIt-gtest)
+link_libraries(webserv_lib gtest_main FakeIt::FakeIt-gtest test_utils)
 
 # Tests
 add_executable(reader_test reader_test.cpp)
