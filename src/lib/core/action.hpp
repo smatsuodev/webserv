@@ -3,13 +3,6 @@
 
 #include "server.hpp"
 
-// IEventHandler が返す Command オブジェクト
-class IAction {
-public:
-    virtual ~IAction();
-    virtual void execute(Server &server) = 0;
-};
-
 class AddConnectionAction : public IAction {
 public:
     explicit AddConnectionAction(Connection *conn);
