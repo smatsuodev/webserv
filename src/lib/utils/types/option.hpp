@@ -102,6 +102,7 @@ public:
                     some_ = new types::Some<T>(*other.some_);
                 }
             } else {
+                delete some_;
                 some_ = NULL;
             }
         }

@@ -148,6 +148,7 @@ public:
                 } else {
                     *ok_ = *other.ok_;
                 }
+                delete err_;
                 err_ = NULL;
             } else if (other.isErr()) {
                 if (err_ == NULL) {
@@ -155,6 +156,7 @@ public:
                 } else {
                     *err_ = *other.err_;
                 }
+                delete ok_;
                 ok_ = NULL;
             }
         }
