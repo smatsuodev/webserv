@@ -5,12 +5,12 @@
 #include "utils/types/result.hpp"
 #include "utils/types/option.hpp"
 #include "event.hpp"
+#include "transport/connection.hpp"
 
 #include <vector>
 
-class IAction;
 class Server;
-class Connection;
+class ServerState;
 
 // イベントハンドラーに呼び出された文脈を提供する
 // Connection がコピー禁止なので、Context もコピー禁止
@@ -28,6 +28,14 @@ private:
     Event event_;
 };
 
+// IEventHandler が返す Command オブジェクト
+class IAction {
+public:
+    virtual ~IAction();
+    virtual void execute(ServerState &state) = 0;
+};
+
+// IEventHandler は Context を受けとり、IAction を返す
 class IEventHandler {
 public:
     virtual ~IEventHandler();

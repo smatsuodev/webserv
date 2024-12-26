@@ -1,5 +1,4 @@
 #include "event_handler.hpp"
-#include "utils/types/try.hpp"
 
 Context::Context(const Option<Connection *> &conn, const Event &event) : conn_(conn), event_(event) {}
 
