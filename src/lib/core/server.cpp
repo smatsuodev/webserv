@@ -6,7 +6,7 @@
 #include "utils/logger.hpp"
 #include <map>
 
-Server::Server() {}
+Server::Server(const std::string &ip, const unsigned short port) : ip_(ip), port_(port), listener_(ip, port) {}
 
 Server::~Server() {
     for (std::map<int, Connection *>::iterator it = connections_.begin(); it != connections_.end(); ++it) {
@@ -17,12 +17,11 @@ Server::~Server() {
     }
 }
 
-void Server::start(const unsigned short port) {
-    Listener lsn("0.0.0.0", port);
-    notifier_.registerEvent(Event(lsn.getFd()));
-    this->registerEventHandler(lsn.getFd(), new AcceptHandler(lsn));
+void Server::start() {
+    notifier_.registerEvent(Event(listener_.getFd()));
+    this->registerEventHandler(listener_.getFd(), new AcceptHandler(listener_));
 
-    LOG_INFOF("server started on port %u", port);
+    LOG_INFOF("server started on port %s:%u", ip_.c_str(), port_);
 
     while (true) {
         const EventNotifier::WaitEventsResult waitResult = notifier_.waitEvents();
@@ -36,40 +35,20 @@ void Server::start(const unsigned short port) {
             const Event &ev = events[i];
             LOG_DEBUGF("event arrived for fd %d", ev.getFd());
 
-            Option<IEventHandler *> maybeHandler = this->findEventHandler(ev.getFd());
-            if (maybeHandler.isNone()) {
+            Option<IEventHandler *> handler = this->findEventHandler(ev.getFd());
+            if (handler.isNone()) {
                 LOG_DEBUGF("event handler for fd %d is not registered", ev.getFd());
                 continue;
             }
-            IEventHandler *handler = maybeHandler.unwrap();
-            Option<Connection *> connection = this->findConnection(ev.getFd());
-            Context ctx(connection, ev);
+            Context ctx(this->findConnection(ev.getFd()), ev);
 
-            const IEventHandler::InvokeResult result = handler->invoke(ctx);
+            const IEventHandler::InvokeResult result = handler.unwrap()->invoke(ctx);
             if (result.isErr()) {
-                const error::AppError err = result.unwrapErr();
-                if (err == error::kIOWouldBlock) {
-                    continue;
-                }
-
-                LOG_WARNF("handler error");
-                // kIOWouldBlock 以外のエラーはコネクションを閉じる
-                if (ev.getFd() != lsn.getFd()) {
-                    notifier_.unregisterEvent(ev);
-                    this->unregisterEventHandler(ev.getFd());
-                    if (connection.isSome()) {
-                        this->removeConnection(connection.unwrap());
-                    }
-                }
+                this->onHandlerError(ctx, result.unwrapErr());
                 continue;
             }
 
-            const std::vector<IAction *> actions = result.unwrap();
-            for (std::vector<IAction *>::const_iterator it = actions.begin(); it != actions.end(); ++it) {
-                IAction *action = *it;
-                action->execute(*this);
-                delete action;
-            }
+            this->executeActions(result.unwrap());
         }
     }
 }
@@ -111,6 +90,35 @@ void Server::unregisterEventHandler(const int targetFd) {
 
 EventNotifier &Server::getEventNotifier() {
     return notifier_;
+}
+
+void Server::onHandlerError(const Context &ctx, const error::AppError err) {
+    // kIOWouldBlock はリトライするので無視
+    if (err == error::kIOWouldBlock) {
+        return;
+    }
+
+    LOG_WARNF("handler error");
+
+    const Event &ev = ctx.getEvent();
+    const Option<Connection *> conn = ctx.getConnection();
+
+    // kIOWouldBlock 以外のエラーはコネクションを閉じる
+    if (ev.getFd() != listener_.getFd()) {
+        notifier_.unregisterEvent(ev);
+        this->unregisterEventHandler(ev.getFd());
+        if (conn.isSome()) {
+            this->removeConnection(conn.unwrap());
+        }
+    }
+}
+
+void Server::executeActions(std::vector<IAction *> actions) {
+    for (std::vector<IAction *>::const_iterator it = actions.begin(); it != actions.end(); ++it) {
+        IAction *action = *it;
+        action->execute(*this);
+        delete action;
+    }
 }
 
 Option<Connection *> Server::findConnection(const int fd) const {
