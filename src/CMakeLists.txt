@@ -48,6 +48,8 @@ add_library(webserv_lib STATIC
         lib/http/request.hpp
         lib/http/request_parser.cpp
         lib/http/request_parser.hpp
+        lib/core/handler/read_request_handler.cpp
+        lib/core/handler/read_request_handler.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
