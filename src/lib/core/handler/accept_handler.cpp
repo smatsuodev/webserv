@@ -1,5 +1,6 @@
 #include "accept_handler.hpp"
 #include "echo_handler.hpp"
+#include "read_request_handler.hpp"
 #include "core/action.hpp"
 #include "core/server.hpp"
 #include "utils/logger.hpp"
@@ -22,7 +23,7 @@ IEventHandler::InvokeResult AcceptHandler::invoke(const Context &) {
     std::vector<IAction *> actions;
     actions.push_back(new RegisterEventAction(eventToRegister));
     actions.push_back(new AddConnectionAction(newConnection));
-    actions.push_back(new RegisterEventHandlerAction(newConnection, new EchoHandler()));
+    actions.push_back(new RegisterEventHandlerAction(newConnection, new ReadRequestHandler()));
 
     return Ok(actions);
 }

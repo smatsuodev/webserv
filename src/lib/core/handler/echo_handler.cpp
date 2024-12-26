@@ -6,6 +6,8 @@
 #include "utils/types/try.hpp"
 #include <sys/socket.h>
 
+EchoHandler::EchoHandler(const std::string &content) : content_(content) {}
+
 EchoHandler::InvokeResult EchoHandler::invoke(const Context &ctx) {
     LOG_DEBUGF("start EchoHandler::invoke");
 
@@ -15,34 +17,14 @@ EchoHandler::InvokeResult EchoHandler::invoke(const Context &ctx) {
     }
     Connection *conn = ctx.getConnection().unwrap();
 
-    std::string content;
-    Option<error::AppError> err = None;
-    while (true) {
-        char buffer[1024];
-        const io::IReader::ReadResult result = conn->getReader().read(buffer, sizeof(buffer));
-        if (result.isErr()) {
-            err = Some(result.unwrapErr());
-            break;
-        }
-        const size_t bytesRead = result.unwrap();
-        if (bytesRead == 0) {
-            break;
-        }
-        content.append(buffer, bytesRead);
-    }
+    const std::string response =
+        utils::format("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %zu\r\n\r\n%s", content_.size(),
+                      content_.c_str());
 
     // TODO: send がブロックした場合のエラーハンドリング
-    // err があっても、途中まで読み込んだものは書き込む
-    if (!content.empty() && send(conn->getFd(), content.c_str(), content.size(), 0) == -1) {
+    if (send(conn->getFd(), response.c_str(), response.size(), 0) == -1) {
         LOG_WARN("failed to send response");
         return Err(error::kUnknown);
-    }
-
-    if (err.isSome()) {
-        if (err.unwrap() == error::kIOWouldBlock) {
-            LOG_DEBUGF("read would block");
-        }
-        return Err(err.unwrap());
     }
 
     LOG_DEBUG("response sent");
