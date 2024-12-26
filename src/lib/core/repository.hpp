@@ -13,9 +13,6 @@ public:
     ConnectionRepository();
     ~ConnectionRepository();
 
-    friend class AddConnectionAction;
-    friend class RemoveConnectionAction;
-
     // NOTE: 参照を返すべきか?
     Option<Connection *> get(int fd);
     /**
@@ -33,9 +30,6 @@ class EventHandlerRepository : public NonCopyable {
 public:
     EventHandlerRepository();
     ~EventHandlerRepository();
-
-    friend class RegisterEventHandlerAction;
-    friend class UnRegisterEventHandlerAction;
 
     Option<IEventHandler *> get(int fd);
     void set(int fd, IEventHandler *handler);

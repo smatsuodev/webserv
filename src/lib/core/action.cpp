@@ -1,12 +1,14 @@
 #include "action.hpp"
 
+#include "server.hpp"
+
 IAction::~IAction() {}
 
 AddConnectionAction::AddConnectionAction(Connection *conn) : conn_(conn) {}
 
-void AddConnectionAction::execute(Server &server) {
+void AddConnectionAction::execute(ServerState &state) {
     if (conn_) {
-        server.connRepo_.set(conn_->getFd(), conn_);
+        state.getConnectionRepository().set(conn_->getFd(), conn_);
         // 2回以上実行できないようにする
         conn_ = NULL;
     }
@@ -14,47 +16,47 @@ void AddConnectionAction::execute(Server &server) {
 
 RemoveConnectionAction::RemoveConnectionAction(Connection *conn) : conn_(conn) {}
 
-void RemoveConnectionAction::execute(Server &server) {
+void RemoveConnectionAction::execute(ServerState &state) {
     if (conn_) {
-        server.connRepo_.remove(conn_->getFd());
+        state.getConnectionRepository().remove(conn_->getFd());
         conn_ = NULL;
-    }
-}
-
-UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection *conn, IEventHandler *handler)
-    : conn_(conn), handler_(handler), executed_(false) {}
-
-void UnregisterEventHandlerAction::execute(Server &server) {
-    if (!executed_) {
-        server.handlerRepo_.remove(conn_->getFd());
-        executed_ = true;
-    }
-}
-
-RegisterEventAction::RegisterEventAction(const Event &event) : event_(event), executed_(false) {}
-
-void RegisterEventAction::execute(Server &server) {
-    if (!executed_) {
-        server.notifier_.registerEvent(event_);
-        executed_ = true;
-    }
-}
-
-UnregisterEventAction::UnregisterEventAction(const Event &event) : event_(event), executed_(false) {}
-
-void UnregisterEventAction::execute(Server &server) {
-    if (!executed_) {
-        server.notifier_.unregisterEvent(event_);
-        executed_ = true;
     }
 }
 
 RegisterEventHandlerAction::RegisterEventHandlerAction(Connection *conn, IEventHandler *handler)
     : conn_(conn), handler_(handler), executed_(false) {}
 
-void RegisterEventHandlerAction::execute(Server &server) {
+void RegisterEventHandlerAction::execute(ServerState &state) {
     if (!executed_) {
-        server.handlerRepo_.set(conn_->getFd(), handler_);
+        state.getEventHandlerRepository().set(conn_->getFd(), handler_);
+        executed_ = true;
+    }
+}
+
+UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection *conn, IEventHandler *handler)
+    : conn_(conn), handler_(handler), executed_(false) {}
+
+void UnregisterEventHandlerAction::execute(ServerState &state) {
+    if (!executed_) {
+        state.getEventHandlerRepository().remove(conn_->getFd());
+        executed_ = true;
+    }
+}
+
+RegisterEventAction::RegisterEventAction(const Event &event) : event_(event), executed_(false) {}
+
+void RegisterEventAction::execute(ServerState &state) {
+    if (!executed_) {
+        state.getEventNotifier().registerEvent(event_);
+        executed_ = true;
+    }
+}
+
+UnregisterEventAction::UnregisterEventAction(const Event &event) : event_(event), executed_(false) {}
+
+void UnregisterEventAction::execute(ServerState &state) {
+    if (!executed_) {
+        state.getEventNotifier().unregisterEvent(event_);
         executed_ = true;
     }
 }

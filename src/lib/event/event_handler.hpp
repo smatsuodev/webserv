@@ -10,6 +10,7 @@
 #include <vector>
 
 class Server;
+class ServerState;
 
 // イベントハンドラーに呼び出された文脈を提供する
 // Connection がコピー禁止なので、Context もコピー禁止
@@ -31,7 +32,7 @@ private:
 class IAction {
 public:
     virtual ~IAction();
-    virtual void execute(Server &server) = 0;
+    virtual void execute(ServerState &state) = 0;
 };
 
 // IEventHandler は Context を受けとり、IAction を返す
