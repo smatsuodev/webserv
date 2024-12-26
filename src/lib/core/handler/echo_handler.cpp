@@ -1,15 +1,13 @@
 #include "echo_handler.hpp"
 #include "core/action.hpp"
-#include "transport/connection.hpp"
 #include "utils/logger.hpp"
-#include "utils/io/reader.hpp"
 #include "utils/types/try.hpp"
 #include <sys/socket.h>
 
 EchoHandler::EchoHandler(const std::string &content) : content_(content) {}
 
 EchoHandler::InvokeResult EchoHandler::invoke(const Context &ctx) {
-    LOG_DEBUGF("start EchoHandler::invoke");
+    LOG_DEBUGF("start EchoHandler");
 
     if (ctx.getConnection().isNone()) {
         LOG_INFO("no connection");
