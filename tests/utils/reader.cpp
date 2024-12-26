@@ -35,3 +35,19 @@ WouldBlockReader::ReadResult WouldBlockReader::read(char *buf, const std::size_t
 bool WouldBlockReader::eof() {
     return reader_.eof();
 }
+
+WouldBlockReader2::WouldBlockReader2(IReader &reader) : reader_(reader) {}
+
+io::IReader::ReadResult WouldBlockReader2::read(char *buf, const std::size_t nbyte) {
+    static bool flag = false;
+    flag = !flag;
+    if (flag) {
+        errno = EAGAIN;
+        return Err(error::kIOWouldBlock);
+    }
+    return reader_.read(buf, nbyte);
+}
+
+bool WouldBlockReader2::eof() {
+    return reader_.eof();
+}

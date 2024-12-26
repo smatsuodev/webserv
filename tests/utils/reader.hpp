@@ -14,22 +14,35 @@ private:
     std::size_t pos_;
 };
 
+// 常にエラーを返す
 class BrokenReader : public io::IReader {
 public:
     ReadResult read(char *, std::size_t) override;
     bool eof() override;
 };
 
+// n 回目に kWouldBlock を返す
 class WouldBlockReader : public io::IReader {
 public:
     WouldBlockReader(IReader &reader, int n);
     ReadResult read(char *buf, std::size_t nbyte);
-    bool eof();
+    bool eof() override;
 
 private:
     IReader &reader_;
     int n_;
     int counter_;
+};
+
+// 交互に kWouldBlock を返す
+class WouldBlockReader2 : public io::IReader {
+public:
+    explicit WouldBlockReader2(IReader &reader);
+    ReadResult read(char *buf, std::size_t nbyte) override;
+    bool eof() override;
+
+private:
+    IReader &reader_;
 };
 
 #endif
