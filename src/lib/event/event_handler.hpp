@@ -48,6 +48,8 @@ public:
     /**
      * Connection の管理は Server の責務
      * Server に実行してほしい処理を IAction オブジェクトとして返す (Command パターン)
+     *
+     * Server は順番通り実行すること
      */
     typedef Result<std::vector<IAction *>, error::AppError> InvokeResult;
     virtual InvokeResult invoke(const Context &ctx) = 0;
