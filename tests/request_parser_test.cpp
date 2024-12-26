@@ -5,148 +5,176 @@
 
 using namespace http;
 
-TEST(ParseHeaderFieldLineErr, empty) {
+class ParseHeaderFieldLineErr : public testing::Test {
+protected:
+    void SetUp() override {
+        SET_LOG_LEVEL(Logger::kError);
+    }
+};
+
+TEST_F(ParseHeaderFieldLineErr, empty) {
     const auto result = RequestParser::parseHeaderFieldLine("");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseHeaderFieldLineErr, noColon) {
+TEST_F(ParseHeaderFieldLineErr, noColon) {
     const auto result = RequestParser::parseHeaderFieldLine("Host");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseHeaderFieldLineErr, emptyFieldName) {
+TEST_F(ParseHeaderFieldLineErr, emptyFieldName) {
     const auto result = RequestParser::parseHeaderFieldLine(": value");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseHeaderFieldLineErr, spaceBeforeFieldName) {
+TEST_F(ParseHeaderFieldLineErr, spaceBeforeFieldName) {
     const auto result = RequestParser::parseHeaderFieldLine(" Host: value");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseHeaderFieldLineErr, fieldNameContainsSpace) {
+TEST_F(ParseHeaderFieldLineErr, fieldNameContainsSpace) {
     const auto result = RequestParser::parseHeaderFieldLine("Field Name: value");
     EXPECT_TRUE(result.isErr());
 }
 
 // RFC 9112: No whitespace is allowed between the field name and colon
-TEST(ParseHeaderFieldLineErr, spaceBeforeColon) {
+TEST_F(ParseHeaderFieldLineErr, spaceBeforeColon) {
     const auto result = RequestParser::parseHeaderFieldLine("Host : value");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseHeaderFieldLineOk, normal) {
+class ParseHeaderFieldLineOk : public testing::Test {
+protected:
+    void SetUp() override {
+        SET_LOG_LEVEL(Logger::kError);
+    }
+};
+
+TEST_F(ParseHeaderFieldLineOk, normal) {
     const auto result = RequestParser::parseHeaderFieldLine("Host: example.com");
     EXPECT_TRUE(result.isOk());
     EXPECT_EQ(result.unwrap().first, "Host");
     EXPECT_EQ(result.unwrap().second, "example.com");
 }
 
-TEST(ParseHeaderFieldLineOk, noSpaceAfterColon) {
+TEST_F(ParseHeaderFieldLineOk, noSpaceAfterColon) {
     const auto result = RequestParser::parseHeaderFieldLine("Host:example.com");
     EXPECT_TRUE(result.isOk());
     EXPECT_EQ(result.unwrap().first, "Host");
     EXPECT_EQ(result.unwrap().second, "example.com");
 }
 
-TEST(ParseHeaderFieldLineOk, spacesAroundValue) {
+TEST_F(ParseHeaderFieldLineOk, spacesAroundValue) {
     const auto result = RequestParser::parseHeaderFieldLine("Host:   example.com   ");
     EXPECT_TRUE(result.isOk());
     EXPECT_EQ(result.unwrap().first, "Host");
     EXPECT_EQ(result.unwrap().second, "example.com");
 }
 
-TEST(ParseHeaderFieldLineOk, tabAroundValue) {
+TEST_F(ParseHeaderFieldLineOk, tabAroundValue) {
     const auto result = RequestParser::parseHeaderFieldLine("Host:\texample.com\t");
     EXPECT_TRUE(result.isOk());
     EXPECT_EQ(result.unwrap().first, "Host");
     EXPECT_EQ(result.unwrap().second, "example.com");
 }
 
-TEST(ParseHeaderFieldLineOk, spaceInValue) {
+TEST_F(ParseHeaderFieldLineOk, spaceInValue) {
     const auto result = RequestParser::parseHeaderFieldLine("User-Agent: A browser");
     EXPECT_TRUE(result.isOk());
     EXPECT_EQ(result.unwrap().first, "User-Agent");
     EXPECT_EQ(result.unwrap().second, "A browser");
 }
 
-TEST(ParseRequestRequestLineErr, empty) {
+class ParseRequestRequestLineErr : public testing::Test {
+protected:
+    void SetUp() override {
+        SET_LOG_LEVEL(Logger::kError);
+    }
+};
+
+TEST_F(ParseRequestRequestLineErr, empty) {
     const auto result = RequestParser::parseRequest("", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, noSpace) {
+TEST_F(ParseRequestRequestLineErr, noSpace) {
     const auto result = RequestParser::parseRequest("GET/pathHTTP/1.1", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, noMethod) {
+TEST_F(ParseRequestRequestLineErr, noMethod) {
     const auto result = RequestParser::parseRequest("/path HTTP/1.1", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, noRequestTarget) {
+TEST_F(ParseRequestRequestLineErr, noRequestTarget) {
     const auto result = RequestParser::parseRequest("GET HTTP/1.1", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, noHTTPVersion) {
+TEST_F(ParseRequestRequestLineErr, noHTTPVersion) {
     const auto result = RequestParser::parseRequest("GET /path", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, invalidMethod) {
+TEST_F(ParseRequestRequestLineErr, invalidMethod) {
     const auto result = RequestParser::parseRequest("XXX /path HTTP/1.1", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, invalidHTTPVersion) {
+TEST_F(ParseRequestRequestLineErr, invalidHTTPVersion) {
     const auto result = RequestParser::parseRequest("GET /path XXX/1.0", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, lowerCaseHTTPVersion) {
+TEST_F(ParseRequestRequestLineErr, lowerCaseHTTPVersion) {
     const auto result = RequestParser::parseRequest("GET /path http/1.1", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, noVersionNumber) {
+TEST_F(ParseRequestRequestLineErr, noVersionNumber) {
     const auto result = RequestParser::parseRequest("GET /path HTTP/", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, noVersionNumber2) {
+TEST_F(ParseRequestRequestLineErr, noVersionNumber2) {
     const auto result = RequestParser::parseRequest("GET /path HTTP/.", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, noMajorVersion) {
+TEST_F(ParseRequestRequestLineErr, noMajorVersion) {
     const auto result = RequestParser::parseRequest("GET /path HTTP/.1", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, noMinorVersion) {
+TEST_F(ParseRequestRequestLineErr, noMinorVersion) {
     const auto result = RequestParser::parseRequest("GET /path HTTP/1.", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, nonDigitMajorVersion) {
+TEST_F(ParseRequestRequestLineErr, nonDigitMajorVersion) {
     const auto result = RequestParser::parseRequest("GET /path HTTP/X.1", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, nonDigitMinorVersion) {
+TEST_F(ParseRequestRequestLineErr, nonDigitMinorVersion) {
     const auto result = RequestParser::parseRequest("GET /path HTTP/1.X", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineErr, longVersion) {
+TEST_F(ParseRequestRequestLineErr, longVersion) {
     const auto result = RequestParser::parseRequest("GET /path HTTP/1.1.1", {}, "");
     EXPECT_TRUE(result.isErr());
 }
 
-TEST(ParseRequestRequestLineOk, normal) {
+class ParseRequestRequestLineOk : public testing::Test {
+protected:
+    void SetUp() override {
+        SET_LOG_LEVEL(Logger::kError);
+    }
+};
+
+TEST_F(ParseRequestRequestLineOk, normal) {
     const auto result = RequestParser::parseRequest("GET /path HTTP/1.1", {}, "");
     EXPECT_TRUE(result.isOk());
 
@@ -154,7 +182,14 @@ TEST(ParseRequestRequestLineOk, normal) {
     EXPECT_EQ(result.unwrap(), expected);
 }
 
-TEST(ParseRequestOk, normal) {
+class ParseRequestOk : public testing::Test {
+protected:
+    void SetUp() override {
+        SET_LOG_LEVEL(Logger::kError);
+    }
+};
+
+TEST_F(ParseRequestOk, normal) {
     const auto result = RequestParser::parseRequest("GET /path HTTP/1.1", {"Host: example.com"}, "body");
     EXPECT_TRUE(result.isOk());
 
