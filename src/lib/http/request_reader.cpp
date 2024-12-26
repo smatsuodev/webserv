@@ -20,6 +20,9 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
         LOG_DEBUG("read start-line");
         const Result<std::string, error::AppError> result = this->readLine();
         if (result.isErr()) {
+            if (result.unwrapErr() == error::kIOWouldBlock) {
+                return Err(error::kIOWouldBlock);
+            }
             LOG_DEBUG("start-line does not end with CRLF");
             return Err(error::kParseUnknown);
         }
@@ -32,6 +35,9 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
         while (true) {
             const Result<std::string, error::AppError> readResult = this->readLine();
             if (readResult.isErr()) {
+                if (readResult.unwrapErr() == error::kIOWouldBlock) {
+                    return Err(error::kIOWouldBlock);
+                }
                 LOG_DEBUG("field-line does not end with CRLF");
                 return Err(error::kParseUnknown);
             }
