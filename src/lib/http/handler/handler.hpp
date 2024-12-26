@@ -1,5 +1,5 @@
-#ifndef SRC_LIB_HTTP_HANDLER_REQUEST_HANDLER_HPP
-#define SRC_LIB_HTTP_HANDLER_REQUEST_HANDLER_HPP
+#ifndef SRC_LIB_HTTP_HANDLER__HPP
+#define SRC_LIB_HTTP_HANDLER_HPP
 
 #include "http/request/request.hpp"
 #include "http/response/response.hpp"
@@ -7,9 +7,9 @@
 #include "utils/types/result.hpp"
 
 namespace http {
-    class IRequestHandler {
+    class IHandler {
     public:
-        virtual ~IRequestHandler();
+        virtual ~IHandler();
         virtual Result<Response, error::AppError> serve(Request &req) = 0;
     };
 }
