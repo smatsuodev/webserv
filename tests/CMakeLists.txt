@@ -39,3 +39,6 @@ gtest_discover_tests(http_method_test)
 
 add_executable(http_status_test http_status_test.cpp)
 gtest_discover_tests(http_status_test)
+
+add_executable(string_utils_test string_utils_test.cpp)
+gtest_discover_tests(string_utils_test)

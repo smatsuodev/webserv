@@ -20,3 +20,14 @@ std::string utils::format(const char *fmt, ...) {
 
     return std::string(&buffer[0], size);
 }
+
+bool utils::startsWith(const std::string &str, const std::string &prefix) {
+    return str.find(prefix) == 0;
+}
+
+bool utils::endsWith(const std::string &str, const std::string &suffix) {
+    if (str.size() < suffix.size()) {
+        return false;
+    }
+    return str.rfind(suffix) == (str.size() - suffix.size());
+}
