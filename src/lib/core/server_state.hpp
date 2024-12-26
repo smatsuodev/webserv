@@ -1,9 +1,10 @@
-#ifndef SRC_LIB_CORE_REPOSITORY_HPP
-#define SRC_LIB_CORE_REPOSITORY_HPP
+#ifndef SRC_LIB_CORE_SERVER_STATE_HPP
+#define SRC_LIB_CORE_SERVER_STATE_HPP
 
+#include "event/event_notifier.hpp"
 #include "event/event_handler.hpp"
 #include "transport/connection.hpp"
-#include "utils/non_copyable.hpp"
+#include "utils/types/option.hpp"
 #include <map>
 
 // TODO: 共通化するべき?
@@ -37,6 +38,19 @@ public:
 
 private:
     std::map<int, IEventHandler *> handlers_;
+};
+
+class ServerState {
+public:
+    EventNotifier &getEventNotifier();
+    ConnectionRepository &getConnectionRepository();
+    EventHandlerRepository &getEventHandlerRepository();
+
+private:
+    // EventNotifier はあんまり state っぽくない
+    EventNotifier notifier_;
+    ConnectionRepository connRepo_;
+    EventHandlerRepository handlerRepo_;
 };
 
 #endif

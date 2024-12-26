@@ -72,15 +72,3 @@ void Server::executeActions(std::vector<IAction *> actions) {
         delete action;
     }
 }
-
-EventNotifier &ServerState::getEventNotifier() {
-    return notifier_;
-}
-
-ConnectionRepository &ServerState::getConnectionRepository() {
-    return connRepo_;
-}
-
-EventHandlerRepository &ServerState::getEventHandlerRepository() {
-    return handlerRepo_;
-}

@@ -1,4 +1,4 @@
-#include "repository.hpp"
+#include "server_state.hpp"
 #include "utils/logger.hpp"
 
 ConnectionRepository::ConnectionRepository() {}
@@ -81,4 +81,17 @@ void EventHandlerRepository::remove(const int fd) {
     delete h.unwrap();
 
     LOG_DEBUGF("event handler removed from fd %d", fd);
+}
+
+
+EventNotifier &ServerState::getEventNotifier() {
+    return notifier_;
+}
+
+ConnectionRepository &ServerState::getConnectionRepository() {
+    return connRepo_;
+}
+
+EventHandlerRepository &ServerState::getEventHandlerRepository() {
+    return handlerRepo_;
 }
