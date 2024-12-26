@@ -15,7 +15,7 @@ namespace io {
         virtual bool eof() = 0;
     };
 
-    class FdReader : public IReader {
+    class FdReader : public IReader, NonCopyable {
     public:
         // 所有権を奪わないことを明示するため、AutoFd の参照を受け取る
         explicit FdReader(AutoFd &fd);
@@ -31,7 +31,7 @@ namespace io {
 }
 
 namespace bufio {
-    class Reader : public io::IReader {
+    class Reader : public io::IReader, NonCopyable {
     public:
         explicit Reader(io::IReader &reader, std::size_t bufCapacity = kDefaultBufSize);
         virtual ~Reader();
