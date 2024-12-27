@@ -36,8 +36,6 @@ add_library(webserv_lib STATIC
         lib/event/event_handler.hpp
         lib/core/handler/accept_handler.cpp
         lib/core/handler/accept_handler.hpp
-        lib/core/handler/echo_handler.cpp
-        lib/core/handler/echo_handler.hpp
         lib/core/action.cpp
         lib/core/action.hpp
         lib/http/method.cpp
