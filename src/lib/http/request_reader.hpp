@@ -14,11 +14,19 @@ public:
     ReadRequestResult readRequest();
 
 private:
-    bufio::Reader &reader_;
+    // 読み込みは途中で中断され得るので、どこまで進んだか記録する
+    enum State {
+        kReadingRequestLine,
+        kReadingHeaders,
+        kReadingBody,
+        kDone,
+    };
 
-    Option<std::string> rawRequestLine_;
+    bufio::Reader &reader_;
+    State state_;
+
+    std::string rawRequestLine_;
     std::vector<std::string> headers_;
-    bool headersParsed_;
     Option<size_t> contentLength_;
     char *bodyBuf_;
     size_t bodyBufSize_;
