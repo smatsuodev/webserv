@@ -55,3 +55,6 @@ gtest_discover_tests(request_parser_test)
 
 add_executable(request_reader_test request_reader_test.cpp)
 gtest_discover_tests(request_reader_test)
+
+add_executable(response_test response_test.cpp)
+gtest_discover_tests(response_test)
