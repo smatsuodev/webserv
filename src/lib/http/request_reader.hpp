@@ -33,6 +33,10 @@ private:
     Option<std::string> body_;
 
     Result<std::string, error::AppError> readLine() const;
+
+    Result<void, error::AppError> readRequestLine();
+    Result<void, error::AppError> readHeaders();
+    Result<void, error::AppError> readBody();
 };
 
 #endif
