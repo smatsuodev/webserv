@@ -17,25 +17,31 @@ EventNotifier::EventNotifier() : epollFd_(-1) {
     LOG_DEBUGF("epoll fd created (fd: %d)", epollFd_.get());
 }
 
-void EventNotifier::registerEvent(const Event &event) const {
+void EventNotifier::registerEvent(const Event &event) {
     const int targetFd = event.getFd();
+
     epoll_event eev = {};
-    eev.events = EPOLLIN | EPOLLET;
+    eev.events = EventNotifier::toEpollEvents(event) | EPOLLET;
     eev.data.fd = targetFd;
-    if (epoll_ctl(epollFd_, EPOLL_CTL_ADD, targetFd, &eev) == -1) {
-        LOG_ERRORF("failed to add to epoll fd: %s", std::strerror(errno));
+    const int epollOp = registeredFd_.count(targetFd) == 0 ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
+    if (epoll_ctl(epollFd_, epollOp, targetFd, &eev) == -1) {
+        LOG_WARNF("failed to add to epoll fd: %s", std::strerror(errno));
         return;
     }
 
+    registeredFd_.insert(targetFd);
     LOG_DEBUGF("fd %d added to epoll", targetFd);
 }
 
-void EventNotifier::unregisterEvent(const Event &event) const {
+void EventNotifier::unregisterEvent(const Event &event) {
     const int targetFd = event.getFd();
+
     if (epoll_ctl(epollFd_, EPOLL_CTL_DEL, targetFd, NULL) == -1) {
         LOG_WARNF("failed to remove from epoll fd: %s", std::strerror(errno));
         return;
     }
+
+    registeredFd_.erase(targetFd);
     LOG_DEBUGF("fd %d removed from epoll", targetFd);
 }
 
@@ -55,7 +61,7 @@ EventNotifier::WaitEventsResult EventNotifier::waitEvents() {
 
     std::vector<Event> events(numEvents);
     for (int i = 0; i < numEvents; i++) {
-        events[i] = Event(evs[i].data.fd);
+        events[i] = Event(evs[i].data.fd, EventNotifier::toEventTypeFlags(evs[i].events));
     }
 
     while (!pseudoEvents_.empty()) {
@@ -65,4 +71,27 @@ EventNotifier::WaitEventsResult EventNotifier::waitEvents() {
     }
 
     return Ok(events);
+}
+
+uint32_t EventNotifier::toEventTypeFlags(const uint32_t epollEvents) {
+    uint32_t flags = 0;
+    if (epollEvents & EPOLLIN) {
+        flags |= Event::kRead;
+    }
+    if (epollEvents & EPOLLOUT) {
+        flags |= Event::kWrite;
+    }
+    return flags;
+}
+
+uint32_t EventNotifier::toEpollEvents(const Event &event) {
+    const uint32_t flags = event.getTypeFlags();
+    uint32_t events = 0;
+    if (flags & Event::kRead) {
+        events |= EPOLLIN;
+    }
+    if (flags & Event::kWrite) {
+        events |= EPOLLOUT;
+    }
+    return events;
 }

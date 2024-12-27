@@ -23,6 +23,7 @@ IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     const http::Response res(http::kStatusOk, "HTTP/1.1", headers, req.getBody());
 
     std::vector<IAction *> actions;
+    actions.push_back(new RegisterEventAction(Event(ctx.getEvent().getFd(), Event::kWrite)));
     actions.push_back(new RegisterEventHandlerAction(ctx.getConnection().unwrap(), new WriteResponseHandler(res)));
     /**
      * クライアントはこれ以上イベントを起こさない可能性がある

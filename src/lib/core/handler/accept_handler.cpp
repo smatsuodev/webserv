@@ -18,7 +18,7 @@ IEventHandler::InvokeResult AcceptHandler::invoke(const Context &) {
     }
 
     Connection *newConnection = result.unwrap();
-    const Event eventToRegister = Event(newConnection->getFd());
+    const Event eventToRegister = Event(newConnection->getFd(), Event::kRead);
 
     // caller が処理すべき action を返す
     std::vector<IAction *> actions;

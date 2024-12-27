@@ -5,7 +5,7 @@
 #include "utils/auto_fd.hpp"
 #include "utils/types/error.hpp"
 #include "utils/types/result.hpp"
-
+#include <set>
 #include <vector>
 
 // epoll の抽象
@@ -14,9 +14,8 @@ class EventNotifier {
 public:
     EventNotifier();
 
-    // TODO: read/write のどれが対象か選べるようにする
-    void registerEvent(const Event &event) const;
-    void unregisterEvent(const Event &event) const;
+    void registerEvent(const Event &event);
+    void unregisterEvent(const Event &event);
 
     /**
      * 擬似的にイベントが起きたことにして、waitEvents から返されるようにする
@@ -30,6 +29,10 @@ public:
 private:
     AutoFd epollFd_;
     std::vector<Event> pseudoEvents_;
+    std::set<int> registeredFd_;
+
+    static uint32_t toEpollEvents(const Event &event);
+    static uint32_t toEventTypeFlags(uint32_t epollEvents);
 };
 
 #endif

@@ -11,7 +11,7 @@ Server::Server(const std::string &ip, const unsigned short port) : ip_(ip), port
 Server::~Server() {}
 
 void Server::start() {
-    state_.getEventNotifier().registerEvent(Event(listener_.getFd()));
+    state_.getEventNotifier().registerEvent(Event(listener_.getFd(), Event::kRead));
     state_.getEventHandlerRepository().set(listener_.getFd(), new AcceptHandler(listener_));
 
     LOG_INFOF("server started on port %s:%u", ip_.c_str(), port_);
@@ -26,7 +26,7 @@ void Server::start() {
         const std::vector<Event> events = waitResult.unwrap();
         for (std::size_t i = 0; i < events.size(); i++) {
             const Event &ev = events[i];
-            LOG_DEBUGF("event arrived for fd %d", ev.getFd());
+            LOG_DEBUGF("event arrived for fd %d (flags: %x)", ev.getFd(), ev.getTypeFlags());
 
             Option<IEventHandler *> handler = state_.getEventHandlerRepository().get(ev.getFd());
             if (handler.isNone()) {
