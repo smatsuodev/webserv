@@ -37,8 +37,8 @@ Listener::AcceptConnectionResult Listener::acceptConnection() const {
         return Err<std::string>("failed to set non-blocking fd");
     }
 
-    LOG_DEBUGF("connection established from %s:%u (fd: %d)", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port),
-               fd);
+    LOG_INFOF("connection established from %s:%u (fd: %d)", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port),
+              fd);
 
     return Ok(new Connection(fd));
 }
