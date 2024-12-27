@@ -1,6 +1,14 @@
 #include "utils/string.hpp"
 #include <gtest/gtest.h>
 
+TEST(ToStringTest, IntToString) {
+    constexpr int value = 123;
+    const std::string expected = "123";
+    const std::string actual = utils::toString(value);
+
+    ASSERT_EQ(expected, actual);
+}
+
 TEST(StartsWith, emptyStr) {
     EXPECT_TRUE(utils::startsWith("", ""));
     EXPECT_FALSE(utils::startsWith("", "a"));
@@ -115,4 +123,28 @@ TEST(StoulOk, max) {
     const auto result = utils::stoul(std::to_string(ulMax));
     EXPECT_TRUE(result.isOk());
     EXPECT_EQ(ulMax, result.unwrap());
+}
+
+TEST(Join, empty) {
+    const std::vector<std::string> ss;
+    const auto result = utils::join(ss, " ");
+    EXPECT_EQ(result, "");
+}
+
+TEST(Join, single) {
+    const std::vector<std::string> ss = {"a"};
+    const auto result = utils::join(ss, " ");
+    EXPECT_EQ(result, "a");
+}
+
+TEST(Join, many) {
+    const std::vector<std::string> ss = {"a", "b", "c", "d"};
+    const auto result = utils::join(ss, " | ");
+    EXPECT_EQ(result, "a | b | c | d");
+}
+
+TEST(Join, emptyElements) {
+    const std::vector<std::string> ss = {"", "", ""};
+    const auto result = utils::join(ss, "x");
+    EXPECT_EQ(result, "xx");
 }
