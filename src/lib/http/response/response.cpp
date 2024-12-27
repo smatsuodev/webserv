@@ -1,4 +1,5 @@
 #include "response.hpp"
+#include "utils/string.hpp"
 
 http::Response::Response(const HttpStatusCode status, const std::string &httpVersion, const Headers &headers,
                          const std::string &body)
@@ -23,4 +24,22 @@ const http::Headers &http::Response::getHeaders() const {
 
 const std::string &http::Response::getBody() const {
     return body_;
+}
+
+std::string http::Response::toString() const {
+    std::vector<std::string> lines;
+
+    // status line
+    lines.push_back(utils::format("%s %d %s", httpVersion_, status_, http::getHttpStatusText(status_)));
+
+    // field lines
+    for (Headers::const_iterator it = headers_.begin(); it != headers_.end(); ++it) {
+        lines.push_back(utils::format("%s: %s", it->first, it->second));
+    }
+
+    // message body
+    lines.push_back(body_);
+
+    const std::string responseMessage = utils::join(lines, "\r\n");
+    return responseMessage;
 }

@@ -16,6 +16,8 @@ namespace http {
         const Headers &getHeaders() const;
         const std::string &getBody() const;
 
+        std::string toString() const;
+
     private:
         HttpStatusCode status_;
         std::string httpVersion_;
