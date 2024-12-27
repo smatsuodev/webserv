@@ -10,7 +10,8 @@ public:
     InvokeResult invoke(const Context &ctx);
 
 private:
-    http::Response response_;
+    std::string responseMessage_;
+    size_t totalBytesWritten_;
 };
 
 #endif
