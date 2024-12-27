@@ -1,5 +1,4 @@
 #include "accept_handler.hpp"
-#include "echo_handler.hpp"
 #include "read_request_handler.hpp"
 #include "core/action.hpp"
 #include "core/server.hpp"

@@ -4,9 +4,20 @@
 #include "types/error.hpp"
 #include "types/result.hpp"
 #include <string>
+#include <sstream>
+#include <vector>
 
 namespace utils {
+    template <class T>
+    std::string toString(T value) {
+        std::stringstream ss;
+        ss << value;
+
+        return ss.str();
+    }
+
     std::string format(const char *fmt, ...);
+    std::string join(const std::vector<std::string> &strings, const std::string &delimiter);
     bool startsWith(const std::string &str, const std::string &prefix);
     bool endsWith(const std::string &str, const std::string &suffix);
     // 数字以外を含む場合はエラー (std::stoull とは異なる)

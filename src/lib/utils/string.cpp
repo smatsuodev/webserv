@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstdarg>
 #include <cstdio>
+#include <iterator>
 
 std::string utils::format(const char *fmt, ...) {
     // 必要なバッファサイズを計算
@@ -22,6 +23,15 @@ std::string utils::format(const char *fmt, ...) {
     va_end(args2);
 
     return std::string(&buffer[0], size);
+}
+
+std::string utils::join(const std::vector<std::string> &strings, const std::string &delimiter) {
+    if (strings.empty()) return "";
+
+    std::ostringstream oss;
+    std::copy(strings.begin(), strings.end() - 1, std::ostream_iterator<std::string>(oss, delimiter.c_str()));
+    oss << strings.back();
+    return oss.str();
 }
 
 bool utils::startsWith(const std::string &str, const std::string &prefix) {
