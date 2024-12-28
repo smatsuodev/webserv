@@ -49,8 +49,9 @@ namespace toml {
 
     class Value {
     public:
-        enum ValueType { kString, kInteger, kBoolean, kArray, kTable };
+        enum ValueType { kUnknown, kString, kInteger, kBoolean, kArray, kTable };
 
+        Value();
         explicit Value(ValueType type);
         explicit Value(const std::string &value);
         explicit Value(long value);

@@ -59,10 +59,10 @@ add_library(webserv_lib STATIC
         lib/core/handler/write_response_handler.hpp
         lib/config/config.cpp
         lib/config/config.hpp
-#        lib/config/toml/value.cpp
-#        lib/config/toml/value.hpp
-#        lib/config/toml/parser.cpp
-#        lib/config/toml/parser.hpp
+        lib/config/toml/value.cpp
+        lib/config/toml/value.hpp
+        lib/config/toml/parser.cpp
+        lib/config/toml/parser.hpp
         lib/config/toml/tokenizer.cpp
         lib/config/toml/tokenizer.hpp
 )

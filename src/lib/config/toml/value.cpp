@@ -2,6 +2,7 @@
 
 namespace toml {
     /* Value */
+    Value::Value() : type_(kUnknown), integerValue_(0), booleanValue_(false) {}
     Value::Value(const ValueType type) : type_(type), integerValue_(0), booleanValue_(false) {}
     Value::Value(const std::string &value)
         : type_(kString), stringValue_(value), integerValue_(0), booleanValue_(false) {}
@@ -27,6 +28,9 @@ namespace toml {
             case kTable:
                 tableValue_ = other.tableValue_;
                 break;
+            default:
+                // do nothing
+                break;
         }
     }
 
@@ -50,6 +54,9 @@ namespace toml {
                     break;
                 case kTable:
                     tableValue_ = other.tableValue_;
+                    break;
+                default:
+                    // do nothing
                     break;
             }
         }

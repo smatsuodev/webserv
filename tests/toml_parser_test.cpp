@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include "config/toml/parser.hpp"
-#include "config/toml/value.hpp"
 
 using namespace toml;
 
@@ -13,7 +12,7 @@ void testOk(const std::string &text, const Table &expected) {
 
 void testErr(const std::string &text) {
     // TODO: use parser
-    const TomlParser::ParseResult result = Err(error::kUnknown);
+    const TomlParser::ParseResult result = Ok(Table());
     ASSERT_TRUE(result.isErr());
 }
 
@@ -79,7 +78,7 @@ TEST(ParserOk, dottedKey) {
     testOk(text, expected);
 }
 
-TEST(ParseOkDiscouraged, messyDottedKey) {
+TEST(ParserOkDiscouraged, messyDottedKey) {
     const auto text = R"(
     fruit.count = 2
 
@@ -105,7 +104,7 @@ TEST(ParseOkDiscouraged, messyDottedKey) {
     testOk(text, expected);
 }
 
-TEST(ParseOk, array) {
+TEST(ParserOk, array) {
     const auto text = R"(
     array = [1,2,]
     nested = [[1, ], [2, ]]
@@ -189,7 +188,7 @@ TEST(ParserOkDiscouraged, messyTable) {
         //
         std::make_pair("foo",
                        Value(Table({//
-                                    std::make_pair("bar", Value(Table())), std::make_pair("baz", Value(Table({})))}))),
+                                    std::make_pair("bar", Value(Table())), std::make_pair("baz", Value(Table()))}))),
         //
         std::make_pair("x", Value(Table())),
     });

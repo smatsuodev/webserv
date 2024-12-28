@@ -12,7 +12,7 @@ void testOk(const std::string &text, const Tokenizer::Tokens &expected) {
 
 void testErr(const std::string &text) {
     // TODO: use tokenizer
-    const Tokenizer::TokenizeResult result = Err<std::string>("unknown");
+    const Tokenizer::TokenizeResult result = Ok<Tokenizer::Tokens>({});
     ASSERT_TRUE(result.isErr());
 }
 

@@ -27,6 +27,7 @@ namespace toml {
         explicit Token(TokenType type, const std::string &value);
 
         bool operator==(const Token &other) const;
+        bool operator!=(const Token &other) const;
 
         TokenType getType() const;
         const std::string &getValue() const;

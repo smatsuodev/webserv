@@ -16,6 +16,10 @@ namespace toml {
         return type_ == other.type_ && value_ == other.value_;
     }
 
+    bool Token::operator!=(const Token &other) const {
+        return !(*this == other);
+    }
+
     TokenType Token::getType() const {
         return type_;
     }
