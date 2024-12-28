@@ -10,6 +10,7 @@ namespace toml {
     enum TokenType {
         kKey,
         kDot,
+        kComma,
         kAssignment,
         kValue,
         kTableHeaderOpen,
@@ -35,7 +36,10 @@ namespace toml {
     class Tokenizer {
     public:
         typedef std::vector<Token> Tokens;
-        // 意味のある単位でまとめて返す
+        /**
+         * 意味のある単位でまとめて返す
+         * 改行トークンで区切っても良さそう
+         */
         typedef Result<std::vector<Tokens>, std::string> TokenizeResult;
         static TokenizeResult tokenize(std::istream &input);
 
@@ -48,6 +52,7 @@ namespace toml {
         static Result<Tokens, std::string> tokenizeValue(const std::string &rawValue);
 
         static Option<std::size_t> findAssignment(const std::string &line);
+        static Result<std::vector<std::string>, std::string> splitElements(const std::string &);
     };
 }
 

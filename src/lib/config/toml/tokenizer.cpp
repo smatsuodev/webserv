@@ -2,7 +2,10 @@
 #include "utils/logger.hpp"
 #include "utils/types/option.hpp"
 #include "utils/types/try.hpp"
+
+#include <map>
 #include <sstream>
+#include <stack>
 
 namespace toml {
     Token::Token(const TokenType type, const std::string &value) : type_(type), value_(value) {}
@@ -191,6 +194,62 @@ namespace toml {
 
     // TODO: 途中に # があるとまずい
     Result<Tokenizer::Tokens, std::string> Tokenizer::tokenizeInlineTable(const std::string &rawInlineTable) {}
+
+    /*
+     * Array -> 要素の vector
+     * "[1, 2, 3]" -> {"1", "2", "3"}
+     *
+     * Inline Table -> key-value の vector
+     * "{k1 = 1, k2 = 2}" -> {"k1=1", "k2=2"}
+     *
+     * カンマが quote される場合に気をつける
+     * ["1,2", 3] -> {"1,2", "3"}
+     */
+    Result<std::vector<std::string>, std::string> Tokenizer::splitElements(const std::string &str) {
+        const bool isArray = utils::startsWith(str, "[") && utils::endsWith(str, "]");
+        const bool isInlineTable = utils::startsWith(str, "{") && utils::endsWith(str, "}");
+        if (!isArray && !isInlineTable) {
+            return Err(utils::format("invalid array or inline table: %s", str.c_str()));
+        }
+
+        const std::string rawElements = utils::trim(str.substr(1, str.size() - 2));
+        if (rawElements.empty()) {
+            // 空配列
+            return Ok(std::vector<std::string>());
+        }
+
+        std::map<char, char> closeChMap;
+        closeChMap['"'] = '"';
+        closeChMap['\''] = '\'';
+        closeChMap['['] = ']';
+        closeChMap['{'] = '}';
+
+        std::vector<std::string> elements;
+        std::string elem;
+        std::stack<char> openChStack;
+        for (std::size_t i = 0; i < str.size(); ++i) {
+            const char c = str[i];
+
+
+            if (openChStack.empty() && c == ',') {
+                elements.push_back(elem);
+                elem.clear();
+            }
+
+            elem += c;
+
+            if (!openChStack.empty() && openChStack.top() == closeChMap[c]) {
+                openChStack.pop();
+                continue;
+            }
+            if (c == '"' || c == '\'' || c == '[' || c == '{') {
+                openChStack.push(c);
+                continue;
+            }
+
+
+        }
+    }
 
     // "=" = 1 みたいなことができるので、quote されたものは無視して探す
     Option<std::size_t> Tokenizer::findAssignment(const std::string &line) {
