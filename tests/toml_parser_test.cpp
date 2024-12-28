@@ -163,6 +163,68 @@ TEST(ParserOk, addSubTable) {
     EXPECT_TRUE(false);
 }
 
+TEST(ParserOkDiscouraged, messyTable) {
+    const auto text = R"(
+    [foo.bar]
+    [x]
+    [foo.baz]
+    )";
+    const auto expected = Table({
+        //
+        std::make_pair("foo",
+                       Value(Table({//
+                                    std::make_pair("bar", Value(Table())), std::make_pair("baz", Value(Table({})))}))),
+        //
+        std::make_pair("x", Value(Table())),
+    });
+
+    EXPECT_TRUE(false);
+}
+
+TEST(ParserOk, arrayOfTable) {
+    const auto text = R"(
+    [[server]]
+    port = 80
+    [[server]]
+    port = 3000
+    [[server]]  # empty
+    )";
+    const auto expected = //
+        Table({//
+               std::make_pair("server",
+                              Value(Array({
+                                  //
+                                  Value(Table({std::make_pair("port", Value(80l))})),
+                                  Value(Table({std::make_pair("port", Value(3000l))})),
+                                  Value(Table()),
+                              })))});
+
+    EXPECT_TRUE(false);
+}
+
+TEST(ParserOk, arrayOfNestedTable) {
+    const auto text = R"(
+    [[server]]
+    port = 80
+    [server.error_page]
+    404 = "404.html"
+    [server.foo]
+    x = 1
+    )";
+    const auto errorPage = Table({std::make_pair("404", Value("404.html"))});
+    const auto table = Table({
+        //
+        std::make_pair("port", Value(80l)),
+        //
+        std::make_pair("error_page", Value(errorPage)),
+        //
+        std::make_pair("foo", Value(Table({std::make_pair("x", Value(1l))}))),
+    });
+    const auto expected = Table({std::make_pair("server", Value(Array({Value(table)})))});
+
+    EXPECT_TRUE(false);
+}
+
 TEST(ParserErr, duplicateKey) {
     const auto text = R"(
     key = 0
@@ -224,6 +286,36 @@ TEST(ParserErr, overwriteByTable) {
     x = 1
     [table.x]   # x は既に決まってる
     y = 1
+    )";
+
+    EXPECT_TRUE(false);
+}
+
+TEST(ParserErr, overwriteTableByArrayOfTable) {
+    const auto text = R"(
+    [foo]
+    x = 1
+    [[foo]] # 既に foo は table なので不可
+    y = 1
+    )";
+
+    EXPECT_TRUE(false);
+}
+
+TEST(ParserErr, overwriteArrayByArrayOfTable) {
+    const auto text = R"(
+    a = []
+    [[a]] # a は既に配列
+    )";
+
+    EXPECT_TRUE(false);
+}
+
+TEST(ParserErr, overwriteArrayOfTableByTableNested) {
+    const auto text = R"(
+    [[array]]
+    [[array.nestedArray]]
+    [array.nestedArray] # nestedArray は既に配列
     )";
 
     EXPECT_TRUE(false);
