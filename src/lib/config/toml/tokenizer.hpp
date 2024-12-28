@@ -35,16 +35,17 @@ namespace toml {
     class Tokenizer {
     public:
         typedef std::vector<Token> Tokens;
-        typedef Result<Tokens, std::string> TokenizeResult;
+        typedef Result<std::vector<Tokens>, std::string> TokenizeResult;
         static TokenizeResult tokenize(std::istream &input);
 
     private:
+        static Result<Tokens, std::string> tokenizeArray(const std::string &rawArray);
+        static Result<Tokens, std::string> tokenizeInlineTable(const std::string &rawInlineTable);
+        static Result<Tokens, std::string> tokenizeTableHeader(const std::string &rawTableHeader);
+        static Result<Tokens, std::string> tokenizeKeyValue(const std::string &rawKeyValue);
         static Result<Tokens, std::string> tokenizeKey(const std::string &rawKey);
         static Result<Tokens, std::string> tokenizeValue(const std::string &rawValue);
-        static Result<Tokens, std::string> tokenizeMultiLineArray(const std::vector<std::string> &lines);
         static Option<std::size_t> findAssignment(const std::string &line);
-        static Result<std::vector<std::string>, std::string> readUntilArrayClose(const std::string &firstLine,
-                                                                                 std::istream &input);
     };
 }
 
