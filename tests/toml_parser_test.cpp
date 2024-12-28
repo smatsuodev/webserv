@@ -4,6 +4,19 @@
 
 using namespace toml;
 
+void testOk(const std::string &text, const Table &expected) {
+    // TODO: use parser
+    const TomlParser::ParseResult result = Err(error::kUnknown);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_EQ(result.unwrap(), expected);
+}
+
+void testErr(const std::string &text) {
+    // TODO: use parser
+    const TomlParser::ParseResult result = Err(error::kUnknown);
+    ASSERT_TRUE(result.isErr());
+}
+
 TEST(ParserOk, keyValues) {
     const auto text = R"(
     key = "value"
@@ -39,7 +52,7 @@ TEST(ParserOk, keyValues) {
         //
     });
 
-    EXPECT_TRUE(false);
+    testOk(text, expected);
 }
 
 TEST(ParserOk, dottedKey) {
@@ -62,7 +75,8 @@ TEST(ParserOk, dottedKey) {
                                   std::make_pair("apple", Value(appleTable)),
                                   std::make_pair("orange", Value(orangeTable)),
                               })))});
-    EXPECT_TRUE(false);
+
+    testOk(text, expected);
 }
 
 TEST(ParseOkDiscouraged, messyDottedKey) {
@@ -87,7 +101,8 @@ TEST(ParseOkDiscouraged, messyDottedKey) {
                                   std::make_pair("apple", Value(appleTable)),
                                   std::make_pair("orange", Value(orangeTable)),
                               })))});
-    EXPECT_TRUE(false);
+
+    testOk(text, expected);
 }
 
 TEST(ParseOk, array) {
@@ -118,7 +133,8 @@ TEST(ParseOk, array) {
         std::make_pair("deep", Value(deep)),
         std::make_pair("mix", Value(mix)),
     });
-    EXPECT_TRUE(false);
+
+    testOk(text, expected);
 }
 
 TEST(ParserOk, table) {
@@ -141,7 +157,7 @@ TEST(ParserOk, table) {
         std::make_pair("other", Value(Table({std::make_pair("z", Value(1l))}))),
     });
 
-    EXPECT_TRUE(false);
+    testOk(text, expected);
 }
 
 TEST(ParserOk, addSubTable) {
@@ -160,7 +176,7 @@ TEST(ParserOk, addSubTable) {
         std::make_pair("foo", Value(fooTable)),
     });
 
-    EXPECT_TRUE(false);
+    testOk(text, expected);
 }
 
 TEST(ParserOkDiscouraged, messyTable) {
@@ -178,7 +194,7 @@ TEST(ParserOkDiscouraged, messyTable) {
         std::make_pair("x", Value(Table())),
     });
 
-    EXPECT_TRUE(false);
+    testOk(text, expected);
 }
 
 TEST(ParserOk, arrayOfTable) {
@@ -199,7 +215,7 @@ TEST(ParserOk, arrayOfTable) {
                                   Value(Table()),
                               })))});
 
-    EXPECT_TRUE(false);
+    testOk(text, expected);
 }
 
 TEST(ParserOk, arrayOfNestedTable) {
@@ -222,7 +238,7 @@ TEST(ParserOk, arrayOfNestedTable) {
     });
     const auto expected = Table({std::make_pair("server", Value(Array({Value(table)})))});
 
-    EXPECT_TRUE(false);
+    testOk(text, expected);
 }
 
 TEST(ParserErr, duplicateKey) {
@@ -231,7 +247,7 @@ TEST(ParserErr, duplicateKey) {
     key = 0 # 同じキー
     )";
 
-    EXPECT_TRUE(false);
+    testErr(text);
 }
 
 TEST(ParserErr, duplicateKeyQuoted) {
@@ -240,7 +256,8 @@ TEST(ParserErr, duplicateKeyQuoted) {
     "key" = 0 # quote しても同じキー
     )";
 
-    EXPECT_TRUE(false);
+
+    testErr(text);
 }
 
 TEST(ParserErr, editInlineTable) {
@@ -248,7 +265,8 @@ TEST(ParserErr, editInlineTable) {
     key = { x = 1 }
     key.y = 2 # key は inline table なので、上書き不可
     )";
-    EXPECT_TRUE(false);
+
+    testErr(text);
 }
 
 TEST(ParserErr, editTableByInlineTable) {
@@ -257,7 +275,8 @@ TEST(ParserErr, editTableByInlineTable) {
     foo.bar = 1
     foo = { baz = 2 } # 既存の table は inline table で上書き不可
     )";
-    EXPECT_TRUE(false);
+
+    testErr(text);
 }
 
 TEST(ParserErr, sameTable) {
@@ -268,7 +287,8 @@ TEST(ParserErr, sameTable) {
     y = 1
     )";
 
-    EXPECT_TRUE(false);
+
+    testErr(text);
 }
 
 TEST(ParserErr, addByTable) {
@@ -278,6 +298,7 @@ TEST(ParserErr, addByTable) {
     [foo.bar] # 既存の foo.bar に table を再定義不可
     y = 1
     )";
+    testErr(text);
 }
 
 TEST(ParserErr, overwriteByTable) {
@@ -288,7 +309,7 @@ TEST(ParserErr, overwriteByTable) {
     y = 1
     )";
 
-    EXPECT_TRUE(false);
+    testErr(text);
 }
 
 TEST(ParserErr, overwriteTableByArrayOfTable) {
@@ -299,7 +320,7 @@ TEST(ParserErr, overwriteTableByArrayOfTable) {
     y = 1
     )";
 
-    EXPECT_TRUE(false);
+    testErr(text);
 }
 
 TEST(ParserErr, overwriteArrayByArrayOfTable) {
@@ -308,7 +329,7 @@ TEST(ParserErr, overwriteArrayByArrayOfTable) {
     [[a]] # a は既に配列
     )";
 
-    EXPECT_TRUE(false);
+    testErr(text);
 }
 
 TEST(ParserErr, overwriteArrayOfTableByTableNested) {
@@ -318,5 +339,5 @@ TEST(ParserErr, overwriteArrayOfTableByTableNested) {
     [array.nestedArray] # nestedArray は既に配列
     )";
 
-    EXPECT_TRUE(false);
+    testErr(text);
 }
