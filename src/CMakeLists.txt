@@ -57,6 +57,8 @@ add_library(webserv_lib STATIC
         lib/http/response/response.hpp
         lib/core/handler/write_response_handler.cpp
         lib/core/handler/write_response_handler.hpp
+        lib/config/config.cpp
+        lib/config/config.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
