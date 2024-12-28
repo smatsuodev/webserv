@@ -1,28 +1,37 @@
 #ifndef SRC_LIB_CONFIG_TOML_PARSER_HPP
 #define SRC_LIB_CONFIG_TOML_PARSER_HPP
 
+#include "tokenizer.hpp"
 #include "value.hpp"
 #include "utils/types/result.hpp"
 #include "utils/types/error.hpp"
+#include "utils/types/unit.hpp"
 
 namespace toml {
     class TomlParser {
     public:
-        TomlParser();
+        explicit TomlParser(const Tokenizer::Tokens &tokens);
         ~TomlParser();
 
-        static Result<Table, error::AppError> parse(std::istream &input);
+        Result<Table, error::AppError> parse();
 
     private:
-        static std::string trim(const std::string &s);
-        static std::string toLower(const std::string &s);
-        static std::vector<std::string> split(const std::string &s, char delim);
-        static bool isInteger(const std::string &s);
+        const Tokenizer::Tokens &tokens_;
+        int pos_;
+        int nextPos_;
+        Option<Token> token_;
 
-        static Result<Table *, error::AppError> parseTableHeader(Table *root, const std::string &line);
-        typedef Result<std::pair<std::string, Value>, error::AppError> ParseKeyValueResult;
-        static ParseKeyValueResult parseKeyValue(const std::string &line);
-        static Result<Value, error::AppError> parseValue(const std::string &rawValue);
+        /**
+         * 次のトークンを読み込む
+         * @return まだトークンが残っているなら先頭のトークンを返す。<br>
+         * トークンが無いならNoneを返す。
+         */
+        Option<Token> nextToken();
+        bool consume(TokenType expected);
+
+        Result<Table, error::AppError> parseExpression(Table table);
+        Result<Table, error::AppError> parseKeyVal(Table table);
+        Result<Table, error::AppError> parseTable(Table table);
     };
 }
 
