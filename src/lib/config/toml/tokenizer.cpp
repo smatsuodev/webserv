@@ -190,7 +190,21 @@ namespace toml {
     }
 
     // TODO: 途中に # があるとまずい
-    Result<Tokenizer::Tokens, std::string> Tokenizer::tokenizeArray(const std::string &rawArray) {}
+    Result<Tokenizer::Tokens, std::string> Tokenizer::tokenizeArray(const std::string &rawArray) {
+        Tokens tokens;
+
+        // splitElements は Array でなければエラーを返す
+        const Result<std::vector<std::string>, std::string> result = Tokenizer::splitElements(rawArray);
+        if (result.isErr()) {
+            return Err(result.unwrapErr());
+        }
+        const std::vector<std::string> elements = result.unwrap();
+
+        for (std::size_t i = 0; i < elements.size(); ++i) {
+
+            const Result<Tokenizer::Tokens, std::string> valueTokensResult = Tokenizer::tokenizeValue()
+        }
+    }
 
     // TODO: 途中に # があるとまずい
     Result<Tokenizer::Tokens, std::string> Tokenizer::tokenizeInlineTable(const std::string &rawInlineTable) {}
