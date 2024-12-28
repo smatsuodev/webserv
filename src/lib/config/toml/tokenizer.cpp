@@ -230,10 +230,10 @@ namespace toml {
         for (std::size_t i = 0; i < str.size(); ++i) {
             const char c = str[i];
 
-
             if (openChStack.empty() && c == ',') {
-                elements.push_back(elem);
+                elements.push_back(utils::toString(elem));
                 elem.clear();
+                continue;
             }
 
             elem += c;
@@ -246,9 +246,9 @@ namespace toml {
                 openChStack.push(c);
                 continue;
             }
-
-
         }
+
+        return Ok(elements);
     }
 
     // "=" = 1 みたいなことができるので、quote されたものは無視して探す
