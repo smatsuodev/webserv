@@ -1,6 +1,7 @@
 #ifndef SRC_LIB_UTILS_TYPES_OPTION_HPP
 #define SRC_LIB_UTILS_TYPES_OPTION_HPP
 
+#include "result.hpp"
 #include <cstddef>
 #include <stdexcept>
 
@@ -151,6 +152,12 @@ public:
 
     bool canUnwrap() const {
         return isSome();
+    }
+
+    template <class E>
+    Result<T, E> okOr(E err) const {
+        if (isSome()) return Ok(some_->val());
+        return Err(err);
     }
 
 private:

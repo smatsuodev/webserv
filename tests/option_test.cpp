@@ -183,3 +183,19 @@ TEST(OptionTest, exprIsEvaluatedOnce) {
 
     EXPECT_EQ(cnt, 1);
 }
+
+TEST(OptionTest, okOrSome) {
+    Option<int> op = Some(1);
+    Result<int, int> res = op.okOr(2);
+
+    EXPECT_TRUE(res.isOk());
+    EXPECT_EQ(res.unwrap(), 1);
+}
+
+TEST(OptionTest, okOrNone) {
+    Option<int> op = None;
+    Result<int, int> res = op.okOr(2);
+
+    EXPECT_TRUE(res.isErr());
+    EXPECT_EQ(res.unwrapErr(), 2);
+}
