@@ -1,4 +1,6 @@
 #include "tokenizer.hpp"
+
+#include "value.hpp"
 #include "utils/logger.hpp"
 #include "utils/types/option.hpp"
 #include "utils/types/try.hpp"
@@ -200,10 +202,23 @@ namespace toml {
         }
         const std::vector<std::string> elements = result.unwrap();
 
-        for (std::size_t i = 0; i < elements.size(); ++i) {
+        tokens.push_back(Token(kArrayOpen, "["));
 
-            const Result<Tokenizer::Tokens, std::string> valueTokensResult = Tokenizer::tokenizeValue()
+        for (std::size_t i = 0; i < elements.size(); ++i) {
+            const Result<Tokens, std::string> valueTokensResult = Tokenizer::tokenizeValue(elements[i]);
+            if (valueTokensResult.isErr()) {
+                return Err(valueTokensResult.unwrapErr());
+            }
+            const Tokens tmp = valueTokensResult.unwrap();
+            tokens.insert(tokens.end(), tmp.begin(), tmp.end());
+            if (i == elements.size() - 1) {
+                tokens.push_back(Token(kComma, ","));
+            }
         }
+
+        tokens.push_back(Token(kArrayClose, "]"));
+
+        return Ok(tokens);
     }
 
     // TODO: 途中に # があるとまずい
