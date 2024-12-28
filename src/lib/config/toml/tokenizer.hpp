@@ -35,6 +35,7 @@ namespace toml {
     class Tokenizer {
     public:
         typedef std::vector<Token> Tokens;
+        // 意味のある単位でまとめて返す
         typedef Result<std::vector<Tokens>, std::string> TokenizeResult;
         static TokenizeResult tokenize(std::istream &input);
 
@@ -45,6 +46,7 @@ namespace toml {
         static Result<Tokens, std::string> tokenizeKeyValue(const std::string &rawKeyValue);
         static Result<Tokens, std::string> tokenizeKey(const std::string &rawKey);
         static Result<Tokens, std::string> tokenizeValue(const std::string &rawValue);
+
         static Option<std::size_t> findAssignment(const std::string &line);
     };
 }

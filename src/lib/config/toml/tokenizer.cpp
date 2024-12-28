@@ -1,12 +1,8 @@
 #include "tokenizer.hpp"
-
 #include "utils/logger.hpp"
 #include "utils/types/option.hpp"
 #include "utils/types/try.hpp"
-
-#include <map>
 #include <sstream>
-#include <stack>
 
 namespace toml {
     Token::Token(const TokenType type, const std::string &value) : type_(type), value_(value) {}
@@ -67,10 +63,10 @@ namespace toml {
         // 念の為 trim
         const std::string trimmed = utils::trim(rawTableHeader);
         if (trimmed.empty()) {
-            return Err<std::string>(utils::format("invalid table header: %s", rawTableHeader.c_str()));
+            return Err(utils::format("invalid table header: %s", rawTableHeader.c_str()));
         }
         if (!(trimmed[0] == '[' && trimmed[trimmed.size() - 1] == ']')) {
-            return Err<std::string>(utils::format("invalid table header: %s", rawTableHeader.c_str()));
+            return Err(utils::format("invalid table header: %s", rawTableHeader.c_str()));
         }
         tokens.push_back(Token(kTableHeaderOpen, "["));
 
@@ -90,13 +86,15 @@ namespace toml {
     Result<Tokenizer::Tokens, std::string> Tokenizer::tokenizeKeyValue(const std::string &rawKeyValue) {
         Tokens tokens;
 
+        // TODO: (key, value) に分ける関数を作る
         const Option<std::size_t> assignmentPos = Tokenizer::findAssignment(rawKeyValue);
         if (assignmentPos.isNone()) {
-            return Err<std::string>(utils::format("invalid key-value: %s", rawKeyValue.c_str()));
+            return Err(utils::format("invalid key-value: %s", rawKeyValue.c_str()));
         }
         const std::size_t pos = assignmentPos.unwrap();
-
         const std::string rawKey = utils::trim(rawKeyValue.substr(0, pos));
+        const std::string rawValue = utils::trim(rawKeyValue.substr(pos + 1));
+
         const Result<Tokens, std::string> keyTokensResult = Tokenizer::tokenizeKey(rawKey);
         if (keyTokensResult.isErr()) {
             return Err(keyTokensResult.unwrapErr());
@@ -106,7 +104,6 @@ namespace toml {
 
         tokens.push_back(Token(kAssignment, "="));
 
-        const std::string rawValue = utils::trim(rawKeyValue.substr(pos + 1));
         const Result<Tokens, std::string> result = Tokenizer::tokenizeValue(rawValue);
         if (result.isErr()) {
             return Err(result.unwrapErr());
@@ -117,6 +114,7 @@ namespace toml {
         return Ok(tokens);
     }
 
+    // TODO: 途中に # があるとまずい
     Result<std::vector<Token>, std::string> Tokenizer::tokenizeKey(const std::string &rawKey) {
         std::vector<Token> tokens;
 
@@ -151,7 +149,7 @@ namespace toml {
 
             const std::string trimmed = utils::trim(elem);
             if (trimmed.empty()) {
-                return Err<std::string>(utils::format("invalid key: %s", rawKey.c_str()));
+                return Err(utils::format("invalid key: %s", rawKey.c_str()));
             }
 
             tokens.push_back(Token(kKey, trimmed));
@@ -161,16 +159,38 @@ namespace toml {
         }
 
         if (quoteCh.isSome()) {
-            return Err<std::string>(utils::format("missing quote: %s", rawKey.c_str()));
+            return Err(utils::format("missing quote: %s", rawKey.c_str()));
         }
 
         return Ok(tokens);
     }
 
-    Result<std::vector<Token>, std::string> Tokenizer::tokenizeValue(const std::string &rawValue) {
-        std::vector<Token> tokens;
-        return Ok(tokens);
+    // TODO: 途中に # があるとまずい
+    Result<Tokenizer::Tokens, std::string> Tokenizer::tokenizeValue(const std::string &rawValue) {
+        // 念の為 trim
+        const std::string trimmed = utils::trim(rawValue);
+        if (trimmed.empty()) {
+            return Err<std::string>("value is empty");
+        }
+
+        switch (trimmed[0]) {
+            case '[':
+                return Tokenizer::tokenizeArray(trimmed);
+            case '{':
+                return Tokenizer::tokenizeInlineTable(trimmed);
+            default: {
+                Tokens tokens;
+                tokens.push_back(Token(kValue, trimmed));
+                return Ok(tokens);
+            }
+        }
     }
+
+    // TODO: 途中に # があるとまずい
+    Result<Tokenizer::Tokens, std::string> Tokenizer::tokenizeArray(const std::string &rawArray) {}
+
+    // TODO: 途中に # があるとまずい
+    Result<Tokenizer::Tokens, std::string> Tokenizer::tokenizeInlineTable(const std::string &rawInlineTable) {}
 
     // "=" = 1 みたいなことができるので、quote されたものは無視して探す
     Option<std::size_t> Tokenizer::findAssignment(const std::string &line) {
