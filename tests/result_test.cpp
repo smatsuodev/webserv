@@ -254,3 +254,19 @@ TEST(ResultTest, assignErr2Ok) {
     r = Ok(1);
     EXPECT_EQ(r.unwrap(), 1);
 }
+
+TEST(ResultTest, exprIsEvaluatedOnce) {
+    int cnt = 0;
+    auto func = [&]() -> Result<void, bool> {
+        cnt++;
+        return Err(true);
+    };
+    auto callTry = [&]() -> Result<void, bool> {
+        TRY(func());
+        return Ok();
+    };
+
+    callTry();
+
+    EXPECT_EQ(cnt, 1);
+}

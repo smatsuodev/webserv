@@ -167,3 +167,19 @@ TEST(OptionTest, assignNone2Some) {
     op = Some(1);
     EXPECT_EQ(op.unwrap(), 1);
 }
+
+TEST(OptionTest, exprIsEvaluatedOnce) {
+    int cnt = 0;
+    auto func = [&]() -> Option<bool> {
+        cnt++;
+        return None;
+    };
+    auto callTry = [&]() -> Option<bool> {
+        TRY(func());
+        return None;
+    };
+
+    callTry();
+
+    EXPECT_EQ(cnt, 1);
+}

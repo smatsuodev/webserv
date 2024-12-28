@@ -19,7 +19,13 @@ types::None tryDefault(const Option<T> &) {
  * 展開によって複数回評価されてしまう
  * (副作用があっても冪等ならOK)
  */
-#define TRY(expr) TRY_OR(expr, tryDefault(expr))
+
+#define TRY(expr)                                                                \
+    ({                                                                           \
+        typeof(expr) e = (expr); /* NOLINT(*-unnecessary-copy-initialization) */ \
+        if (!(e).canUnwrap()) return tryDefault(e);                              \
+        (e).unwrap();                                                            \
+    })
 
 #define TRY_OR(expr, defaultValue)                                               \
     ({                                                                           \
