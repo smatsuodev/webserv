@@ -12,6 +12,10 @@
 namespace toml {
     Token::Token(const TokenType type, const std::string &value) : type_(type), value_(value) {}
 
+    bool Token::operator==(const Token &other) const {
+        return type_ == other.type_ && value_ == other.value_;
+    }
+
     TokenType Token::getType() const {
         return type_;
     }
