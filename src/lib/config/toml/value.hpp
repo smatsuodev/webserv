@@ -16,6 +16,7 @@ namespace toml {
         ~Array();
 
         Array &operator=(const Array &other);
+        bool operator==(const Array &other) const;
 
         void addElement(const Value &value);
         // parse が楽になるように、可変参照を返してる
@@ -32,6 +33,7 @@ namespace toml {
         ~Table();
 
         Table &operator=(const Table &other);
+        bool operator==(const Table &other) const;
 
         void setValue(const std::string &key, const Value &value);
 
@@ -57,6 +59,7 @@ namespace toml {
         ~Value();
 
         Value &operator=(const Value &other);
+        bool operator==(const Value &other) const;
 
         void setString(const std::string &value);
         void setInteger(long value);

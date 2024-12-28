@@ -56,6 +56,23 @@ namespace toml {
         return *this;
     }
 
+    bool Value::operator==(const Value &other) const {
+        switch (type_) {
+            case kString:
+                return stringValue_ == other.stringValue_;
+            case kInteger:
+                return integerValue_ == other.integerValue_;
+            case kBoolean:
+                return booleanValue_ == other.booleanValue_;
+            case kArray:
+                return arrayValue_ == other.arrayValue_;
+            case kTable:
+                return tableValue_ == other.tableValue_;
+            default:
+                return false;
+        }
+    }
+
     void Value::setString(const std::string &value) {
         type_ = kString;
         stringValue_ = value;
@@ -148,6 +165,10 @@ namespace toml {
         return *this;
     }
 
+    bool Array::operator==(const Array &other) const {
+        return elements_ == other.elements_;
+    }
+
     void Array::addElement(const Value &value) {
         elements_.push_back(value);
     }
@@ -168,6 +189,10 @@ namespace toml {
             values_ = other.values_;
         }
         return *this;
+    }
+
+    bool Table::operator==(const Table &other) const {
+        return values_ == other.values_;
     }
 
     void Table::setValue(const std::string &key, const Value &value) {
