@@ -20,11 +20,12 @@ namespace toml {
         return value_;
     }
 
-    Tokenizer::TokenizeResult Tokenizer::tokenize(std::istream &input) {
+    Tokenizer::TokenizeResult Tokenizer::tokenize(const std::string &input) {
         std::vector<Tokens> tokensList;
 
         std::string line;
-        while (std::getline(input, line)) {
+        std::istringstream iss(input);
+        while (std::getline(iss, line)) {
             const std::string trimmedLine = utils::trim(line);
             if (trimmedLine.empty()) {
                 continue;

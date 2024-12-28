@@ -41,7 +41,7 @@ namespace toml {
          * 改行トークンで区切っても良さそう
          */
         typedef Result<std::vector<Tokens>, std::string> TokenizeResult;
-        static TokenizeResult tokenize(std::istream &input);
+        static TokenizeResult tokenize(const std::string &input);
 
     private:
         static Result<Tokens, std::string> tokenizeArray(const std::string &rawArray);
