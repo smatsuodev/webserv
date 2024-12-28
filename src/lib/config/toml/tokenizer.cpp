@@ -21,7 +21,7 @@ namespace toml {
     }
 
     Tokenizer::TokenizeResult Tokenizer::tokenize(const std::string &input) {
-        std::vector<Tokens> tokensList;
+        Tokens tokens;
 
         std::string line;
         std::istringstream iss(input);
@@ -31,7 +31,7 @@ namespace toml {
                 continue;
             }
 
-            Tokens tokens;
+            Tokens tmpTokens;
             switch (trimmedLine[0]) {
                 case '#':
                     // 無視
@@ -41,7 +41,7 @@ namespace toml {
                     if (result.isErr()) {
                         return Err(result.unwrapErr());
                     }
-                    tokens = result.unwrap();
+                    tmpTokens = result.unwrap();
                     break;
                 }
                 default: {
@@ -50,17 +50,18 @@ namespace toml {
                     if (result.isErr()) {
                         return Err(result.unwrapErr());
                     }
-                    tokens = result.unwrap();
+                    tmpTokens = result.unwrap();
                     break;
                 }
             }
 
-            if (!tokens.empty()) {
-                tokensList.insert(tokensList.end(), tokens.begin(), tokens.end());
+            if (!tmpTokens.empty()) {
+                tokens.insert(tokens.end(), tmpTokens.begin(), tmpTokens.end());
+                tokens.push_back(Token(kNewLine, "\n"));
             }
         }
 
-        return Ok(tokensList);
+        return Ok(tokens);
     }
 
     Result<Tokenizer::Tokens, std::string> Tokenizer::tokenizeTableHeader(const std::string &rawTableHeader) {
@@ -159,7 +160,7 @@ namespace toml {
             }
 
             tokens.push_back(Token(kKey, trimmed));
-            if (i == splitted.size() - 1) {
+            if (i != splitted.size() - 1) {
                 tokens.push_back(Token(kDot, "."));
             }
         }
@@ -313,7 +314,7 @@ namespace toml {
         Option<char> quoteCh = None;
         for (std::size_t i = 0; i < line.size(); ++i) {
             // quote 終了
-            if (line[i] == quoteCh.unwrap()) {
+            if (quoteCh.isSome() && line[i] == quoteCh.unwrap()) {
                 quoteCh = None;
                 continue;
             }

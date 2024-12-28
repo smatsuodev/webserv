@@ -18,7 +18,8 @@ namespace toml {
         kInlineTableOpen,
         kInlineTableClose,
         kArrayOpen,
-        kArrayClose
+        kArrayClose,
+        kNewLine,
     };
 
     class Token {
@@ -40,7 +41,7 @@ namespace toml {
          * 意味のある単位でまとめて返す
          * 改行トークンで区切っても良さそう
          */
-        typedef Result<std::vector<Tokens>, std::string> TokenizeResult;
+        typedef Result<Tokens, std::string> TokenizeResult;
         static TokenizeResult tokenize(const std::string &input);
 
     private:

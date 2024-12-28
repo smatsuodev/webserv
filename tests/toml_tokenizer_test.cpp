@@ -7,17 +7,16 @@ TEST(TomlTokenizerOk, keyValue) {
     const std::string document = "key=value";
 
     const auto result = Tokenizer::tokenize(document);
-    EXPECT_TRUE(result.isOk());
+    ASSERT_TRUE(result.isOk());
 
-    const auto lst = result.unwrap();
-    EXPECT_EQ(lst.size(), 1);
+    const auto tokens = result.unwrap();
+    EXPECT_EQ(tokens.size(), 4);
 
-    const auto &tokens = lst[0];
     std::vector<TokenType> types;
     for (const auto &token : tokens) {
         types.push_back(token.getType());
     }
 
-    const std::vector expected = {kKey, kAssignment, kValue};
+    const std::vector expected = {kKey, kAssignment, kValue, kNewLine};
     EXPECT_EQ(types, expected);
 }
