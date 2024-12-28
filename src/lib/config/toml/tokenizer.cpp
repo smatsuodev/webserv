@@ -205,11 +205,11 @@ namespace toml {
         tokens.push_back(Token(kArrayOpen, "["));
 
         for (std::size_t i = 0; i < elements.size(); ++i) {
-            const Result<Tokens, std::string> valueTokensResult = Tokenizer::tokenizeValue(elements[i]);
-            if (valueTokensResult.isErr()) {
-                return Err(valueTokensResult.unwrapErr());
+            const Result<Tokens, std::string> r = Tokenizer::tokenizeValue(elements[i]);
+            if (r.isErr()) {
+                return Err(r.unwrapErr());
             }
-            const Tokens tmp = valueTokensResult.unwrap();
+            const Tokens tmp = r.unwrap();
             tokens.insert(tokens.end(), tmp.begin(), tmp.end());
             if (i == elements.size() - 1) {
                 tokens.push_back(Token(kComma, ","));
@@ -222,7 +222,34 @@ namespace toml {
     }
 
     // TODO: 途中に # があるとまずい
-    Result<Tokenizer::Tokens, std::string> Tokenizer::tokenizeInlineTable(const std::string &rawInlineTable) {}
+    Result<Tokenizer::Tokens, std::string> Tokenizer::tokenizeInlineTable(const std::string &rawInlineTable) {
+        Tokens tokens;
+
+        // splitElements は InlineTable でなければエラーを返す
+        const Result<std::vector<std::string>, std::string> result = Tokenizer::splitElements(rawInlineTable);
+        if (result.isErr()) {
+            return Err(result.unwrapErr());
+        }
+        const std::vector<std::string> elements = result.unwrap();
+
+        tokens.push_back(Token(kInlineTableOpen, "{"));
+
+        for (std::size_t i = 0; i < elements.size(); ++i) {
+            const Result<Tokens, std::string> r = Tokenizer::tokenizeKeyValue(elements[i]);
+            if (r.isErr()) {
+                return Err(r.unwrapErr());
+            }
+            const Tokens tmp = r.unwrap();
+            tokens.insert(tokens.end(), tmp.begin(), tmp.end());
+            if (i == elements.size() - 1) {
+                tokens.push_back(Token(kComma, ","));
+            }
+        }
+
+        tokens.push_back(Token(kInlineTableClose, "]"));
+
+        return Ok(tokens);
+    }
 
     /*
      * Array -> 要素の vector
