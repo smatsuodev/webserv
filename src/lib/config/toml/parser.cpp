@@ -29,7 +29,7 @@ namespace toml {
     }
 
     // toml = expression *( newline expression )
-    Result<Table, error::AppError> TomlParser::parse() {
+    Result<Table, error::AppError> TomlParser::parse(const std::string &) {
         Table table = TRY(parseExpression(Table()));
 
         while (token_ != None) {

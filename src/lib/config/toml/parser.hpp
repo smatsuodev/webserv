@@ -13,7 +13,7 @@ namespace toml {
         explicit TomlParser(const Tokenizer::Tokens &tokens);
         ~TomlParser();
 
-        Result<Table, error::AppError> parse();
+        Result<Table, error::AppError> parse(const std::string &tomlStr);
 
     private:
         const Tokenizer::Tokens &tokens_;
