@@ -24,6 +24,8 @@ namespace utils {
     // 先頭・末尾の空白もエラーとする
     typedef Result<unsigned long, error::AppError> StoulResult;
     StoulResult stoul(const std::string &str);
+    std::string trim(const std::string &str);
+    std::vector<std::string> split(const std::string &str, char delimiter);
 }
 
 #endif
