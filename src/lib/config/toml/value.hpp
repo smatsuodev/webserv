@@ -12,6 +12,7 @@ namespace toml {
     class Array {
     public:
         Array();
+        explicit Array(const std::vector<Value> &elements);
         Array(const Array &other);
         ~Array();
 
@@ -29,6 +30,7 @@ namespace toml {
     class Table {
     public:
         Table();
+        explicit Table(const std::map<std::string, Value> &values);
         Table(const Table &other);
         ~Table();
 

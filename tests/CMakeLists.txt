@@ -61,3 +61,6 @@ gtest_discover_tests(response_test)
 
 add_executable(toml_tokenizer_test toml_tokenizer_test.cpp)
 gtest_discover_tests(toml_tokenizer_test)
+
+add_executable(toml_parser_test toml_parser_test.cpp)
+gtest_discover_tests(toml_parser_test)

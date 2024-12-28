@@ -154,6 +154,8 @@ namespace toml {
     /* Array */
     Array::Array() {}
 
+    Array::Array(const std::vector<Value> &elements) : elements_(elements) {}
+
     Array::Array(const Array &other) : elements_(other.elements_) {}
 
     Array::~Array() {}
@@ -179,6 +181,8 @@ namespace toml {
 
     /* Table */
     Table::Table() {}
+
+    Table::Table(const std::map<std::string, Value> &values) : values_(values) {}
 
     Table::Table(const Table &other) : values_(other.values_) {}
 

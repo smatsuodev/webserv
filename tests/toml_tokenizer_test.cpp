@@ -49,19 +49,20 @@ TEST(TokenizerOk, singleQuotedKey) {
     EXPECT_TRUE(false);
 }
 
-// 'quoted "value"' = 0
+
 TEST(TokenizerOk, quotedQuoteKey) {
     const auto text = R"('"quoted key"' = 0)";
     EXPECT_TRUE(false);
 }
 
-// "" = "blank"
-TEST(TokenizerOk, emptyKey) {
+// 有効だが非推奨
+TEST(TokenizerOkDiscouraged, emptyKey) {
     const auto text = R"("" = 0)";
     EXPECT_TRUE(false);
 }
 
-TEST(TokenizerOk, emptyKeySingle) {
+// 有効だが非推奨
+TEST(TokenizerOkDiscouraged, emptyKeySingle) {
     const auto text = R"('' = 0)";
     EXPECT_TRUE(false);
 }
