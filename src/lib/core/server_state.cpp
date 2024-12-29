@@ -53,12 +53,12 @@ EventHandlerRepository::~EventHandlerRepository() {
     }
 }
 
-Option<IEventHandler *> EventHandlerRepository::get(const int fd) {
+Option<Ref<IEventHandler> > EventHandlerRepository::get(const int fd) {
     const std::map<int, IEventHandler *>::const_iterator it = handlers_.find(fd);
     if (it == handlers_.end()) {
         return None;
     }
-    return Some(it->second);
+    return Some(Ref<IEventHandler>(*it->second));
 }
 
 void EventHandlerRepository::set(const int fd, IEventHandler *handler) {
@@ -72,14 +72,14 @@ void EventHandlerRepository::set(const int fd, IEventHandler *handler) {
 }
 
 void EventHandlerRepository::remove(const int fd) {
-    const Option<IEventHandler *> h = this->get(fd);
-    if (h.isNone()) {
+    const std::map<int, IEventHandler *>::const_iterator it = handlers_.find(fd);
+    if (it == handlers_.end()) {
         LOG_DEBUG("EventHandlerRepository::remove: handler not found");
         return;
     }
 
+    delete it->second;
     handlers_.erase(fd);
-    delete h.unwrap();
 
     LOG_DEBUGF("event handler removed from fd %d", fd);
 }

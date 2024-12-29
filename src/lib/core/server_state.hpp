@@ -31,7 +31,7 @@ public:
     EventHandlerRepository();
     ~EventHandlerRepository();
 
-    Option<IEventHandler *> get(int fd);
+    Option<Ref<IEventHandler> > get(int fd);
     void set(int fd, IEventHandler *handler);
     void remove(int fd);
 
