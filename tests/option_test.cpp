@@ -167,3 +167,67 @@ TEST(OptionTest, assignNone2Some) {
     op = Some(1);
     EXPECT_EQ(op.unwrap(), 1);
 }
+
+Option<double> inverse(const int x) {
+    if (x == 0) {
+        return None;
+    }
+    return Some(1.0 / x);
+}
+
+Option<double> inverse(const double x) {
+    if (x == 0) {
+        return None;
+    }
+    return Some(1.0 / x);
+}
+
+TEST(OptionTest, noneAndThen) {
+    Option<int> op = None;
+    const auto res = op.andThen(inverse);
+    EXPECT_TRUE(res.isNone());
+}
+
+TEST(OptionTest, someAndThen) {
+    Option<int> op = Some(2);
+    const auto res = op.andThen(inverse);
+    EXPECT_TRUE(res.isSome());
+    EXPECT_DOUBLE_EQ(res.unwrap(), 0.5);
+}
+
+TEST(OptionTest, someAndThenNone) {
+    Option<int> op = Some(0);
+    const auto res = op.andThen(inverse);
+    EXPECT_TRUE(res.isNone());
+}
+
+TEST(OptionTest, chainAndThen) {
+    Option<int> op = Some(2);
+    const auto res = op.andThen(inverse).andThen(inverse);
+    EXPECT_TRUE(res.isSome());
+    EXPECT_DOUBLE_EQ(res.unwrap(), 2.0);
+}
+
+int addOne(const int x) {
+    return x + 1;
+}
+
+TEST(OptionTest, noneMap) {
+    Option<int> op = None;
+    const auto res = op.map(addOne);
+    EXPECT_TRUE(res.isNone());
+}
+
+TEST(OptionTest, someMap) {
+    Option<int> op = Some(1);
+    const auto res = op.map(addOne);
+    EXPECT_TRUE(res.isSome());
+    EXPECT_EQ(res.unwrap(), 2);
+}
+
+TEST(OptionTest, chainMap) {
+    Option<int> op = Some(1);
+    const auto res = op.map(addOne).map(addOne);
+    EXPECT_TRUE(res.isSome());
+    EXPECT_EQ(res.unwrap(), 3);
+}

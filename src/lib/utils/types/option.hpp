@@ -153,6 +153,22 @@ public:
         return isSome();
     }
 
+    template <typename U>
+    Option<U> andThen(Option<U> (*func)(T)) {
+        if (isSome()) {
+            return func(some_->val());
+        }
+        return None;
+    }
+
+    template <typename U>
+    Option<U> map(U (*func)(T)) {
+        if (isSome()) {
+            return Some(func(some_->val()));
+        }
+        return None;
+    }
+
 private:
     types::Some<T> *some_;
 };
