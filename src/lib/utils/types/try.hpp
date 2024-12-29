@@ -14,12 +14,13 @@ types::None tryDefault(const Option<T> &) {
     return None;
 }
 
-/**
- * NOTE: TRY, TRY_OR の expr は副作用を起こしてはいけない
- * 展開によって複数回評価されてしまう
- * (副作用があっても冪等ならOK)
- */
-#define TRY(expr) TRY_OR(expr, tryDefault(expr))
+// typeof(expr) は式を評価しないので、全体として一回だけ expr が評価される
+#define TRY(expr)                                                                \
+    ({                                                                           \
+        typeof(expr) e = (expr); /* NOLINT(*-unnecessary-copy-initialization) */ \
+        if (!(e).canUnwrap()) return tryDefault(e);                              \
+        (e).unwrap();                                                            \
+    })
 
 #define TRY_OR(expr, defaultValue)                                               \
     ({                                                                           \
