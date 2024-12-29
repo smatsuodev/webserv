@@ -4,7 +4,6 @@
 #include "./handler/accept_handler.hpp"
 #include "transport/listener.hpp"
 #include "utils/logger.hpp"
-#include <map>
 
 Server::Server(const std::string &ip, const unsigned short port) : ip_(ip), port_(port), listener_(ip, port) {}
 
