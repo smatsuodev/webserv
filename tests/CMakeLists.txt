@@ -58,3 +58,6 @@ gtest_discover_tests(request_reader_test)
 
 add_executable(response_test response_test.cpp)
 gtest_discover_tests(response_test)
+
+add_executable(ref_test ref_test.cpp)
+gtest_discover_tests(ref_test)

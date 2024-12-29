@@ -14,31 +14,32 @@ private:
 
 class RemoveConnectionAction : public IAction {
 public:
-    explicit RemoveConnectionAction(Connection *conn);
+    explicit RemoveConnectionAction(Connection &conn);
     void execute(ServerState &state);
 
 private:
-    Connection *conn_;
+    Connection &conn_;
+    bool executed_;
 };
 
 class RegisterEventHandlerAction : public IAction {
 public:
-    RegisterEventHandlerAction(Connection *conn, IEventHandler *handler);
+    RegisterEventHandlerAction(Connection &conn, IEventHandler *handler);
     void execute(ServerState &state);
 
 private:
-    Connection *conn_;
+    Connection &conn_;
     IEventHandler *handler_;
     bool executed_;
 };
 
 class UnregisterEventHandlerAction : public IAction {
 public:
-    explicit UnregisterEventHandlerAction(Connection *conn, IEventHandler *handler);
+    explicit UnregisterEventHandlerAction(Connection &conn, IEventHandler *handler);
     void execute(ServerState &state);
 
 private:
-    Connection *conn_;
+    Connection &conn_;
     IEventHandler *handler_;
     bool executed_;
 };

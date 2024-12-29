@@ -14,8 +14,7 @@ public:
     ConnectionRepository();
     ~ConnectionRepository();
 
-    // NOTE: 参照を返すべきか?
-    Option<Connection *> get(int fd);
+    Option<Ref<Connection> > get(int fd);
     /**
      * Connection#getFd があるので、fd はなくてもいい
      * インターフェースの統一のためにある
@@ -32,7 +31,7 @@ public:
     EventHandlerRepository();
     ~EventHandlerRepository();
 
-    Option<IEventHandler *> get(int fd);
+    Option<Ref<IEventHandler> > get(int fd);
     void set(int fd, IEventHandler *handler);
     void remove(int fd);
 

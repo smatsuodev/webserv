@@ -1,5 +1,6 @@
 ---
 Language: Cpp
+Standard: c++03
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
 AlignConsecutiveAssignments: false
