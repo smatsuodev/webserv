@@ -14,8 +14,7 @@ public:
     ConnectionRepository();
     ~ConnectionRepository();
 
-    // NOTE: 参照を返すべきか?
-    Option<Connection *> get(int fd);
+    Option<Ref<Connection> > get(int fd);
     /**
      * Connection#getFd があるので、fd はなくてもいい
      * インターフェースの統一のためにある

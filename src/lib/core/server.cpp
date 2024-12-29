@@ -55,7 +55,6 @@ void Server::onHandlerError(const Context &ctx, const error::AppError err) {
     LOG_WARNF("handler error");
 
     const Event &ev = ctx.getEvent();
-    const Option<Connection *> conn = ctx.getConnection();
 
     // kIOWouldBlock 以外のエラーはコネクションを閉じる
     if (ev.getFd() != listener_.getFd()) {

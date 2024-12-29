@@ -10,11 +10,11 @@ WriteResponseHandler::WriteResponseHandler(const http::Response &response)
 IEventHandler::InvokeResult WriteResponseHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start WriteResponseHandler::invoke");
 
-    Connection *conn = ctx.getConnection().unwrap();
+    Connection &conn = ctx.getConnection().unwrap();
     const size_t bytesToWrite = responseMessage_.size() - totalBytesWritten_;
 
     errno = 0;
-    const ssize_t bytesWritten = write(conn->getFd(), responseMessage_.c_str() + totalBytesWritten_, bytesToWrite);
+    const ssize_t bytesWritten = write(conn.getFd(), responseMessage_.c_str() + totalBytesWritten_, bytesToWrite);
     if (bytesWritten == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             return Err(error::kIOWouldBlock);
