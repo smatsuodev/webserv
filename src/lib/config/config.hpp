@@ -14,10 +14,14 @@ namespace config {
     class LocationContext {
     public:
         // NOTE: allowedMethods の初期値を指定したいが、C++98 で初期化子リストが使えない
-        LocationContext(const std::string &path, const std::string &root, const std::string &index,
-                        bool autoindex = false,
-                        const std::vector<http::HttpMethod> &allowedMethods = getDefaultAllowedMethods(),
-                        const Option<std::string> &redirect = None);
+        LocationContext(
+            const std::string &path,
+            const std::string &root,
+            const std::string &index,
+            bool autoindex = false,
+            const std::vector<http::HttpMethod> &allowedMethods = getDefaultAllowedMethods(),
+            const Option<std::string> &redirect = None
+        );
 
     private:
         std::string path_;
@@ -34,10 +38,14 @@ namespace config {
     public:
         typedef std::map<http::HttpStatusCode, std::string> ErrorPageMap;
 
-        explicit ServerContext(const std::vector<LocationContext> &locations, const std::string &host = "0.0.0.0",
-                               uint16_t port = 80, std::size_t clientMaxBodySize = kDefaultClientMaxBodySize,
-                               const std::vector<std::string> &serverName = std::vector<std::string>(),
-                               const ErrorPageMap &errorPage = ErrorPageMap());
+        explicit ServerContext(
+            const std::vector<LocationContext> &locations,
+            const std::string &host = "0.0.0.0",
+            uint16_t port = 80,
+            std::size_t clientMaxBodySize = kDefaultClientMaxBodySize,
+            const std::vector<std::string> &serverName = std::vector<std::string>(),
+            const ErrorPageMap &errorPage = ErrorPageMap()
+        );
 
     private:
         static const std::size_t kDefaultClientMaxBodySize = 1048576; // 1 MiB

@@ -24,8 +24,11 @@ IEventHandler::InvokeResult AcceptHandler::invoke(const Context &) {
     std::vector<IAction *> actions;
     actions.push_back(new RegisterEventAction(eventToRegister));
     actions.push_back(new AddConnectionAction(newConnection));
+    // clang-format off: このスタイルになるように設定できなかった
     actions.push_back(
-        new RegisterEventHandlerAction(newConnection, new ReadRequestHandler(newConnection->getReader())));
+        new RegisterEventHandlerAction(newConnection, new ReadRequestHandler(newConnection->getReader()))
+    );
+    // clang-format on
 
     return Ok(actions);
 }

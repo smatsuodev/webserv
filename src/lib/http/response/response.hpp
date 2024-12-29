@@ -7,8 +7,12 @@
 namespace http {
     class Response {
     public:
-        explicit Response(HttpStatusCode status, const std::string &httpVersion = "HTTP/1.1",
-                          const Headers &headers = Headers(), const std::string &body = "");
+        explicit Response(
+            HttpStatusCode status,
+            const std::string &httpVersion = "HTTP/1.1",
+            const Headers &headers = Headers(),
+            const std::string &body = ""
+        );
         bool operator==(const Response &other) const;
 
         HttpStatusCode getStatusCode() const;

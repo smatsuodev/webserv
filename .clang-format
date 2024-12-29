@@ -2,15 +2,18 @@
 Language: Cpp
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
+AlignAfterOpenBracket: BlockIndent
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
+AlignEscapedNewlines: Left
 AlignOperands: false
 AlignTrailingComments: false
-AlignEscapedNewlines: Left
 AllowShortBlocksOnASingleLine: Empty
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: WithoutElse
 AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
 BraceWrapping:
   AfterCaseLabel: false
   AfterClass: false
@@ -32,6 +35,7 @@ BreakBeforeBraces: Custom
 BreakConstructorInitializers: BeforeColon
 ColumnLimit: 120
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
+FixNamespaceComments: false
 IncludeCategories:
   - Regex: '^<.*'
     Priority: 1
@@ -54,4 +58,4 @@ SpacesInConditionalStatement: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 TabWidth: 4
-FixNamespaceComments: false
+...

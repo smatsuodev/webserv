@@ -28,28 +28,18 @@ TEST(ParserOk, keyValues) {
     array = [1,2]
     point = { x = 0, y = 1 }
     )";
-    // NOTE: インデントを維持するために空のコメントを入れてる
-    const auto expected = Table({
-        //
-        std::make_pair("key", Value("value")),
-        //
-        std::make_pair("b1", Value(true)),
-        //
-        std::make_pair("b2", Value(false)),
-        //
-        std::make_pair("int1", Value(42l)),
-        //
-        std::make_pair("int2", Value(+42l)),
-        //
-        std::make_pair("int3", Value(-42l)),
-        //
-        std::make_pair("int4", Value(0l)),
-        //
-        std::make_pair("array", Value(Array({Value(1l), Value(2l)}))),
-        //
-        std::make_pair("point", Value(Table({std::make_pair("x", Value(0l)), std::make_pair("y", Value(1l))})))
-        //
-    });
+    // NOTE: この format スタイルちょっと微妙
+    const auto expected = Table(
+        {std::make_pair("key", Value("value")),
+         std::make_pair("b1", Value(true)),
+         std::make_pair("b2", Value(false)),
+         std::make_pair("int1", Value(42l)),
+         std::make_pair("int2", Value(+42l)),
+         std::make_pair("int3", Value(-42l)),
+         std::make_pair("int4", Value(0l)),
+         std::make_pair("array", Value(Array({Value(1l), Value(2l)}))),
+         std::make_pair("point", Value(Table({std::make_pair("x", Value(0l)), std::make_pair("y", Value(1l))})))}
+    );
 
     testOk(text, expected);
 }
@@ -67,13 +57,14 @@ TEST(ParserOk, dottedKey) {
 
     const auto appleTable = Table({std::make_pair("color", Value("red")), std::make_pair("price", Value(100l))});
     const auto orangeTable = Table({std::make_pair("color", Value("orange")), std::make_pair("price", Value(200l))});
-    const auto expected = //
-        Table({std::make_pair("fruit",
-                              Value(Table({
-                                  std::make_pair("count", Value(2l)),
-                                  std::make_pair("apple", Value(appleTable)),
-                                  std::make_pair("orange", Value(orangeTable)),
-                              })))});
+    const auto expected = Table({std::make_pair(
+        "fruit",
+        Value(Table({
+            std::make_pair("count", Value(2l)),
+            std::make_pair("apple", Value(appleTable)),
+            std::make_pair("orange", Value(orangeTable)),
+        }))
+    )});
 
     testOk(text, expected);
 }
@@ -93,13 +84,14 @@ TEST(ParserOkDiscouraged, messyDottedKey) {
 
     const auto appleTable = Table({std::make_pair("color", Value("red")), std::make_pair("price", Value(100l))});
     const auto orangeTable = Table({std::make_pair("color", Value("orange")), std::make_pair("price", Value(200l))});
-    const auto expected = //
-        Table({std::make_pair("fruit",
-                              Value(Table({
-                                  std::make_pair("count", Value(2l)),
-                                  std::make_pair("apple", Value(appleTable)),
-                                  std::make_pair("orange", Value(orangeTable)),
-                              })))});
+    const auto expected = Table({std::make_pair(
+        "fruit",
+        Value(Table({
+            std::make_pair("count", Value(2l)),
+            std::make_pair("apple", Value(appleTable)),
+            std::make_pair("orange", Value(orangeTable)),
+        }))
+    )});
 
     testOk(text, expected);
 }
@@ -115,17 +107,13 @@ TEST(ParserOk, array) {
     const auto array = Array({Value(1l), Value(2l)});
     const auto nested = Array({Value(Array({Value(1l)})), Value(Array({Value(2l)}))});
     const auto deep = Array({Value(Array({Value(Array({Value(1l)}))}))});
-    const auto mix = Array( //
-        {//
-         Value(1l),
-         //
+    const auto mix = Array(
+        {Value(1l),
          Value(true),
-         //
          Value("string"),
-         //
          Value(Array({Value(1l)})),
-         //
-         Value(Table({std::make_pair("x", Value(1l))}))});
+         Value(Table({std::make_pair("x", Value(1l))}))}
+    );
     const auto expected = Table({
         std::make_pair("array", Value(array)),
         std::make_pair("nested", Value(nested)),
@@ -150,9 +138,7 @@ TEST(ParserOk, table) {
         std::make_pair("sub", Value(Table({std::make_pair("y", Value(1l))}))),
     });
     const auto expected = Table({
-        //
         std::make_pair("table", Value(table)),
-        //
         std::make_pair("other", Value(Table({std::make_pair("z", Value(1l))}))),
     });
 
@@ -166,9 +152,7 @@ TEST(ParserOk, addSubTable) {
     x = 1
     )";
     const auto fooTable = Table({
-        //
         std::make_pair("bar", Value(1l)),
-        //
         std::make_pair("baz", Value(Table({std::make_pair("x", Value(1l))}))),
     });
     const auto expected = Table({
@@ -185,11 +169,9 @@ TEST(ParserOkDiscouraged, messyTable) {
     [foo.baz]
     )";
     const auto expected = Table({
-        //
-        std::make_pair("foo",
-                       Value(Table({//
-                                    std::make_pair("bar", Value(Table())), std::make_pair("baz", Value(Table()))}))),
-        //
+        std::make_pair(
+            "foo", Value(Table({std::make_pair("bar", Value(Table())), std::make_pair("baz", Value(Table()))}))
+        ),
         std::make_pair("x", Value(Table())),
     });
 
@@ -204,15 +186,14 @@ TEST(ParserOk, arrayOfTable) {
     port = 3000
     [[server]]  # empty
     )";
-    const auto expected = //
-        Table({//
-               std::make_pair("server",
-                              Value(Array({
-                                  //
-                                  Value(Table({std::make_pair("port", Value(80l))})),
-                                  Value(Table({std::make_pair("port", Value(3000l))})),
-                                  Value(Table()),
-                              })))});
+    const auto expected = Table({std::make_pair(
+        "server",
+        Value(Array({
+            Value(Table({std::make_pair("port", Value(80l))})),
+            Value(Table({std::make_pair("port", Value(3000l))})),
+            Value(Table()),
+        }))
+    )});
 
     testOk(text, expected);
 }
@@ -228,11 +209,8 @@ TEST(ParserOk, arrayOfNestedTable) {
     )";
     const auto errorPage = Table({std::make_pair("404", Value("404.html"))});
     const auto table = Table({
-        //
         std::make_pair("port", Value(80l)),
-        //
         std::make_pair("error_page", Value(errorPage)),
-        //
         std::make_pair("foo", Value(Table({std::make_pair("x", Value(1l))}))),
     });
     const auto expected = Table({std::make_pair("server", Value(Array({Value(table)})))});
