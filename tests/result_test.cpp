@@ -1,5 +1,7 @@
 #include "utils/types/result.hpp"
 #include "utils/types/try.hpp"
+#include "utils/types/unit.hpp"
+
 #include <gtest/gtest.h>
 
 TEST(ResultTest, constructOkInt) {
@@ -253,4 +255,68 @@ TEST(ResultTest, assignErr2Ok) {
     Result<int, int> r = Err(1);
     r = Ok(1);
     EXPECT_EQ(r.unwrap(), 1);
+}
+
+Result<double, types::Unit> inverse(const int x) {
+    if (x == 0) {
+        return Err(unit);
+    }
+    return Ok(1.0 / x);
+}
+
+Result<double, types::Unit> inverse(const double x) {
+    if (x == 0) {
+        return Err(unit);
+    }
+    return Ok(1.0 / x);
+}
+
+TEST(ResultTest, errAndThen) {
+    Result<int, types::Unit> r = Err(unit);
+    const auto result = r.andThen(inverse);
+    EXPECT_TRUE(result.isErr());
+}
+
+TEST(ResultTest, okAndThen) {
+    Result<int, types::Unit> r = Ok(2);
+    const auto result = r.andThen(inverse);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_DOUBLE_EQ(result.unwrap(), 0.5);
+}
+
+TEST(ResultTest, okAndThenErr) {
+    Result<int, types::Unit> r = Ok(0);
+    const auto result = r.andThen(inverse);
+    EXPECT_TRUE(result.isErr());
+}
+
+TEST(ResultTest, chainAndThen) {
+    Result<int, types::Unit> r = Ok(2);
+    const auto result = r.andThen(inverse).andThen(inverse);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_DOUBLE_EQ(result.unwrap(), 2.0);
+}
+
+int addOne(const int x) {
+    return x + 1;
+}
+
+TEST(ResultTest, errMap) {
+    Result<int, types::Unit> r = Err(unit);
+    const auto result = r.map(addOne);
+    EXPECT_TRUE(r.isErr());
+}
+
+TEST(ResultTest, okMap) {
+    Result<int, types::Unit> r = Ok(1);
+    const auto result = r.map(addOne);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_EQ(result.unwrap(), 2);
+}
+
+TEST(ResultTest, chainMap) {
+    Result<int, types::Unit> r = Ok(1);
+    const auto result = r.map(addOne).map(addOne);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_EQ(result.unwrap(), 3);
 }

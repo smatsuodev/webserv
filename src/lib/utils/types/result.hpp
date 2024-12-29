@@ -214,6 +214,22 @@ public:
         return isOk();
     }
 
+    template <typename U>
+    Result<U, E> andThen(Result<U, E> (*func)(T)) {
+        if (isOk()) {
+            return func(ok_->val());
+        }
+        return Err(err_->error());
+    }
+
+    template <typename U>
+    Result<U, E> map(U (*func)(T)) {
+        if (isOk()) {
+            return Ok(func(ok_->val()));
+        }
+        return Err(err_->error());
+    }
+
 private:
     types::Ok<T> *ok_;
     types::Err<E> *err_;
@@ -302,6 +318,14 @@ public:
 
     bool canUnwrap() const {
         return isOk();
+    }
+
+    template <typename U>
+    Result<U, E> andThen(Result<U, E> (*func)()) {
+        if (isOk()) {
+            return func();
+        }
+        return Err(err_->error());
     }
 
 private:
