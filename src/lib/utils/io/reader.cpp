@@ -172,12 +172,8 @@ namespace bufio {
         }
 
         // NOTE: fillBuf() の結果によっては、nbyte に足りない可能性がある
-        {
-            const Result<void, error::AppError> r1 = this->ensureBufSize(nbyte);
-            const Result<size_t, error::AppError> r2 = this->fillBuf();
-            TRY(r1);
-            TRY(r2);
-        }
+        TRY(this->ensureBufSize(nbyte));
+        TRY(this->fillBuf());
 
         const std::size_t bytesToPeek = std::min(nbyte, this->unreadBufSize());
         return Ok(std::string(buf_ + bufPos_, bytesToPeek));
@@ -190,12 +186,8 @@ namespace bufio {
         }
 
         // NOTE: fillBuf() の結果によっては、nbyte に足りない可能性がある
-        {
-            const Result<void, error::AppError> r1 = this->ensureBufSize(nbyte);
-            const Result<size_t, error::AppError> r2 = this->fillBuf();
-            TRY(r1);
-            TRY(r2);
-        }
+        TRY(this->ensureBufSize(nbyte));
+        TRY(this->fillBuf());
 
         const std::size_t bytesToDiscard = std::min(nbyte, this->unreadBufSize());
         bufPos_ += bytesToDiscard;
@@ -214,15 +206,13 @@ namespace bufio {
                 return Ok<std::size_t>(0);
             }
             // バッファを入れ替える
-            const ReadResult readResult = reader_.read(buf_, bufCapacity_);
-            bufSize_ = TRY(readResult);
+            bufSize_ = TRY(reader_.read(buf_, bufCapacity_));
             bufPos_ = 0;
             return Ok(bufSize_);
         }
 
         // カーソルはそのままで、バッファを埋める
-        const ReadResult readResult = reader_.read(buf_ + bufPos_, remainingCapacity);
-        const std::size_t bytesRead = TRY(readResult);
+        const std::size_t bytesRead = TRY(reader_.read(buf_ + bufPos_, remainingCapacity));
         bufSize_ += bytesRead;
         return Ok(bytesRead);
     }
@@ -272,10 +262,7 @@ namespace bufio {
 
     Result<void, error::AppError> Reader::prependBuf(const char *buf, const std::size_t nbyte) {
         const size_t newBufSize = this->unreadBufSize() + nbyte;
-        {
-            const Result<void, error::AppError> r = this->ensureBufSize(newBufSize);
-            TRY(r);
-        }
+        TRY(this->ensureBufSize(newBufSize));
 
         if (bufSize_ == 0) {
             std::memcpy(buf_, buf, nbyte);
