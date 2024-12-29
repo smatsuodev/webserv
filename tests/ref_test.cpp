@@ -18,3 +18,15 @@ TEST(Ref, read) {
     stdRef = 42;
     EXPECT_EQ(ref.get(), 42);
 }
+
+TEST(Ref, changeRef) {
+    int x = 0, y = 0;
+    Ref ref = x;
+
+    ref.get() = 42;
+    ref = y;
+    ref.get() = 42;
+
+    EXPECT_EQ(x, 42);
+    EXPECT_EQ(y, 42);
+}
