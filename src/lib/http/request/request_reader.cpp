@@ -20,8 +20,7 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
             // request-line CRLF
             case kReadingRequestLine: {
                 LOG_DEBUG("read start-line");
-                const Result<void, error::AppError> result = this->readRequestLine();
-                TRY(result);
+                TRY(this->readRequestLine());
                 state_ = kReadingHeaders;
                 break;
             }
@@ -29,8 +28,7 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
             // *( field-line CRLF ) CRLF
             case kReadingHeaders: {
                 LOG_DEBUG("read headers");
-                const Result<void, error::AppError> result = this->readHeaders();
-                TRY(result);
+                TRY(this->readHeaders());
                 state_ = contentLength_.isSome() ? kReadingBody : kDone;
                 break;
             }
@@ -38,8 +36,7 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
             // message-body
             case kReadingBody: {
                 LOG_DEBUG("read message-body");
-                const Result<void, error::AppError> result = this->readBody();
-                TRY(result);
+                TRY(this->readBody());
                 state_ = kDone;
                 break;
             }
@@ -56,14 +53,11 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
         }
     }
 
-    const http::RequestParser::ParseResult parseResult =
-        http::RequestParser::parseRequest(rawRequestLine_, headers_, body_.unwrapOr(""));
-    return Ok(TRY(parseResult));
+    return Ok(TRY(http::RequestParser::parseRequest(rawRequestLine_, headers_, body_.unwrapOr(""))));
 }
 
 Result<std::string, error::AppError> RequestReader::readLine() const {
-    const bufio::Reader::ReadUntilResult readResult = reader_.readUntil("\r\n");
-    std::string requestLine = TRY(readResult);
+    std::string requestLine = TRY(reader_.readUntil("\r\n"));
     if (!utils::endsWith(requestLine, "\r\n")) {
         return Err(error::kParseUnknown);
     }
@@ -108,13 +102,10 @@ Result<void, error::AppError> RequestReader::readHeaders() {
         headers_.push_back(header);
 
         // Content-Length ヘッダーの値を取得
-        const http::RequestParser::ParseHeaderFieldLineResult parseHeaderResult =
-            http::RequestParser::parseHeaderFieldLine(header);
-        const http::RequestParser::HeaderField &field = TRY(parseHeaderResult);
+        const http::RequestParser::HeaderField &field = TRY(http::RequestParser::parseHeaderFieldLine(header));
         if (field.first == "Content-Length") {
             // TODO: client_max_body_size より大きい値の場合はエラー
-            const utils::StoulResult r = utils::stoul(field.second);
-            contentLength_ = Some(TRY(r));
+            contentLength_ = Some(TRY(utils::stoul(field.second)));
         }
     }
 
@@ -128,8 +119,7 @@ Result<void, error::AppError> RequestReader::readBody() {
     }
 
     while (bodyBufSize_ < bodySize) {
-        const bufio::Reader::ReadResult readResult = reader_.read(bodyBuf_ + bodyBufSize_, bodySize - bodyBufSize_);
-        bodyBufSize_ += TRY(readResult);
+        bodyBufSize_ += TRY(reader_.read(bodyBuf_ + bodyBufSize_, bodySize - bodyBufSize_));
     }
 
     body_ = Some(std::string(bodyBuf_, bodySize));

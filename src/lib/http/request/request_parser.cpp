@@ -7,13 +7,11 @@ namespace http {
                                                            const std::vector<std::string> &headers,
                                                            const std::string &body) {
         // TODO: parse query
-        const ParseRequestLineResult parseRequestLineResult = parseRequestLine(requestLine);
-        const RequestLine parsedRequestLine = TRY(parseRequestLineResult);
+        const RequestLine parsedRequestLine = TRY(parseRequestLine(requestLine));
 
         std::map<std::string, std::string> parsedHeaders;
         for (std::size_t i = 0; i < headers.size(); i++) {
-            const ParseHeaderFieldLineResult parseHeaderFieldLineResult = parseHeaderFieldLine(headers[i]);
-            parsedHeaders.insert(TRY(parseHeaderFieldLineResult));
+            parsedHeaders.insert(TRY(parseHeaderFieldLine(headers[i])));
         }
 
         return Ok(Request(parsedRequestLine.first.first, // method

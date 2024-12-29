@@ -51,8 +51,7 @@ ReadRequestHandler::ReadRequestHandler(bufio::Reader &reader) : reqReader_(reade
 IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start ReadRequestHandler");
 
-    const RequestReader::ReadRequestResult result = reqReader_.readRequest();
-    const http::Request req = TRY(result);
+    const http::Request req = TRY(reqReader_.readRequest());
 
     LOG_DEBUGF("HTTP request parsed");
 
