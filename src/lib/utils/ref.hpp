@@ -7,7 +7,9 @@ class Ref {
 public:
     typedef T Type;
 
-    explicit Ref(T &ref) : ptr_(&ref) {}
+    // 通常の ref と区別せず扱えるように、explicit を付けない
+    // ReSharper disable once CppNonExplicitConvertingConstructor
+    Ref(T &ref) : ptr_(&ref) {} // NOLINT(*-explicit-constructor)
     Ref(const Ref &ref) : ptr_(ref.ptr_) {}
 
     ~Ref() {
@@ -21,7 +23,7 @@ public:
         return *this;
     }
 
-    // int &ref = Ref<int>(x); と書けるようにするため、explicit を付けない
+    // 通常の ref と区別せず扱えるように、explicit を付けない
     operator T &() const { // NOLINT(*-explicit-constructor)
         return *ptr_;
     }
