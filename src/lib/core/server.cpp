@@ -16,7 +16,7 @@ void Server::start() {
     LOG_INFOF("server started on port %s:%u", ip_.c_str(), port_);
 
     while (true) {
-        const EventNotifier::WaitEventsResult waitResult = state_.getEventNotifier().waitEvents();
+        const IEventNotifier::WaitEventsResult waitResult = state_.getEventNotifier().waitEvents();
         if (waitResult.isErr()) {
             LOG_ERRORF("EventNotifier::waitEvents failed");
             continue;
