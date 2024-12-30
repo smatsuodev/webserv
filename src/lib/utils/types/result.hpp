@@ -230,6 +230,14 @@ public:
         return Err(err_->error());
     }
 
+    template <typename F>
+    Result<T, F> mapErr(F (*func)(E)) {
+        if (isOk()) {
+            return Ok(ok_->val());
+        }
+        return Err(func(err_->error()));
+    }
+
 private:
     types::Ok<T> *ok_;
     types::Err<E> *err_;
@@ -326,6 +334,14 @@ public:
             return func();
         }
         return Err(err_->error());
+    }
+
+    template <typename F>
+    Result<void, F> mapErr(F (*func)(E)) {
+        if (isOk()) {
+            return Ok();
+        }
+        return Err(func(err_->error()));
     }
 
 private:

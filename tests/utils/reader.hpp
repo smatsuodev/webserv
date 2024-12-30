@@ -2,6 +2,7 @@
 #define TESTS_UTILS_READER_HPP
 
 #include "utils/io/reader.hpp"
+#include <string>
 
 class StringReader : public io::IReader {
 public:
