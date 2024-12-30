@@ -41,13 +41,18 @@ private:
 
 class ServerState {
 public:
-    EventNotifier &getEventNotifier();
+    IEventNotifier &getEventNotifier();
     ConnectionRepository &getConnectionRepository();
     EventHandlerRepository &getEventHandlerRepository();
 
 private:
     // EventNotifier はあんまり state っぽくない
-    EventNotifier notifier_;
+#if defined(__linux__)
+    EpollEventNotifier notifier_;
+#elif defined(__APPLE__)
+    KqueueEventNotifier notifier_;
+#endif
+
     ConnectionRepository connRepo_;
     EventHandlerRepository handlerRepo_;
 };

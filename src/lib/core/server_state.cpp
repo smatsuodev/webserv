@@ -85,7 +85,7 @@ void EventHandlerRepository::remove(const int fd) {
 }
 
 
-EventNotifier &ServerState::getEventNotifier() {
+IEventNotifier &ServerState::getEventNotifier() {
     return notifier_;
 }
 
