@@ -320,3 +320,14 @@ TEST(ResultTest, chainMap) {
     ASSERT_TRUE(result.isOk());
     EXPECT_EQ(result.unwrap(), 3);
 }
+
+std::string toStr(const int x) {
+    return std::to_string(x);
+}
+
+TEST(ResultTest, errMapErr) {
+    Result<void, int> r = Err(1);
+    const auto result = r.mapErr(toStr);
+    ASSERT_TRUE(result.isErr());
+    EXPECT_EQ(result.unwrapErr(), "1");
+}
