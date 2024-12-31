@@ -30,7 +30,7 @@ void EpollEventNotifier::registerEvent(const Event &event) {
     const int targetFd = event.getFd();
 
     epoll_event eev = {};
-    eev.events = EpollEventNotifier::toEpollEvents(event) | EPOLLET;
+    eev.events = EpollEventNotifier::toEpollEvents(event) | EPOLLERR | EPOLLET;
     eev.data.fd = targetFd;
     const int epollOp = registeredFd_.count(targetFd) == 0 ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
     if (epoll_ctl(epollFd_, epollOp, targetFd, &eev) == -1) {
@@ -78,6 +78,9 @@ uint32_t EpollEventNotifier::toEventTypeFlags(const uint32_t epollEvents) {
     if (epollEvents & EPOLLOUT) {
         flags |= Event::kWrite;
     }
+    if (epollEvents & EPOLLERR) {
+        flags |= Event::kError;
+    }
     return flags;
 }
 
@@ -89,6 +92,9 @@ uint32_t EpollEventNotifier::toEpollEvents(const Event &event) {
     }
     if (flags & Event::kWrite) {
         events |= EPOLLOUT;
+    }
+    if (flags & Event::kError) {
+        events |= EPOLLERR;
     }
     return events;
 }
