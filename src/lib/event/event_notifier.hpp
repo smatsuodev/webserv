@@ -7,6 +7,12 @@
 #include "utils/types/result.hpp"
 #include <set>
 #include <vector>
+#include <map>
+
+/**
+ * TODO: subject では read/write 両方を監視するよう指定されている
+ * インターフェースは変えずに、waitEvents の結果を filter することで対応したい
+ */
 
 class IEventNotifier {
 public:
@@ -19,6 +25,7 @@ public:
      * 擬似的にイベントが起きたことにして、waitEvents から返されるようにする
      * 順番は保証しない
      */
+    // TODO: 必要ない気がするので、廃止したい
     virtual void triggerPseudoEvent(const Event &event) = 0;
 
     typedef Result<std::vector<Event>, error::AppError> WaitEventsResult;
@@ -44,10 +51,9 @@ private:
     static uint32_t toEventTypeFlags(uint32_t epollEvents);
 };
 
-// kqueue の抽象
-class KqueueEventNotifier : public IEventNotifier {
+class PollEventNotifier : public IEventNotifier {
 public:
-    KqueueEventNotifier();
+    PollEventNotifier();
 
     void registerEvent(const Event &event);
     void unregisterEvent(const Event &event);
@@ -55,14 +61,13 @@ public:
     WaitEventsResult waitEvents();
 
 private:
-    AutoFd kqueueFd_;
+    typedef std::map<int, Event> EventMap;
+
     std::vector<Event> pseudoEvents_;
-    std::set<int> registeredFd_;
+    EventMap registeredEvents_;
 
-    typedef std::vector<int16_t> KqueueFilters;
-
-    static KqueueFilters toKqueueFilters(const Event &event);
-    static uint32_t toEventTypeFlags(const KqueueFilters &filters);
+    static short toPollEvents(const Event &event);
+    static uint32_t toEventTypeFlags(short pollEvents);
 };
 
 #endif

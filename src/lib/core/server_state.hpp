@@ -49,8 +49,8 @@ private:
     // EventNotifier はあんまり state っぽくない
 #if defined(__linux__)
     EpollEventNotifier notifier_;
-#elif defined(__APPLE__)
-    KqueueEventNotifier notifier_;
+#else
+    PollEventNotifier notifier_;
 #endif
 
     ConnectionRepository connRepo_;
