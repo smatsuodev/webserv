@@ -27,6 +27,11 @@ void Server::start() {
             const Event &ev = events[i];
             LOG_DEBUGF("event arrived for fd %d (flags: %x)", ev.getFd(), ev.getTypeFlags());
 
+            if (ev.getTypeFlags() & Event::kError) {
+                this->onErrorEvent(ev);
+                continue;
+            }
+
             Option<Ref<IEventHandler> > handler = state_.getEventHandlerRepository().get(ev.getFd());
             if (handler.isNone()) {
                 LOG_DEBUGF("event handler for fd %d is not registered", ev.getFd());
@@ -47,6 +52,7 @@ void Server::start() {
 
 void Server::onHandlerError(const Context &ctx, const error::AppError err) {
     // kIOWouldBlock はリトライするので無視
+    // TODO: IOError は無視して、onErrorEvent で cleanup するようになる?
     if (err == error::kIOWouldBlock) {
         return;
     }
@@ -60,6 +66,23 @@ void Server::onHandlerError(const Context &ctx, const error::AppError err) {
         state_.getEventNotifier().unregisterEvent(ev);
         state_.getEventHandlerRepository().remove(ev.getFd());
         state_.getConnectionRepository().remove(ev.getFd());
+    }
+}
+
+void Server::onErrorEvent(const Event &event) {
+    if (!(event.getTypeFlags() & Event::kError)) {
+        // kError 以外は無視
+        return;
+    }
+
+    const int fd = event.getFd();
+    LOG_WARNF("error event arrived for fd %d", fd);
+
+    // (たぶん) 継続不可なので cleanup
+    if (event.getFd() != listener_.getFd()) {
+        state_.getEventNotifier().unregisterEvent(event);
+        state_.getEventHandlerRepository().remove(fd);
+        state_.getConnectionRepository().remove(fd);
     }
 }
 

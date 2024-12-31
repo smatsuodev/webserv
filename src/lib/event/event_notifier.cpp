@@ -30,7 +30,7 @@ void EpollEventNotifier::registerEvent(const Event &event) {
     const int targetFd = event.getFd();
 
     epoll_event eev = {};
-    eev.events = EpollEventNotifier::toEpollEvents(event) | EPOLLET;
+    eev.events = EpollEventNotifier::toEpollEvents(event) | EPOLLERR | EPOLLET;
     eev.data.fd = targetFd;
     const int epollOp = registeredFd_.count(targetFd) == 0 ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
     if (epoll_ctl(epollFd_, epollOp, targetFd, &eev) == -1) {
@@ -78,6 +78,9 @@ uint32_t EpollEventNotifier::toEventTypeFlags(const uint32_t epollEvents) {
     if (epollEvents & EPOLLOUT) {
         flags |= Event::kWrite;
     }
+    if (epollEvents & EPOLLERR) {
+        flags |= Event::kError;
+    }
     return flags;
 }
 
@@ -89,6 +92,9 @@ uint32_t EpollEventNotifier::toEpollEvents(const Event &event) {
     }
     if (flags & Event::kWrite) {
         events |= EPOLLOUT;
+    }
+    if (flags & Event::kError) {
+        events |= EPOLLERR;
     }
     return events;
 }
@@ -117,7 +123,7 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
         pollfd pfd = {};
         pfd.fd = it->first;
         // TODO: POLLIN | POLLOUT を通知させる
-        pfd.events = PollEventNotifier::toPollEvents(it->second);
+        pfd.events = static_cast<short>(PollEventNotifier::toPollEvents(it->second) | POLLERR);
         fds.push_back(pfd);
     }
 
@@ -133,8 +139,13 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
         if (pfd.revents == 0) {
             continue;
         }
+        const uint32_t flags = PollEventNotifier::toEventTypeFlags(pfd.revents);
+        if (flags == 0) {
+            continue;
+        }
+
         // TODO: in/out 両方通知するようになったら、期待する event だけ filter する
-        const Event ev(pfd.fd, PollEventNotifier::toEventTypeFlags(pfd.revents));
+        const Event ev(pfd.fd, flags);
         events.push_back(ev);
     }
 
@@ -150,6 +161,9 @@ short PollEventNotifier::toPollEvents(const Event &event) {
     if (flags & Event::kWrite) {
         events |= POLLOUT;
     }
+    if (flags & Event::kError) {
+        events |= POLLERR;
+    }
     return events;
 }
 
@@ -160,6 +174,9 @@ uint32_t PollEventNotifier::toEventTypeFlags(const short pollEvents) {
     }
     if (pollEvents & POLLOUT) {
         flags |= Event::kWrite;
+    }
+    if (pollEvents & POLLERR) {
+        flags |= Event::kError;
     }
     return flags;
 }

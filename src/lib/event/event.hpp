@@ -10,6 +10,7 @@ public:
     enum EventType {
         kRead = 1,
         kWrite = 1 << 1,
+        kError = 1 << 2, // register しなくても発生する. EPOLLERR に相当
     };
 
     Event();
