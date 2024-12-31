@@ -35,12 +35,11 @@ private:
 
 class UnregisterEventHandlerAction : public IAction {
 public:
-    explicit UnregisterEventHandlerAction(Connection &conn, IEventHandler *handler);
+    explicit UnregisterEventHandlerAction(Connection &conn);
     void execute(ServerState &state);
 
 private:
     Connection &conn_;
-    IEventHandler *handler_;
     bool executed_;
 };
 

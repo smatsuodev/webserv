@@ -33,8 +33,7 @@ void RegisterEventHandlerAction::execute(ServerState &state) {
     }
 }
 
-UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection &conn, IEventHandler *handler)
-    : conn_(conn), handler_(handler), executed_(false) {}
+UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection &conn) : conn_(conn), executed_(false) {}
 
 void UnregisterEventHandlerAction::execute(ServerState &state) {
     if (!executed_) {
