@@ -13,12 +13,12 @@ namespace io {
     FdReader::~FdReader() {}
 
     FdReader::ReadResult FdReader::read(char *buf, const std::size_t nbyte) {
-        errno = 0;
+        /**
+         * subject で read 直後の errno の確認は禁止されてる
+         * EAGAIN とそれ以外の区別は EPOLLERR イベントで判定できる
+         */
         const ssize_t bytesRead = ::read(fd_, buf, nbyte);
         if (bytesRead == -1) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                return Err(error::kIOWouldBlock);
-            }
             return Err(error::kIOUnknown);
         }
         if (bytesRead == 0) {
@@ -45,35 +45,22 @@ namespace bufio {
             return Err(error::kValidationInvalidArgs);
         }
 
-        std::size_t totalBytesRead = 0;
-        while (totalBytesRead < nbyte) {
-            if (this->unreadBufSize() == 0) {
-                const Result<size_t, error::AppError> fillBufResult = this->fillBuf();
-                if (fillBufResult.isErr()) {
-                    const error::AppError err = fillBufResult.unwrapErr();
-                    if (err == error::kIOWouldBlock && totalBytesRead > 0) {
-                        return Ok(totalBytesRead);
-                    }
-
-                    // 引数の buf に書き込まれたデータが失われないように、バッファに戻す
-                    if (totalBytesRead > 0) {
-                        this->prependBuf(buf, totalBytesRead);
-                    }
-                    return Err(err);
-                }
-
-                if (fillBufResult.unwrap() == 0) {
-                    // reader_ からこれ以上読み込めない
-                    break;
-                }
+        TRY(this->ensureBufSize(nbyte));
+        if (this->unreadBufSize() < nbyte) {
+            const size_t bytesRead = TRY(this->fillBuf());
+            if (bytesRead == 0) {
+                // eof に達した場合、nbyte に満たなくても結果を返す
+                return Ok(this->consumeAndCopyBuf(buf, nbyte));
             }
-
-            // 内部バッファから引数の buf にコピー
-            const std::size_t bytesCopied = this->consumeAndCopyBuf(buf + totalBytesRead, nbyte - totalBytesRead);
-            totalBytesRead += bytesCopied;
         }
 
-        return Ok(totalBytesRead);
+        // nbyte が大きい場合、1 回の read では足りない可能性がある
+        if (this->unreadBufSize() < nbyte) {
+            // NOTE: エラーではないので、本当は None を返したい
+            return Err(error::kUnknown);
+        }
+
+        return Ok(this->consumeAndCopyBuf(buf, nbyte));
     }
 
     bool Reader::eof() {
@@ -86,84 +73,42 @@ namespace bufio {
             return Err(error::kValidationInvalidArgs);
         }
 
-        std::string result;
-
-        /**
-         * 読み込んだ文字列の末尾を保持する
-         * 先頭の文字の削除は遅いが、delimiter は大抵短いので無視できる
-         */
-        std::string window;
-        window.reserve(delimiterLen);
-
-        while (true) {
-            char ch;
-            errno = 0;
-            const ReadResult readResult = this->read(&ch, 1);
-            /**
-             * this->read だとバッファリングの都合で、読み込めたところまでの部分的な結果が返ってくる
-             * 部分的な読込結果なのか、eof なのか区別するために、errno を確認する
-             *
-             * ただし、途中で errno がリセットがリセットされる可能性もあるので、あまりよくない
-             */
-            if (readResult.isErr() || (errno == EAGAIN || errno == EWOULDBLOCK)) {
-                if (!result.empty()) {
-                    this->prependBuf(result.data(), result.size());
-                }
-                if (readResult.isErr()) {
-                    return Err(readResult.unwrapErr());
-                }
-                return Err(error::kIOWouldBlock);
+        Option<char *> searchResult = utils::strnstr(buf_ + bufPos_, delimiter.c_str(), this->unreadBufSize());
+        if (searchResult.isNone()) {
+            if (this->isBufFull()) {
+                // buf を埋めても delimiter が見つからないので、buf を拡張する
+                TRY(this->ensureBufSize(bufCapacity_ * 2));
             }
-            if (readResult.unwrap() == 0) {
-                // EOF に達した場合
-                break;
+            const std::size_t bytesRead = TRY(this->fillBuf());
+            if (bytesRead == 0) {
+                // eof の場合、delimiter が見つからなくても結果を返す
+                return Ok<Option<std::string> >(Some(this->consumeAll()));
             }
 
-            result += ch;
-
-            window += ch;
-            if (window.length() > delimiterLen) {
-                // 先頭の文字を削除してウィンドウサイズを維持
-                window.erase(0, 1);
-            }
-
-            if (window == delimiter) {
-                return Ok(result);
-            }
+            // 再検索
+            searchResult = utils::strnstr(buf_ + bufPos_, delimiter.c_str(), this->unreadBufSize());
         }
 
-        // EOF に達しても delimiter が見つからなかった場合
-        return Ok(result);
+        if (searchResult.isNone()) {
+            // 再検索しても存在しない
+            return Ok<Option<std::string> >(None);
+        }
+
+        // delimiter が見つかった
+        const char *delimEnd = searchResult.unwrap() + delimiterLen; // delimiter の終わりの次を指す
+        const std::size_t len = delimEnd - (buf_ + bufPos_);
+        return Ok<Option<std::string> >(Some(this->consume(len)));
     }
 
     Reader::ReadAllResult Reader::readAll() {
-        std::string result;
-
-        while (true) {
-            char buf[4096];
-            std::size_t bytesRead;
-            // readUntil と同じ理由で、read 先を使い分ける
-            if (this->unreadBufSize() > 0) {
-                bytesRead = this->consumeAndCopyBuf(buf, sizeof(buf));
-            } else {
-                const ReadResult readResult = reader_.read(buf, sizeof(buf));
-                if (readResult.isErr()) {
-                    // ここまで読み込んだ分をバッファに戻す
-                    if (!result.empty()) {
-                        this->prependBuf(result.data(), result.size());
-                    }
-                    return Err(readResult.unwrapErr());
-                }
-                bytesRead = readResult.unwrap();
-            }
-
-            if (bytesRead == 0) {
-                break;
-            }
-            result.append(buf, bytesRead);
+        const std::size_t bytesRead = TRY(this->fillBuf());
+        if (bytesRead == 0) {
+            // eof に達した
+            return Ok<Option<std::string> >(Some(this->consumeAll()));
         }
 
-        return Ok(result);
+        // まだ読み取り可能なデータがある
+        return Ok<Option<std::string> >(None);
     }
 
     Reader::PeekResult Reader::peek(const std::size_t nbyte) {
@@ -192,6 +137,10 @@ namespace bufio {
         const std::size_t bytesToDiscard = std::min(nbyte, this->unreadBufSize());
         bufPos_ += bytesToDiscard;
         return Ok(bytesToDiscard);
+    }
+
+    bool Reader::isBufFull() const {
+        return bufSize_ == bufCapacity_;
     }
 
     std::size_t Reader::unreadBufSize() const {
@@ -251,7 +200,7 @@ namespace bufio {
     }
 
     std::size_t Reader::consumeAndCopyBuf(char *buf, const std::size_t nbyte) {
-        const size_t bytesToCopy = std::min(nbyte, this->unreadBufSize());
+        const std::size_t bytesToCopy = std::min(nbyte, this->unreadBufSize());
         if (bytesToCopy > 0) {
             std::memcpy(buf, buf_ + bufPos_, bytesToCopy);
             bufPos_ += bytesToCopy;
@@ -259,6 +208,16 @@ namespace bufio {
         return bytesToCopy;
     }
 
+    std::string Reader::consume(const std::size_t nbyte) {
+        const std::size_t bytesToConsume = std::min(nbyte, this->unreadBufSize());
+        const std::string result(buf_ + bufPos_, bytesToConsume);
+        bufPos_ += bytesToConsume;
+        return result;
+    }
+
+    std::string Reader::consumeAll() {
+        return this->consume(this->unreadBufSize());
+    }
 
     Result<void, error::AppError> Reader::prependBuf(const char *buf, const std::size_t nbyte) {
         const size_t newBufSize = this->unreadBufSize() + nbyte;

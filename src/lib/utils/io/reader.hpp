@@ -2,6 +2,7 @@
 #define SRC_LIB_UTILS_IO_READER_HPP
 
 #include "../types/result.hpp"
+#include "../types/option.hpp"
 #include "utils/auto_fd.hpp"
 #include "utils/types/error.hpp"
 
@@ -37,18 +38,19 @@ namespace bufio {
         virtual ~Reader();
 
         /**
-         * 途中で EAGAIN が起きたら、読み込めた分の結果を返す
-         * 最初に EAGAIN が起きたら kWouldBlock エラーを返す
+         * 可能な限り nbyte 読み込んで返す
+         * EAGAIN でも Err を返す
+         * subject の制約で、read は 1 回だけ行う
          */
         virtual ReadResult read(char *buf, std::size_t nbyte);
         virtual bool eof();
 
-        // 途中で EAGAIN が起きたら、エラーを返す
-        typedef Result<std::string, error::AppError> ReadUntilResult;
+        // 高々 1 回しか read できないので、エラーはなくても返すべき値がないことがある
+        typedef Result<Option<std::string>, error::AppError> ReadUntilResult;
         ReadUntilResult readUntil(const std::string &delimiter);
 
         // 途中で EAGAIN が起きたら、エラーを返す
-        typedef Result<std::string, error::AppError> ReadAllResult;
+        typedef Result<Option<std::string>, error::AppError> ReadAllResult;
         ReadAllResult readAll();
 
         // バッファを消費せず、指定したバイト数を読む
@@ -75,6 +77,8 @@ namespace bufio {
         // 未読み取りのバッファの先頭位置
         std::size_t bufPos_;
 
+        bool isBufFull() const;
+
         // 読み取っていないバッファの量
         std::size_t unreadBufSize() const;
         /**
@@ -93,6 +97,9 @@ namespace bufio {
          * 戻り値は実際に移されたバイト数
          */
         std::size_t consumeAndCopyBuf(char *buf, std::size_t nbyte);
+        // 最大 nbyte 分、バッファを消費して文字列として返す
+        std::string consume(std::size_t nbyte);
+        std::string consumeAll();
         // バッファの先頭にデータを追加する
         Result<void, error::AppError> prependBuf(const char *buf, std::size_t nbyte);
     };
