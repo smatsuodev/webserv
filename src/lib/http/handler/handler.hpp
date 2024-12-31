@@ -1,5 +1,5 @@
-#ifndef SRC_LIB_HTTP_RESPONSE_HANDLER_HANDLER_HPP
-#define SRC_LIB_HTTP_RESPONSE_HANDLER_HANDLER_HPP
+#ifndef SRC_LIB_HTTP_HANDLER_HANDLER_HPP
+#define SRC_LIB_HTTP_HANDLER_HANDLER_HPP
 
 #include "utils/types/result.hpp"
 #include "../response/response.hpp"
