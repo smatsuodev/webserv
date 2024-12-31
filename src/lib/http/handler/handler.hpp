@@ -2,8 +2,8 @@
 #define SRC_LIB_HTTP_RESPONSE_HANDLER_HANDLER_HPP
 
 #include "utils/types/result.hpp"
-#include "../response.hpp"
-#include "http/request/request.hpp"
+#include "../response/response.hpp"
+#include "../request/request.hpp"
 #include "utils/types/error.hpp"
 
 namespace http {
