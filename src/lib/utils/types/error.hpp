@@ -11,11 +11,12 @@ namespace error {
     // 必要に応じて種類を追加する
     enum AppError {
         kUnknown,
+        kRecoverable,
 
         // IO
         // ReSharper disable CppInconsistentNaming
-        kIOUnknown,
-        kIOWouldBlock,
+        kIOUnknown, // EAGAIN も含む
+        kIOWouldBlock, // TODO: 廃止したい
         // ReSharper restore CppInconsistentNaming
 
         // Validation
@@ -26,6 +27,11 @@ namespace error {
         // 出し分けてもあんまり意味はないので、分類してない
         kParseUnknown,
     };
+
+    // mapErr で使う想定
+    AppError recover(AppError err);
+    // ReSharper disable once CppInconsistentNaming
+    AppError recoverIOError(AppError err);
 }
 
 #endif

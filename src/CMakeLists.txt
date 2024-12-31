@@ -25,6 +25,7 @@ add_library(webserv_lib STATIC
         lib/utils/io/reader.cpp
         lib/utils/io/reader.hpp
         lib/utils/types/result.cpp
+        lib/utils/types/error.cpp
         lib/utils/types/error.hpp
         lib/event/event_notifier.cpp
         lib/event/event_notifier.hpp
