@@ -26,7 +26,7 @@ public:
 class WouldBlockReader : public io::IReader {
 public:
     WouldBlockReader(IReader &reader, int n);
-    ReadResult read(char *buf, std::size_t nbyte);
+    ReadResult read(char *buf, std::size_t nbyte) override;
     bool eof() override;
 
 private:
