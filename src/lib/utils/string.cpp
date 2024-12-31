@@ -67,3 +67,17 @@ utils::StoulResult utils::stoul(const std::string &str) {
 
     return Ok(result);
 }
+
+// TODO: コピーを避ける
+Option<char *> utils::strnstr(const char *haystack, const char *needle, const std::size_t len) {
+    if (haystack == NULL || needle == NULL) {
+        return None;
+    }
+
+    std::string haystackStr(haystack, len);
+    const std::size_t pos = haystackStr.find(needle);
+    if (pos == std::string::npos) {
+        return None;
+    }
+    return Some(const_cast<char *>(haystack + pos));
+}
