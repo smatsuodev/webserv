@@ -21,13 +21,6 @@ public:
     virtual void registerEvent(const Event &event) = 0;
     virtual void unregisterEvent(const Event &event) = 0;
 
-    /**
-     * 擬似的にイベントが起きたことにして、waitEvents から返されるようにする
-     * 順番は保証しない
-     */
-    // TODO: 必要ない気がするので、廃止したい
-    virtual void triggerPseudoEvent(const Event &event) = 0;
-
     typedef Result<std::vector<Event>, error::AppError> WaitEventsResult;
     virtual WaitEventsResult waitEvents() = 0;
 };
@@ -39,12 +32,10 @@ public:
 
     void registerEvent(const Event &event);
     void unregisterEvent(const Event &event);
-    void triggerPseudoEvent(const Event &event);
     WaitEventsResult waitEvents();
 
 private:
     AutoFd epollFd_;
-    std::vector<Event> pseudoEvents_;
     std::set<int> registeredFd_;
 
     static uint32_t toEpollEvents(const Event &event);
@@ -57,13 +48,10 @@ public:
 
     void registerEvent(const Event &event);
     void unregisterEvent(const Event &event);
-    void triggerPseudoEvent(const Event &event);
     WaitEventsResult waitEvents();
 
 private:
     typedef std::map<int, Event> EventMap;
-
-    std::vector<Event> pseudoEvents_;
     EventMap registeredEvents_;
 
     static short toPollEvents(const Event &event);

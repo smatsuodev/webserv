@@ -60,12 +60,3 @@ void UnregisterEventAction::execute(ServerState &state) {
         executed_ = true;
     }
 }
-
-TriggerPseudoEventAction::TriggerPseudoEventAction(const Event &event) : event_(event), executed_(false) {}
-
-void TriggerPseudoEventAction::execute(ServerState &state) {
-    if (!executed_) {
-        state.getEventNotifier().triggerPseudoEvent(event_);
-        executed_ = true;
-    }
-}

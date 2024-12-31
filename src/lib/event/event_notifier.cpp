@@ -54,15 +54,9 @@ void EpollEventNotifier::unregisterEvent(const Event &event) {
     LOG_DEBUGF("fd %d removed from epoll", targetFd);
 }
 
-void EpollEventNotifier::triggerPseudoEvent(const Event &event) {
-    pseudoEvents_.push_back(event);
-}
-
 EpollEventNotifier::WaitEventsResult EpollEventNotifier::waitEvents() {
     epoll_event evs[1024];
-    // pseudo-event があれば即座に返ってほしい、そうでなければ待ち続けてほしい
-    const int timeout = pseudoEvents_.empty() ? -1 : 0;
-    const int numEvents = epoll_wait(epollFd_.get(), evs, 1024, timeout);
+    const int numEvents = epoll_wait(epollFd_.get(), evs, 1024, -1);
     if (numEvents == -1) {
         LOG_ERRORF("epoll_wait failed: %s", std::strerror(errno));
         return Err(error::kUnknown);
@@ -71,12 +65,6 @@ EpollEventNotifier::WaitEventsResult EpollEventNotifier::waitEvents() {
     std::vector<Event> events(numEvents);
     for (int i = 0; i < numEvents; i++) {
         events[i] = Event(evs[i].data.fd, EpollEventNotifier::toEventTypeFlags(evs[i].events));
-    }
-
-    while (!pseudoEvents_.empty()) {
-        // 逆順に追加される
-        events.push_back(pseudoEvents_.back());
-        pseudoEvents_.pop_back();
     }
 
     return Ok(events);
@@ -123,10 +111,6 @@ void PollEventNotifier::unregisterEvent(const Event &event) {
     LOG_DEBUGF("fd %d removed from poll", event.getFd());
 }
 
-void PollEventNotifier::triggerPseudoEvent(const Event &event) {
-    pseudoEvents_.push_back(event);
-}
-
 IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
     std::vector<pollfd> fds;
     for (EventMap::const_iterator it = registeredEvents_.begin(); it != registeredEvents_.end(); ++it) {
@@ -137,9 +121,7 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
         fds.push_back(pfd);
     }
 
-    // pseudo-event があれば即座に返ってほしい、そうでなければ待ち続けてほしい
-    const int timeout = pseudoEvents_.empty() ? -1 : 0;
-    const int result = poll(fds.data(), fds.size(), timeout);
+    const int result = poll(fds.data(), fds.size(), -1);
     if (result == -1) {
         LOG_ERRORF("poll failed: %s", std::strerror(errno));
         return Err(error::kUnknown);
@@ -154,12 +136,6 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
         // TODO: in/out 両方通知するようになったら、期待する event だけ filter する
         const Event ev(pfd.fd, PollEventNotifier::toEventTypeFlags(pfd.revents));
         events.push_back(ev);
-    }
-
-    while (!pseudoEvents_.empty()) {
-        // 逆順に追加される
-        events.push_back(pseudoEvents_.back());
-        pseudoEvents_.pop_back();
     }
 
     return Ok(events);
