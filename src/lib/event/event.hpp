@@ -6,6 +6,7 @@
 class Event {
 public:
     // どのイベントを監視するか or どのイベントが起きたか (準備完了したか)
+    // TODO: エラーを通知する
     enum EventType {
         kRead = 1,
         kWrite = 1 << 1,
