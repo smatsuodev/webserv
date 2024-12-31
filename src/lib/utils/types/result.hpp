@@ -104,6 +104,23 @@ types::Ok<T> Ok(T val) {
     return types::Ok<T>(val);
 }
 
+// forward-declaration
+template <class T>
+class Option;
+
+// forward-declaration
+// ReSharper disable once CppRedundantNamespaceDefinition
+namespace types {
+    template <class T>
+    class Some;
+}
+
+template <class T>
+// ReSharper disable once CppInconsistentNaming
+types::Ok<Option<T> > Ok(types::Some<T> val) {
+    return types::Ok<Option<T> >(val);
+}
+
 // ReSharper disable once CppInconsistentNaming
 types::Ok<void> Ok();
 

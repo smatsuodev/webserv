@@ -331,3 +331,9 @@ TEST(ResultTest, errMapErr) {
     ASSERT_TRUE(result.isErr());
     EXPECT_EQ(result.unwrapErr(), "1");
 }
+
+TEST(ResultTest, optionalOk) {
+    const Result<Option<int>, types::Unit> r = Ok(Some(42));
+    ASSERT_TRUE(r.isOk());
+    EXPECT_EQ(r.unwrap().unwrap(), 42);
+}
