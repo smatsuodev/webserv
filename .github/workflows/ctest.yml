@@ -19,8 +19,10 @@ jobs:
           cmakeVersion: "~3.28.0"
           ninjaVersion: "^1.11.1"
 
+      - uses: hendrikmuhs/ccache-action@v1.2
+
       - name: Configure CMake
-        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
         run: cmake --build build -j
