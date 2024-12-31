@@ -1,5 +1,11 @@
 #include "string.hpp"
 #include "logger.hpp"
+#include <cerrno>
+#include <vector>
+#include <cstdlib>
+#include <cstdarg>
+#include <cstdio>
+#include <iterator>
 
 std::string utils::format(const char *fmt, ...) {
     // 必要なバッファサイズを計算
