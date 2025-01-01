@@ -11,14 +11,12 @@ public:
     explicit ReadBuffer(io::IReader &reader);
 
     // バッファから nbyte を消費して返す
-    typedef Result<std::string, error::AppError> ConsumeResult;
-    ConsumeResult consume(std::size_t nbyte);
+    std::string consume(std::size_t nbyte);
     /**
      * バッファから delimiter までを消費して返す
-     * eof が近い場合を除き、delimiter が見つからない場合は Ok(None) を返す
+     * eof が近い場合を除き、delimiter が見つからない場合は None を返す
      */
-    typedef Result<Option<std::string>, error::AppError> ConsumeUntilResult;
-    ConsumeUntilResult consumeUntil(const std::string &delimiter);
+    Option<std::string> consumeUntil(const std::string &delimiter);
     /**
      * バッファにデータを追加する
      * read (2) したバイト数を返す

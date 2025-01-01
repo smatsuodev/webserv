@@ -4,11 +4,11 @@
 
 ReadBuffer::ReadBuffer(io::IReader &reader) : reader_(reader) {}
 
-ReadBuffer::ConsumeResult ReadBuffer::consume(const std::size_t nbyte) {
+std::string ReadBuffer::consume(const std::size_t nbyte) {
     const std::size_t bytesToConsume = std::min(nbyte, buf_.size());
     const std::string consumed(buf_.data(), bytesToConsume);
     buf_.erase(buf_.begin(), buf_.begin() + static_cast<long>(bytesToConsume));
-    return Ok(consumed);
+    return consumed;
 }
 
 // ReSharper disable once CppPassValueParameterByConstReference
@@ -16,14 +16,11 @@ Option<std::string> wrapString(const std::string s) { // NOLINT(*-unnecessary-va
     return Some(s);
 }
 
-ReadBuffer::ConsumeUntilResult ReadBuffer::consumeUntil(const std::string &delimiter) {
-    const Option<char *> result = utils::strnstr(buf_.data(), delimiter.c_str(), buf_.size());
-    if (result.isNone()) {
-        return Ok<Option<std::string> >(None);
-    }
-    const char *delimEnd = result.unwrap() + delimiter.size();
+Option<std::string> ReadBuffer::consumeUntil(const std::string &delimiter) {
+    const char *found = TRY(utils::strnstr(buf_.data(), delimiter.c_str(), buf_.size()));
+    const char *delimEnd = found + delimiter.size();
     const std::size_t bytesToConsume = delimEnd - buf_.data();
-    return this->consume(bytesToConsume).map(Some<std::string>);
+    return Some(this->consume(bytesToConsume));
 }
 
 ReadBuffer::LoadResult ReadBuffer::load() {
