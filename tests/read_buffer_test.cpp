@@ -18,9 +18,8 @@ TEST(ByteBufferTest, ConsumeExactBytes) {
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
 
-    const Result<std::string, error::AppError> result = buffer.consume(5);
-    ASSERT_TRUE(result.isOk());
-    EXPECT_EQ(result.unwrap(), "Hello");
+    const std::string result = buffer.consume(5);
+    EXPECT_EQ(result, "Hello");
     EXPECT_EQ(buffer.size(), testData.size() - 5);
 }
 
@@ -32,9 +31,8 @@ TEST(ByteBufferTest, ConsumeExactBytesExceedBuffer) {
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
 
-    const Result<std::string, error::AppError> result = buffer.consume(10); // 要求サイズ > 実際のバッファサイズ
-    ASSERT_TRUE(result.isOk());
-    EXPECT_EQ(result.unwrap(), "Hello");
+    const std::string result = buffer.consume(10); // 要求サイズ > 実際のバッファサイズ
+    EXPECT_EQ(result, "Hello");
     EXPECT_EQ(buffer.size(), 0);
 }
 
@@ -46,11 +44,10 @@ TEST(ByteBufferTest, ConsumeUntilDelimiter) {
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
 
-    const Result<Option<std::string>, error::AppError> result = buffer.consumeUntil("&");
-    ASSERT_TRUE(result.isOk());
-    ASSERT_TRUE(result.unwrap().isSome());
-    EXPECT_EQ(result.unwrap().unwrap(), "key1=value1&"); // 区切り文字を含めて返す
-    EXPECT_EQ(buffer.size(), testData.size() - result.unwrap().unwrap().size());
+    const Option<std::string> result = buffer.consumeUntil("&");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), "key1=value1&"); // 区切り文字を含めて返す
+    EXPECT_EQ(buffer.size(), testData.size() - result.unwrap().size());
 }
 
 TEST(ByteBufferTest, ConsumeUntilDelimiterAtEnd) {
@@ -61,10 +58,9 @@ TEST(ByteBufferTest, ConsumeUntilDelimiterAtEnd) {
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
 
-    const Result<Option<std::string>, error::AppError> result = buffer.consumeUntil("&");
-    ASSERT_TRUE(result.isOk());
-    ASSERT_TRUE(result.unwrap().isSome());
-    EXPECT_EQ(result.unwrap().unwrap(), "key1=value1&");
+    const Option<std::string> result = buffer.consumeUntil("&");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), "key1=value1&");
     EXPECT_EQ(buffer.size(), 0);
 }
 
@@ -84,9 +80,8 @@ TEST(ByteBufferTest, ConsumeUntilDelimiterNotFound) {
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
 
-    const Result<Option<std::string>, error::AppError> result = buffer.consumeUntil("|");
-    ASSERT_TRUE(result.isOk());
-    ASSERT_TRUE(result.unwrap().isNone());
+    const Option<std::string> result = buffer.consumeUntil("|");
+    ASSERT_TRUE(result.isNone());
 
     // サイズは変化しない
     EXPECT_EQ(buffer.size(), testData.size());
@@ -100,17 +95,15 @@ TEST(ByteBufferTest, MultipleConsumes) {
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
 
-    const Result<std::string, error::AppError> consumeFirst = buffer.consume(12);
-    ASSERT_TRUE(consumeFirst.isOk());
-    EXPECT_EQ(consumeFirst.unwrap(), "Hello World!");
+    const std::string consumeFirst = buffer.consume(12);
+    EXPECT_EQ(consumeFirst, "Hello World!");
 
-    const Result<Option<std::string>, error::AppError> consumeUntil = buffer.consumeUntil("&");
-    ASSERT_TRUE(consumeUntil.isOk());
-    ASSERT_TRUE(consumeUntil.unwrap().isSome());
-    EXPECT_EQ(consumeUntil.unwrap().unwrap(), " Key=Value&");
+    const Option<std::string> consumeUntil = buffer.consumeUntil("&");
+    ASSERT_TRUE(consumeUntil.isSome());
+    EXPECT_EQ(consumeUntil.unwrap(), " Key=Value&");
 
     // 残りサイズの確認
-    EXPECT_EQ(buffer.size(), testData.size() - consumeFirst.unwrap().size() - consumeUntil.unwrap().unwrap().size());
+    EXPECT_EQ(buffer.size(), testData.size() - consumeFirst.size() - consumeUntil.unwrap().size());
 }
 
 TEST(ByteBufferTest, PartialConsumeOfDelimiterSequence) {
@@ -121,15 +114,13 @@ TEST(ByteBufferTest, PartialConsumeOfDelimiterSequence) {
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
 
-    const Result<Option<std::string>, error::AppError> consumeUntilFirst = buffer.consumeUntil("|");
-    ASSERT_TRUE(consumeUntilFirst.isOk());
-    ASSERT_TRUE(consumeUntilFirst.unwrap().isSome());
-    EXPECT_EQ(consumeUntilFirst.unwrap().unwrap(), "ABCD|");
+    const Option<std::string> consumeUntilFirst = buffer.consumeUntil("|");
+    ASSERT_TRUE(consumeUntilFirst.isSome());
+    EXPECT_EQ(consumeUntilFirst.unwrap(), "ABCD|");
 
-    const Result<Option<std::string>, error::AppError> consumeUntilSecond = buffer.consumeUntil("|");
-    ASSERT_TRUE(consumeUntilSecond.isOk());
-    ASSERT_TRUE(consumeUntilSecond.unwrap().isSome());
-    EXPECT_EQ(consumeUntilSecond.unwrap().unwrap(), "EFGH|");
+    const Option<std::string> consumeUntilSecond = buffer.consumeUntil("|");
+    ASSERT_TRUE(consumeUntilSecond.isSome());
+    EXPECT_EQ(consumeUntilSecond.unwrap(), "EFGH|");
 
     // バッファが空になっていることを確認
     EXPECT_EQ(buffer.size(), 0);
