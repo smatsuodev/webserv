@@ -13,6 +13,11 @@ namespace types {
     public:
         explicit Ok(T val) : val_(val) {}
 
+        // コピーコンストラクタではない
+        // Result<T, E>(Ok<U>) のコンストラクタで Ok<U> -> Ok<T> に変換するために必要
+        template <class U>
+        explicit Ok(Ok<U> &other) : val_(other.val()) {}
+
         Ok(const Ok &other) : val_(other.val_) {}
 
         ~Ok() {}
@@ -104,23 +109,6 @@ types::Ok<T> Ok(T val) {
     return types::Ok<T>(val);
 }
 
-// forward-declaration
-template <class T>
-class Option;
-
-// forward-declaration
-// ReSharper disable once CppRedundantNamespaceDefinition
-namespace types {
-    template <class T>
-    class Some;
-}
-
-template <class T>
-// ReSharper disable once CppInconsistentNaming
-types::Ok<Option<T> > Ok(types::Some<T> val) {
-    return types::Ok<Option<T> >(val);
-}
-
 // ReSharper disable once CppInconsistentNaming
 types::Ok<void> Ok();
 
@@ -142,6 +130,31 @@ public:
     // Result<int, std::string> target = Ok(0); みたいなことができるようにexplicitをつけない
     // NOLINTNEXTLINE(google-explicit-constructor)
     Result(types::Ok<T> ok) : ok_(new types::Ok<T>(ok)), err_(NULL) {}
+
+    /**
+     * 以下のコードを書けるようにするために必要
+     * (本来 Ok<Option<int>> や Ok<std::string> などの注釈が必要)
+     * Result<Option<int>, E> r = Ok(Some(42));
+     * Result<std::string, E> r2 = Ok("hello");
+     */
+    // NOTE: U -> T に変換できる必要がある
+    template <class U>
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    Result(types::Ok<U> ok) : ok_(new types::Ok<T>(ok)), err_(NULL) {}
+
+    // result.map(Some<T>) の型 Result<Some<T>, E> から Result<Option<T>, E> に変換するために必要
+    template <class U>
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    Result(const Result<U, E> &other) {
+        if (other.isOk()) {
+            // NOTE: U -> T に変換できる必要がある
+            ok_ = new types::Ok<T>(other.unwrap());
+            err_ = NULL;
+        } else {
+            err_ = new types::Err<E>(other.unwrapErr());
+            ok_ = NULL;
+        }
+    }
 
     // Result<int, std::string> target = Err<std::string>("error"); みたいなことができるようにexplicitをつけない
     // NOLINTNEXTLINE(google-explicit-constructor)
@@ -232,7 +245,7 @@ public:
     }
 
     template <typename U>
-    Result<U, E> andThen(Result<U, E> (*func)(T)) {
+    Result<U, E> andThen(Result<U, E> (*func)(T)) const {
         if (isOk()) {
             return func(ok_->val());
         }
@@ -240,7 +253,7 @@ public:
     }
 
     template <typename U>
-    Result<U, E> map(U (*func)(T)) {
+    Result<U, E> map(U (*func)(T)) const {
         if (isOk()) {
             return Ok(func(ok_->val()));
         }
@@ -248,7 +261,7 @@ public:
     }
 
     template <typename F>
-    Result<T, F> mapErr(F (*func)(E)) {
+    Result<T, F> mapErr(F (*func)(E)) const {
         if (isOk()) {
             return Ok(ok_->val());
         }
