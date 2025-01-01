@@ -345,3 +345,9 @@ TEST(ResultTest, mapToOptionalOk) {
     ASSERT_TRUE(result.isOk());
     EXPECT_EQ(result.unwrap().unwrap(), 42);
 }
+
+TEST(ResultTest, okString) {
+    const Result<std::string, types::Unit> r = Ok("hello");
+    ASSERT_TRUE(r.isOk());
+    EXPECT_EQ(r.unwrap(), "hello");
+}
