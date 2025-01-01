@@ -4,10 +4,9 @@
 #include "http/response/response.hpp"
 #include "http/response/response_builder.hpp"
 #include "utils/logger.hpp"
-#include "utils/io/reader.hpp"
 #include "utils/types/try.hpp"
-
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/stat.h>
 
 // TODO: config を元に適切な path に解決する
@@ -35,10 +34,8 @@ Result<int, error::AppError> openFile(const std::string path) { // NOLINT(*-unne
 }
 
 Result<std::string, error::AppError> readFile(const int rawFd) {
-    AutoFd fd(rawFd);
-    io::FdReader fdReader(fd);
-    bufio::Reader bufReader(fdReader);
-    return Ok(TRY(bufReader.readAll()).unwrap());
+    close(rawFd);
+    return Err(error::kUnknown);
 }
 
 // ReSharper disable once CppPassValueParameterByConstReference
