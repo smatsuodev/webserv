@@ -1,7 +1,7 @@
 #ifndef SRC_LIB_EVENT_EVENT_HPP
 #define SRC_LIB_EVENT_EVENT_HPP
 
-#include <stdint.h>
+#include <stdint.h> // NOLINT(*-deprecated-headers): C++98 ではまだ deprecated ではない
 
 class Event {
 public:
