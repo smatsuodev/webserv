@@ -15,7 +15,8 @@ namespace types {
 
         // コピーコンストラクタではない
         // Result<T, E>(Ok<U>) のコンストラクタで Ok<U> -> Ok<T> に変換するために必要
-        template <class U>
+        // TODO: 提出時に消す
+        template <class U, typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
         explicit Ok(Ok<U> &other) : val_(other.val()) {}
 
         Ok(const Ok &other) : val_(other.val_) {}
@@ -137,13 +138,15 @@ public:
      * Result<Option<int>, E> r = Ok(Some(42));
      * Result<std::string, E> r2 = Ok("hello");
      */
-    // NOTE: U -> T に変換できる必要がある
-    template <class U>
+    // U -> T に変換可能であるという制約を付けないと、IDE 上でエラーが出ない (コンパイル時に出る)
+    // TODO: std::is_convertible などは C++11 以降なので、提出時に消す
+    template <class U, typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
     // NOLINTNEXTLINE(google-explicit-constructor)
     Result(types::Ok<U> ok) : ok_(new types::Ok<T>(ok)), err_(NULL) {}
 
     // result.map(Some<T>) の型 Result<Some<T>, E> から Result<Option<T>, E> に変換するために必要
-    template <class U>
+    // TODO: 提出時に消す
+    template <class U, typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
     // NOLINTNEXTLINE(google-explicit-constructor)
     Result(const Result<U, E> &other) {
         if (other.isOk()) {
