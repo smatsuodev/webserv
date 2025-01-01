@@ -62,5 +62,5 @@ gtest_discover_tests(response_test)
 add_executable(ref_test ref_test.cpp)
 gtest_discover_tests(ref_test)
 
-add_executable(byte_buffer_test byte_buffer_test.cpp)
-gtest_discover_tests(byte_buffer_test)
+add_executable(read_buffer_test read_buffer_test.cpp)
+gtest_discover_tests(read_buffer_test)

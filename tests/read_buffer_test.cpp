@@ -1,10 +1,8 @@
 #include <gtest/gtest.h>
 #include "./utils/reader.hpp"
-#include "utils/io/byte_buffer.hpp"
+#include "utils/io/read_buffer.hpp"
 
-using namespace io;
-
-void loadAll(ByteBuffer &buffer) {
+void loadAll(ReadBuffer &buffer) {
     while (true) {
         if (const auto loaded = buffer.load().unwrap(); loaded == 0) {
             return;
@@ -15,7 +13,7 @@ void loadAll(ByteBuffer &buffer) {
 TEST(ByteBufferTest, ConsumeExactBytes) {
     const std::string testData = "Hello, World!";
     StringReader reader(testData);
-    ByteBuffer buffer(reader);
+    ReadBuffer buffer(reader);
 
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
@@ -29,7 +27,7 @@ TEST(ByteBufferTest, ConsumeExactBytes) {
 TEST(ByteBufferTest, ConsumeExactBytesExceedBuffer) {
     const std::string testData = "Hello";
     StringReader reader(testData);
-    ByteBuffer buffer(reader);
+    ReadBuffer buffer(reader);
 
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
@@ -43,7 +41,7 @@ TEST(ByteBufferTest, ConsumeExactBytesExceedBuffer) {
 TEST(ByteBufferTest, ConsumeUntilDelimiter) {
     const std::string testData = "key1=value1&key2=value2";
     StringReader reader(testData);
-    ByteBuffer buffer(reader);
+    ReadBuffer buffer(reader);
 
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
@@ -58,7 +56,7 @@ TEST(ByteBufferTest, ConsumeUntilDelimiter) {
 TEST(ByteBufferTest, ConsumeUntilDelimiterAtEnd) {
     const std::string testData = "key1=value1&";
     StringReader reader(testData);
-    ByteBuffer buffer(reader);
+    ReadBuffer buffer(reader);
 
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
@@ -72,7 +70,7 @@ TEST(ByteBufferTest, ConsumeUntilDelimiterAtEnd) {
 
 TEST(ByteBufferTest, LoadError) {
     BrokenReader reader;
-    ByteBuffer buffer(reader);
+    ReadBuffer buffer(reader);
 
     const Result<std::size_t, error::AppError> result = buffer.load();
     ASSERT_TRUE(result.isErr());
@@ -81,7 +79,7 @@ TEST(ByteBufferTest, LoadError) {
 TEST(ByteBufferTest, ConsumeUntilDelimiterNotFound) {
     const std::string testData = "key1=value1";
     StringReader reader(testData);
-    ByteBuffer buffer(reader);
+    ReadBuffer buffer(reader);
 
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
@@ -97,7 +95,7 @@ TEST(ByteBufferTest, ConsumeUntilDelimiterNotFound) {
 TEST(ByteBufferTest, MultipleConsumes) {
     const std::string testData = "Hello World! Key=Value&AnotherKey=AnotherValue";
     StringReader reader(testData);
-    ByteBuffer buffer(reader);
+    ReadBuffer buffer(reader);
 
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());
@@ -118,7 +116,7 @@ TEST(ByteBufferTest, MultipleConsumes) {
 TEST(ByteBufferTest, PartialConsumeOfDelimiterSequence) {
     const std::string testData = "ABCD|EFGH|";
     StringReader reader(testData);
-    ByteBuffer buffer(reader);
+    ReadBuffer buffer(reader);
 
     loadAll(buffer);
     EXPECT_EQ(buffer.size(), testData.size());

@@ -1,14 +1,14 @@
-#ifndef SRC_LIB_UTILS_IO_BYTE_BUFFER_HPP
-#define SRC_LIB_UTILS_IO_BYTE_BUFFER_HPP
+#ifndef SRC_LIB_UTILS_IO_READ_BUFFER_HPP
+#define SRC_LIB_UTILS_IO_READ_BUFFER_HPP
 
 #include "reader.hpp"
 #include "../types/result.hpp"
 #include <vector>
 
 // utils/io にあるべきかは微妙
-class ByteBuffer {
+class ReadBuffer {
 public:
-    explicit ByteBuffer(io::IReader &reader);
+    explicit ReadBuffer(io::IReader &reader);
 
     // バッファから nbyte を消費して返す
     typedef Result<std::string, error::AppError> ConsumeResult;
