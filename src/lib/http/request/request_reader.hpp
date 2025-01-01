@@ -7,10 +7,10 @@
 
 class RequestReader {
 public:
-    explicit RequestReader(bufio::Reader &reader);
-    ~RequestReader();
+    // NOTE: ReadBuffer に直接依存するべきか?
+    explicit RequestReader(ReadBuffer &readBuf);
 
-    typedef Result<http::Request, error::AppError> ReadRequestResult;
+    typedef Result<Option<http::Request>, error::AppError> ReadRequestResult;
     ReadRequestResult readRequest();
 
 private:
@@ -22,21 +22,24 @@ private:
         kDone,
     };
 
-    bufio::Reader &reader_;
+    typedef std::vector<std::string> RawHeaders;
+
+    ReadBuffer &readBuf_;
     State state_;
 
-    std::string rawRequestLine_;
-    std::vector<std::string> headers_;
+    std::string requestLine_;
+    RawHeaders headers_;
     Option<size_t> contentLength_;
-    char *bodyBuf_;
-    size_t bodyBufSize_;
     Option<std::string> body_;
 
-    Result<std::string, error::AppError> readLine() const;
+    typedef Result<Option<std::string>, error::AppError> GetLineResult;
+    static GetLineResult getLine(ReadBuffer &);
 
-    Result<void, error::AppError> readRequestLine();
-    Result<void, error::AppError> readHeaders();
-    Result<void, error::AppError> readBody();
+
+    static Result<Option<std::string>, error::AppError> getRequestLine(ReadBuffer &);
+    static Result<Option<RawHeaders>, error::AppError> getHeaders(ReadBuffer &);
+    static Result<Option<size_t>, error::AppError> getContentLength(const RawHeaders &);
+    static Result<Option<std::string>, error::AppError> getBody(ReadBuffer &, std::size_t);
 };
 
 #endif
