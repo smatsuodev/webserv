@@ -183,26 +183,26 @@ Option<double> inverse(const double x) {
 }
 
 TEST(OptionTest, noneAndThen) {
-    Option<int> op = None;
+    const Option<int> op = None;
     const auto res = op.andThen(inverse);
     EXPECT_TRUE(res.isNone());
 }
 
 TEST(OptionTest, someAndThen) {
-    Option<int> op = Some(2);
+    const Option<int> op = Some(2);
     const auto res = op.andThen(inverse);
     EXPECT_TRUE(res.isSome());
     EXPECT_DOUBLE_EQ(res.unwrap(), 0.5);
 }
 
 TEST(OptionTest, someAndThenNone) {
-    Option<int> op = Some(0);
+    const Option<int> op = Some(0);
     const auto res = op.andThen(inverse);
     EXPECT_TRUE(res.isNone());
 }
 
 TEST(OptionTest, chainAndThen) {
-    Option<int> op = Some(2);
+    const Option<int> op = Some(2);
     const auto res = op.andThen(inverse).andThen(inverse);
     EXPECT_TRUE(res.isSome());
     EXPECT_DOUBLE_EQ(res.unwrap(), 2.0);
@@ -213,21 +213,28 @@ int addOne(const int x) {
 }
 
 TEST(OptionTest, noneMap) {
-    Option<int> op = None;
+    const Option<int> op = None;
     const auto res = op.map(addOne);
     EXPECT_TRUE(res.isNone());
 }
 
 TEST(OptionTest, someMap) {
-    Option<int> op = Some(1);
+    const Option<int> op = Some(1);
     const auto res = op.map(addOne);
     EXPECT_TRUE(res.isSome());
     EXPECT_EQ(res.unwrap(), 2);
 }
 
 TEST(OptionTest, chainMap) {
-    Option<int> op = Some(1);
+    const Option<int> op = Some(1);
     const auto res = op.map(addOne).map(addOne);
     EXPECT_TRUE(res.isSome());
     EXPECT_EQ(res.unwrap(), 3);
+}
+
+// 前は Some<std::string> の注釈が必要だった
+TEST(OptionTest, optionalString) {
+    const Option<std::string> op = Some("hello");
+    EXPECT_TRUE(op.isSome());
+    EXPECT_EQ(op.unwrap(), "hello");
 }
