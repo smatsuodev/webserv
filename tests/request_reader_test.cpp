@@ -26,7 +26,7 @@ TEST_F(RequestReaderTest, GetNormal) {
                                                  {
                                                      std::make_pair("Host", "example.com"),
                                                  });
-    EXPECT_EQ(result.unwrap(), expected);
+    EXPECT_EQ(result.unwrap().unwrap(), expected);
 }
 
 TEST_F(RequestReaderTest, PostNormal) {
@@ -48,7 +48,7 @@ TEST_F(RequestReaderTest, PostNormal) {
                                                      std::make_pair("Host", "example.com"),
                                                  },
                                                  "hello");
-    EXPECT_EQ(result.unwrap(), expected);
+    EXPECT_EQ(result.unwrap().unwrap(), expected);
 }
 
 TEST_F(RequestReaderTest, GetWouldBlock) {
@@ -69,7 +69,7 @@ TEST_F(RequestReaderTest, GetWouldBlock) {
                                                  {
                                                      std::make_pair("Host", "example.com"),
                                                  });
-    EXPECT_EQ(result.unwrap(), expected);
+    EXPECT_EQ(result.unwrap().unwrap(), expected);
 }
 
 TEST_F(RequestReaderTest, PostWouldBlock) {
@@ -94,5 +94,5 @@ TEST_F(RequestReaderTest, PostWouldBlock) {
                                                      std::make_pair("Host", "example.com"),
                                                  },
                                                  "hello");
-    EXPECT_EQ(result.unwrap(), expected);
+    EXPECT_EQ(result.unwrap().unwrap(), expected);
 }

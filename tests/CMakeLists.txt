@@ -29,7 +29,8 @@ add_library(test_utils STATIC
 target_link_libraries(test_utils PUBLIC webserv_lib)
 
 # テストの実行ファイルにリンクするライブラリ
-link_libraries(webserv_lib gtest_main FakeIt::FakeIt-gtest test_utils)
+# NOTE: test_utils に webserv_lib が入っているので、改めて含めてない
+link_libraries(gtest_main FakeIt::FakeIt-gtest test_utils)
 
 # Tests
 add_executable(option_test option_test.cpp)
