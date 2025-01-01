@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <stdexcept>
-#include <type_traits>
 
 template <class T>
 class Option;
