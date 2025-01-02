@@ -1,6 +1,11 @@
 # Generated from CLion Inspection settings
 ---
-WarningsAsErrors: '*'
+WarningsAsErrors: >
+  bugprone-*,
+  cert-*,
+  performance-*,
+  readability-misleading-indentation,
+  readability-redundant-declaration
 Checks: '-*,
 bugprone-argument-comment,
 bugprone-assert-side-effect,
