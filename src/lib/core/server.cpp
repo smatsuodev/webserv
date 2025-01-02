@@ -53,7 +53,8 @@ void Server::start() {
 void Server::onHandlerError(const Context &ctx, const error::AppError err) {
     // kIOWouldBlock はリトライするので無視
     // TODO: IOError は無視して、onErrorEvent で cleanup するようになる?
-    if (err == error::kIOWouldBlock) {
+    // IO のエラーは epoll で検知するので、ここでは無視 (EAGAIN の可能性があるため)
+    if (err == error::kIOWouldBlock || err == error::kRecoverable || err == error::kIOUnknown) {
         return;
     }
 

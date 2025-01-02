@@ -64,6 +64,7 @@ EpollEventNotifier::WaitEventsResult EpollEventNotifier::waitEvents() {
 
     std::vector<Event> events(numEvents);
     for (int i = 0; i < numEvents; i++) {
+        LOG_DEBUGF("epoll events: fd=%d, events=%d", evs[i].data.fd, evs[i].events);
         events[i] = Event(evs[i].data.fd, EpollEventNotifier::toEventTypeFlags(evs[i].events));
     }
 

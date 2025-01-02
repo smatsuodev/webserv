@@ -4,10 +4,9 @@
 #include "http/response/response.hpp"
 #include "http/response/response_builder.hpp"
 #include "utils/logger.hpp"
-#include "utils/io/reader.hpp"
 #include "utils/types/try.hpp"
-
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/stat.h>
 
 // TODO: config を元に適切な path に解決する
@@ -35,10 +34,8 @@ Result<int, error::AppError> openFile(const std::string path) { // NOLINT(*-unne
 }
 
 Result<std::string, error::AppError> readFile(const int rawFd) {
-    AutoFd fd(rawFd);
-    io::FdReader fdReader(fd);
-    bufio::Reader bufReader(fdReader);
-    return Ok(TRY(bufReader.readAll()));
+    close(rawFd);
+    return Err(error::kUnknown);
 }
 
 // ReSharper disable once CppPassValueParameterByConstReference
@@ -46,18 +43,23 @@ http::Response toResponse(const std::string fileContent) { // NOLINT(*-unnecessa
     return http::ResponseBuilder().text(fileContent).build();
 }
 
-ReadRequestHandler::ReadRequestHandler(bufio::Reader &reader) : reqReader_(reader) {}
+ReadRequestHandler::ReadRequestHandler(ReadBuffer &readBuf) : reqReader_(readBuf) {}
 
 IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start ReadRequestHandler");
 
-    const http::Request req = TRY(reqReader_.readRequest());
+    const Option<http::Request> req = TRY(reqReader_.readRequest());
+    if (req.isNone()) {
+        // read は高々 1 回なので、パースまで完了しなかった
+        LOG_DEBUG("request is not fully read");
+        return Err(error::kRecoverable);
+    }
 
     LOG_DEBUGF("HTTP request parsed");
 
     // TODO: すべてのエラーが 404 とは限らない. 適切なレスポンスを返すようにする
     // TODO: readFile が kWouldBlock を返すと、読み取った req が失われる
-    const http::Response res = getPath(req)
+    const http::Response res = getPath(req.unwrap())
                                    .andThen(openFile)
                                    .andThen(readFile)
                                    .map(toResponse)

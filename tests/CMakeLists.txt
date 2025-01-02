@@ -29,12 +29,10 @@ add_library(test_utils STATIC
 target_link_libraries(test_utils PUBLIC webserv_lib)
 
 # テストの実行ファイルにリンクするライブラリ
-link_libraries(webserv_lib gtest_main FakeIt::FakeIt-gtest test_utils)
+# NOTE: test_utils に webserv_lib が入っているので、改めて含めてない
+link_libraries(gtest_main FakeIt::FakeIt-gtest test_utils)
 
 # Tests
-add_executable(reader_test reader_test.cpp)
-gtest_discover_tests(reader_test)
-
 add_executable(option_test option_test.cpp)
 gtest_discover_tests(option_test)
 
@@ -61,3 +59,6 @@ gtest_discover_tests(response_test)
 
 add_executable(ref_test ref_test.cpp)
 gtest_discover_tests(ref_test)
+
+add_executable(read_buffer_test read_buffer_test.cpp)
+gtest_discover_tests(read_buffer_test)
