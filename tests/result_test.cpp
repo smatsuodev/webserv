@@ -272,26 +272,26 @@ Result<double, types::Unit> inverse(const double x) {
 }
 
 TEST(ResultTest, errAndThen) {
-    Result<int, types::Unit> r = Err(unit);
+    const Result<int, types::Unit> r = Err(unit);
     const auto result = r.andThen(inverse);
     EXPECT_TRUE(result.isErr());
 }
 
 TEST(ResultTest, okAndThen) {
-    Result<int, types::Unit> r = Ok(2);
+    const Result<int, types::Unit> r = Ok(2);
     const auto result = r.andThen(inverse);
     ASSERT_TRUE(result.isOk());
     EXPECT_DOUBLE_EQ(result.unwrap(), 0.5);
 }
 
 TEST(ResultTest, okAndThenErr) {
-    Result<int, types::Unit> r = Ok(0);
+    const Result<int, types::Unit> r = Ok(0);
     const auto result = r.andThen(inverse);
     EXPECT_TRUE(result.isErr());
 }
 
 TEST(ResultTest, chainAndThen) {
-    Result<int, types::Unit> r = Ok(2);
+    const Result<int, types::Unit> r = Ok(2);
     const auto result = r.andThen(inverse).andThen(inverse);
     ASSERT_TRUE(result.isOk());
     EXPECT_DOUBLE_EQ(result.unwrap(), 2.0);
@@ -302,20 +302,20 @@ int addOne(const int x) {
 }
 
 TEST(ResultTest, errMap) {
-    Result<int, types::Unit> r = Err(unit);
+    const Result<int, types::Unit> r = Err(unit);
     const auto result = r.map(addOne);
     EXPECT_TRUE(r.isErr());
 }
 
 TEST(ResultTest, okMap) {
-    Result<int, types::Unit> r = Ok(1);
+    const Result<int, types::Unit> r = Ok(1);
     const auto result = r.map(addOne);
     ASSERT_TRUE(result.isOk());
     EXPECT_EQ(result.unwrap(), 2);
 }
 
 TEST(ResultTest, chainMap) {
-    Result<int, types::Unit> r = Ok(1);
+    const Result<int, types::Unit> r = Ok(1);
     const auto result = r.map(addOne).map(addOne);
     ASSERT_TRUE(result.isOk());
     EXPECT_EQ(result.unwrap(), 3);
@@ -330,4 +330,24 @@ TEST(ResultTest, errMapErr) {
     const auto result = r.mapErr(toStr);
     ASSERT_TRUE(result.isErr());
     EXPECT_EQ(result.unwrapErr(), "1");
+}
+
+TEST(ResultTest, optionalOk) {
+    const Result<Option<int>, types::Unit> r = Ok(Some(42));
+    ASSERT_TRUE(r.isOk());
+    EXPECT_EQ(r.unwrap().unwrap(), 42);
+}
+
+// Result<Some, E> -> Result<Option, E> の変換。前はできなかった。
+TEST(ResultTest, mapToOptionalOk) {
+    const Result<int, types::Unit> r = Ok(42);
+    const Result<Option<int>, types::Unit> result = r.map(Some<int>);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_EQ(result.unwrap().unwrap(), 42);
+}
+
+TEST(ResultTest, okString) {
+    const Result<std::string, types::Unit> r = Ok("hello");
+    ASSERT_TRUE(r.isOk());
+    EXPECT_EQ(r.unwrap(), "hello");
 }

@@ -3,14 +3,16 @@
 
 #include "request.hpp"
 #include "transport/connection.hpp"
+#include "utils/types/unit.hpp"
+
 #include <vector>
 
 class RequestReader {
 public:
-    explicit RequestReader(bufio::Reader &reader);
-    ~RequestReader();
+    // NOTE: ReadBuffer に直接依存するべきか?
+    explicit RequestReader(ReadBuffer &readBuf);
 
-    typedef Result<http::Request, error::AppError> ReadRequestResult;
+    typedef Result<Option<http::Request>, error::AppError> ReadRequestResult;
     ReadRequestResult readRequest();
 
 private:
@@ -22,21 +24,26 @@ private:
         kDone,
     };
 
-    bufio::Reader &reader_;
+    typedef std::vector<std::string> RawHeaders;
+
+    ReadBuffer &readBuf_;
     State state_;
 
-    std::string rawRequestLine_;
-    std::vector<std::string> headers_;
+    std::string requestLine_;
+    RawHeaders headers_;
     Option<size_t> contentLength_;
-    char *bodyBuf_;
-    size_t bodyBufSize_;
     Option<std::string> body_;
 
-    Result<std::string, error::AppError> readLine() const;
+    std::string bodyBuf_;
 
-    Result<void, error::AppError> readRequestLine();
-    Result<void, error::AppError> readHeaders();
-    Result<void, error::AppError> readBody();
+    typedef Result<Option<std::string>, error::AppError> GetLineResult;
+    GetLineResult getLine() const;
+
+    // private メンバに書き込むものと、戻り値で返すものが混在してる
+    Result<Option<std::string>, error::AppError> getRequestLine() const;
+    Result<Option<types::Unit>, error::AppError> getHeaders();
+    static Result<Option<size_t>, error::AppError> getContentLength(const RawHeaders &);
+    Result<Option<types::Unit>, error::AppError> getBody(std::size_t);
 };
 
 #endif

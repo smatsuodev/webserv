@@ -35,12 +35,11 @@ private:
 
 class UnregisterEventHandlerAction : public IAction {
 public:
-    explicit UnregisterEventHandlerAction(Connection &conn, IEventHandler *handler);
+    explicit UnregisterEventHandlerAction(Connection &conn);
     void execute(ServerState &state);
 
 private:
     Connection &conn_;
-    IEventHandler *handler_;
     bool executed_;
 };
 
@@ -57,16 +56,6 @@ private:
 class UnregisterEventAction : public IAction {
 public:
     explicit UnregisterEventAction(const Event &event);
-    void execute(ServerState &state);
-
-private:
-    Event event_;
-    bool executed_;
-};
-
-class TriggerPseudoEventAction : public IAction {
-public:
-    explicit TriggerPseudoEventAction(const Event &event);
     void execute(ServerState &state);
 
 private:

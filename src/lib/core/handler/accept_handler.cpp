@@ -25,7 +25,7 @@ IEventHandler::InvokeResult AcceptHandler::invoke(const Context &) {
     actions.push_back(new RegisterEventAction(eventToRegister));
     actions.push_back(new AddConnectionAction(newConnection));
     actions.push_back(
-        new RegisterEventHandlerAction(*newConnection, new ReadRequestHandler(newConnection->getReader())));
+        new RegisterEventHandlerAction(*newConnection, new ReadRequestHandler(newConnection->getReadBuffer())));
 
     return Ok(actions);
 }

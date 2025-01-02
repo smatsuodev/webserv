@@ -33,8 +33,7 @@ void RegisterEventHandlerAction::execute(ServerState &state) {
     }
 }
 
-UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection &conn, IEventHandler *handler)
-    : conn_(conn), handler_(handler), executed_(false) {}
+UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection &conn) : conn_(conn), executed_(false) {}
 
 void UnregisterEventHandlerAction::execute(ServerState &state) {
     if (!executed_) {
@@ -57,15 +56,6 @@ UnregisterEventAction::UnregisterEventAction(const Event &event) : event_(event)
 void UnregisterEventAction::execute(ServerState &state) {
     if (!executed_) {
         state.getEventNotifier().unregisterEvent(event_);
-        executed_ = true;
-    }
-}
-
-TriggerPseudoEventAction::TriggerPseudoEventAction(const Event &event) : event_(event), executed_(false) {}
-
-void TriggerPseudoEventAction::execute(ServerState &state) {
-    if (!executed_) {
-        state.getEventNotifier().triggerPseudoEvent(event_);
         executed_ = true;
     }
 }

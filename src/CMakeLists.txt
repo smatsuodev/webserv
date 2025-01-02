@@ -1,4 +1,4 @@
-set(CMAKE_CXX_STANDARD 98)
+set(CMAKE_CXX_STANDARD 11)  # TODO: C++98 にする
 # 実行ファイルを /bin に出力
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
@@ -63,6 +63,8 @@ add_library(webserv_lib STATIC
         lib/utils/ref.hpp
         lib/http/handler/handler.cpp
         lib/http/handler/handler.hpp
+        lib/utils/io/read_buffer.cpp
+        lib/utils/io/read_buffer.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
