@@ -26,10 +26,10 @@ public:
     // 未読み取りのバイト数を返す
     std::size_t size() const;
 
-    private:
-        static const std::size_t kLoadSize = 4096;
-        io::IReader &reader_;
-        std::vector<char> buf_;
+private:
+    static const std::size_t kLoadSize = 4096;
+    io::IReader &reader_;
+    std::vector<char> buf_;
 };
 
 #endif
