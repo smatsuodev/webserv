@@ -4,24 +4,25 @@
 #include <cstddef>
 #include <stdexcept>
 
+/* forward-declaration */
 template <class T>
 class Option;
-
 template <class T, class E>
 class Result;
 
 namespace types {
     template <class T>
-    class Some;
-
-    class None;
-
-    template <class T>
     class Ok;
-
     template <class E>
     class Err;
 }
+
+// ReSharper disable CppInconsistentNaming
+template <class T>
+types::Ok<T> Ok(T);
+template <class E>
+types::Err<E> Err(E);
+// ReSharper restore CppInconsistentNaming
 
 namespace types {
     template <class T>
