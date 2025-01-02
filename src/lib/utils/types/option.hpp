@@ -78,6 +78,13 @@ class Option {
 public:
     explicit Option(types::Some<T> *some) : some_(some) {}
 
+    // Option<std::string> op = Some("hello"); のように注釈を不要にするために必要
+    // TODO: 提出時に消す
+    // ReSharper disable once CppUseTypeTraitAlias
+    template <class U, typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    Option(types::Some<U> some) : some_(new types::Some<T>(some.val())) {}
+
     explicit Option(const types::None none) : some_(NULL) {
         (void)none;
     }
@@ -152,6 +159,22 @@ public:
 
     bool canUnwrap() const {
         return isSome();
+    }
+
+    template <typename U>
+    Option<U> andThen(Option<U> (*func)(T)) const {
+        if (isSome()) {
+            return func(some_->val());
+        }
+        return None;
+    }
+
+    template <typename U>
+    Option<U> map(U (*func)(T)) const {
+        if (isSome()) {
+            return Some(func(some_->val()));
+        }
+        return None;
     }
 
     template <class E>

@@ -21,6 +21,7 @@ private:
     ServerState state_;
 
     void onHandlerError(const Context &ctx, error::AppError err);
+    void onErrorEvent(const Event &event);
     void executeActions(std::vector<IAction *> actions);
 };
 

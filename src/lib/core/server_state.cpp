@@ -1,5 +1,6 @@
 #include "server_state.hpp"
 #include "utils/logger.hpp"
+#include "utils/ref.hpp"
 
 ConnectionRepository::ConnectionRepository() {}
 
@@ -9,12 +10,12 @@ ConnectionRepository::~ConnectionRepository() {
     }
 }
 
-Option<Connection *> ConnectionRepository::get(const int fd) {
+Option<Ref<Connection> > ConnectionRepository::get(const int fd) {
     const std::map<int, Connection *>::const_iterator it = connections_.find(fd);
     if (it == connections_.end()) {
         return None;
     }
-    return Some(it->second);
+    return Some(Ref<Connection>(*it->second));
 }
 
 void ConnectionRepository::set(const int fd, Connection *conn) {
@@ -32,14 +33,14 @@ void ConnectionRepository::set(const int fd, Connection *conn) {
 }
 
 void ConnectionRepository::remove(const int fd) {
-    const Option<Connection *> conn = this->get(fd);
-    if (conn.isNone()) {
+    const std::map<int, Connection *>::const_iterator it = connections_.find(fd);
+    if (it == connections_.end()) {
         LOG_DEBUGF("ConnectionRepository::remove: fd %d does not exist", fd);
         return;
     }
 
+    delete it->second;
     connections_.erase(fd);
-    delete conn.unwrap();
 
     LOG_DEBUGF("connection removed from server");
 }
@@ -52,15 +53,15 @@ EventHandlerRepository::~EventHandlerRepository() {
     }
 }
 
-Option<IEventHandler *> EventHandlerRepository::get(const int fd) {
+Option<Ref<IEventHandler> > EventHandlerRepository::get(const int fd) {
     const std::map<int, IEventHandler *>::const_iterator it = handlers_.find(fd);
     if (it == handlers_.end()) {
         return None;
     }
-    return Some(it->second);
+    return Some(Ref<IEventHandler>(*it->second));
 }
 
-void EventHandlerRepository::set(int fd, IEventHandler *handler) {
+void EventHandlerRepository::set(const int fd, IEventHandler *handler) {
     if (handlers_[fd]) {
         LOG_DEBUGF("outdated event handler found for fd %d", fd);
         delete handlers_[fd];
@@ -71,20 +72,20 @@ void EventHandlerRepository::set(int fd, IEventHandler *handler) {
 }
 
 void EventHandlerRepository::remove(const int fd) {
-    const Option<IEventHandler *> h = this->get(fd);
-    if (h.isNone()) {
+    const std::map<int, IEventHandler *>::const_iterator it = handlers_.find(fd);
+    if (it == handlers_.end()) {
         LOG_DEBUG("EventHandlerRepository::remove: handler not found");
         return;
     }
 
+    delete it->second;
     handlers_.erase(fd);
-    delete h.unwrap();
 
     LOG_DEBUGF("event handler removed from fd %d", fd);
 }
 
 
-EventNotifier &ServerState::getEventNotifier() {
+IEventNotifier &ServerState::getEventNotifier() {
     return notifier_;
 }
 

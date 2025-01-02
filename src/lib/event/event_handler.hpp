@@ -6,6 +6,7 @@
 #include "utils/types/option.hpp"
 #include "event.hpp"
 #include "transport/connection.hpp"
+#include "utils/ref.hpp"
 
 #include <vector>
 
@@ -13,18 +14,16 @@ class Server;
 class ServerState;
 
 // イベントハンドラーに呼び出された文脈を提供する
-// Connection がコピー禁止なので、Context もコピー禁止
 class Context {
 public:
-    // Connection は参照で受け取りたいが、Option<T &> が無理
-    Context(const Option<Connection *> &conn, const Event &event);
+    Context(const Option<Ref<Connection> > &conn, const Event &event);
 
-    Option<Connection *> getConnection() const;
+    Option<Ref<Connection> > getConnection() const;
     const Event &getEvent() const;
 
 private:
     // accept 前は connection は存在しない
-    Option<Connection *> conn_;
+    Option<Ref<Connection> > conn_;
     Event event_;
 };
 

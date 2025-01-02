@@ -14,31 +14,30 @@ void AddConnectionAction::execute(ServerState &state) {
     }
 }
 
-RemoveConnectionAction::RemoveConnectionAction(Connection *conn) : conn_(conn) {}
+RemoveConnectionAction::RemoveConnectionAction(Connection &conn) : conn_(conn), executed_(false) {}
 
 void RemoveConnectionAction::execute(ServerState &state) {
-    if (conn_) {
-        state.getConnectionRepository().remove(conn_->getFd());
-        conn_ = NULL;
-    }
-}
-
-RegisterEventHandlerAction::RegisterEventHandlerAction(Connection *conn, IEventHandler *handler)
-    : conn_(conn), handler_(handler), executed_(false) {}
-
-void RegisterEventHandlerAction::execute(ServerState &state) {
     if (!executed_) {
-        state.getEventHandlerRepository().set(conn_->getFd(), handler_);
+        state.getConnectionRepository().remove(conn_.getFd());
         executed_ = true;
     }
 }
 
-UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection *conn, IEventHandler *handler)
+RegisterEventHandlerAction::RegisterEventHandlerAction(Connection &conn, IEventHandler *handler)
     : conn_(conn), handler_(handler), executed_(false) {}
+
+void RegisterEventHandlerAction::execute(ServerState &state) {
+    if (!executed_) {
+        state.getEventHandlerRepository().set(conn_.getFd(), handler_);
+        executed_ = true;
+    }
+}
+
+UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection &conn) : conn_(conn), executed_(false) {}
 
 void UnregisterEventHandlerAction::execute(ServerState &state) {
     if (!executed_) {
-        state.getEventHandlerRepository().remove(conn_->getFd());
+        state.getEventHandlerRepository().remove(conn_.getFd());
         executed_ = true;
     }
 }
@@ -57,15 +56,6 @@ UnregisterEventAction::UnregisterEventAction(const Event &event) : event_(event)
 void UnregisterEventAction::execute(ServerState &state) {
     if (!executed_) {
         state.getEventNotifier().unregisterEvent(event_);
-        executed_ = true;
-    }
-}
-
-TriggerPseudoEventAction::TriggerPseudoEventAction(const Event &event) : event_(event), executed_(false) {}
-
-void TriggerPseudoEventAction::execute(ServerState &state) {
-    if (!executed_) {
-        state.getEventNotifier().triggerPseudoEvent(event_);
         executed_ = true;
     }
 }

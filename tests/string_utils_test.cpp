@@ -149,6 +149,74 @@ TEST(Join, emptyElements) {
     EXPECT_EQ(result, "xx");
 }
 
+TEST(StrnstrSome, emptyStr) {
+    const char *s = "";
+    const auto result = utils::strnstr(s, "", 0);
+    EXPECT_TRUE(result.isSome());
+    // アドレスの比較
+    EXPECT_EQ(s, result.unwrap());
+}
+
+TEST(StrnstrSome, emptyNeedle) {
+    const char *s = "abc";
+    const auto result = utils::strnstr(s, "", 0);
+    EXPECT_TRUE(result.isSome());
+    // アドレスの比較
+    EXPECT_EQ(s, result.unwrap());
+}
+
+TEST(StrnstrSome, emptyStrAndNeedle) {
+    const char *s = "";
+    const auto result = utils::strnstr(s, "", 0);
+    EXPECT_TRUE(result.isSome());
+    // アドレスの比較
+    EXPECT_EQ(s, result.unwrap());
+}
+
+TEST(StrnstrSome, hasNeedle) {
+    const char *s = "abc";
+    const auto result = utils::strnstr(s, "b", 3);
+    EXPECT_TRUE(result.isSome());
+    // アドレスの比較
+    EXPECT_EQ(s + 1, result.unwrap());
+}
+
+TEST(StrnstrNone, noNeedle) {
+    const char *s = "abc";
+    const auto result = utils::strnstr(s, "d", 3);
+    EXPECT_TRUE(result.isNone());
+}
+
+TEST(StrnstrNone, needleLongerThanStr) {
+    const char *s = "abc";
+    const auto result = utils::strnstr(s, "abcd", 3);
+    EXPECT_TRUE(result.isNone());
+}
+
+TEST(StrnstrNone, shortLen) {
+    const char *s = "abc";
+    const auto result = utils::strnstr(s, "abc", 2);
+    EXPECT_TRUE(result.isNone());
+}
+
+TEST(StrnstrNone, zeroLen) {
+    const char *s = "abc";
+    const auto result = utils::strnstr(s, "abc", 0);
+    EXPECT_TRUE(result.isNone());
+}
+
+TEST(StrnstrNone, nullStr) {
+    const char *s = nullptr;
+    const auto result = utils::strnstr(s, "abc", 3);
+    EXPECT_TRUE(result.isNone());
+}
+
+TEST(StrnstrNone, nullNeedle) {
+    const char *s = "abc";
+    const auto result = utils::strnstr(s, nullptr, 3);
+    EXPECT_TRUE(result.isNone());
+}
+
 TEST(Trim, empty) {
     const auto result = utils::trim("");
     EXPECT_EQ(result, "");

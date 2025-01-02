@@ -6,7 +6,8 @@
 
 class ReadRequestHandler : public IEventHandler {
 public:
-    explicit ReadRequestHandler(bufio::Reader &reader);
+    // NOTE: ReadBuffer に直接依存するべきか?
+    explicit ReadRequestHandler(ReadBuffer &readBuf);
     InvokeResult invoke(const Context &ctx);
 
 private:

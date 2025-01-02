@@ -2,6 +2,7 @@
 #define TESTS_UTILS_READER_HPP
 
 #include "utils/io/reader.hpp"
+#include <string>
 
 class StringReader : public io::IReader {
 public:
@@ -25,7 +26,7 @@ public:
 class WouldBlockReader : public io::IReader {
 public:
     WouldBlockReader(IReader &reader, int n);
-    ReadResult read(char *buf, std::size_t nbyte);
+    ReadResult read(char *buf, std::size_t nbyte) override;
     bool eof() override;
 
 private:

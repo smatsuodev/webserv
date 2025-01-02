@@ -1,10 +1,19 @@
 #include "event_notifier.hpp"
 #include "utils/logger.hpp"
-#include <sys/epoll.h>
 #include <cstring>
 #include <cerrno>
+#include <map>
+#include <string>
 
-EventNotifier::EventNotifier() : epollFd_(-1) {
+IEventNotifier::~IEventNotifier() {}
+
+#if defined(__linux__)
+
+#include <sys/epoll.h>
+
+EpollEventNotifier::EpollEventNotifier() : epollFd_(-1) {
+    LOG_INFO("using event method: epoll");
+
     /**
      * epoll_create() creates a new epoll(7) instance.
      * Since Linux 2.6.8, the size argument is ignored, but must be greater than zero.
@@ -17,23 +26,23 @@ EventNotifier::EventNotifier() : epollFd_(-1) {
     LOG_DEBUGF("epoll fd created (fd: %d)", epollFd_.get());
 }
 
-void EventNotifier::registerEvent(const Event &event) {
+void EpollEventNotifier::registerEvent(const Event &event) {
     const int targetFd = event.getFd();
 
     epoll_event eev = {};
-    eev.events = EventNotifier::toEpollEvents(event) | EPOLLET;
+    eev.events = EPOLLIN | EPOLLOUT;
     eev.data.fd = targetFd;
-    const int epollOp = registeredFd_.count(targetFd) == 0 ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
+    const int epollOp = registeredEvents_.count(targetFd) == 0 ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
     if (epoll_ctl(epollFd_, epollOp, targetFd, &eev) == -1) {
         LOG_WARNF("failed to add to epoll fd: %s", std::strerror(errno));
         return;
     }
 
-    registeredFd_.insert(targetFd);
+    registeredEvents_[targetFd] = event;
     LOG_DEBUGF("fd %d added to epoll", targetFd);
 }
 
-void EventNotifier::unregisterEvent(const Event &event) {
+void EpollEventNotifier::unregisterEvent(const Event &event) {
     const int targetFd = event.getFd();
 
     if (epoll_ctl(epollFd_, EPOLL_CTL_DEL, targetFd, NULL) == -1) {
@@ -41,39 +50,33 @@ void EventNotifier::unregisterEvent(const Event &event) {
         return;
     }
 
-    registeredFd_.erase(targetFd);
+    registeredEvents_.erase(targetFd);
     LOG_DEBUGF("fd %d removed from epoll", targetFd);
 }
 
-void EventNotifier::triggerPseudoEvent(const Event &event) {
-    pseudoEvents_.push_back(event);
-}
-
-EventNotifier::WaitEventsResult EventNotifier::waitEvents() {
+EpollEventNotifier::WaitEventsResult EpollEventNotifier::waitEvents() {
     epoll_event evs[1024];
-    // pseudo-event があれば即座に返ってほしい、そうでなければ待ち続けてほしい
-    const int timeout = pseudoEvents_.empty() ? -1 : 0;
-    const int numEvents = epoll_wait(epollFd_.get(), evs, 1024, timeout);
+    const int numEvents = epoll_wait(epollFd_.get(), evs, 1024, -1);
     if (numEvents == -1) {
         LOG_ERRORF("epoll_wait failed: %s", std::strerror(errno));
         return Err(error::kUnknown);
     }
 
-    std::vector<Event> events(numEvents);
+    std::vector<Event> events;
+    events.reserve(numEvents);
     for (int i = 0; i < numEvents; i++) {
-        events[i] = Event(evs[i].data.fd, EventNotifier::toEventTypeFlags(evs[i].events));
-    }
-
-    while (!pseudoEvents_.empty()) {
-        // 逆順に追加される
-        events.push_back(pseudoEvents_.back());
-        pseudoEvents_.pop_back();
+        LOG_DEBUGF("epoll events: fd=%d, events=%d", evs[i].data.fd, evs[i].events);
+        const uint32_t flags = EpollEventNotifier::toEventTypeFlags(evs[i].events);
+        // イベント登録時のフラグと一致するイベントのみ返す
+        if (flags & registeredEvents_[evs[i].data.fd].getTypeFlags()) {
+            events.push_back(Event(evs[i].data.fd, flags));
+        }
     }
 
     return Ok(events);
 }
 
-uint32_t EventNotifier::toEventTypeFlags(const uint32_t epollEvents) {
+uint32_t EpollEventNotifier::toEventTypeFlags(const uint32_t epollEvents) {
     uint32_t flags = 0;
     if (epollEvents & EPOLLIN) {
         flags |= Event::kRead;
@@ -81,10 +84,13 @@ uint32_t EventNotifier::toEventTypeFlags(const uint32_t epollEvents) {
     if (epollEvents & EPOLLOUT) {
         flags |= Event::kWrite;
     }
+    if (epollEvents & EPOLLERR) {
+        flags |= Event::kError;
+    }
     return flags;
 }
 
-uint32_t EventNotifier::toEpollEvents(const Event &event) {
+uint32_t EpollEventNotifier::toEpollEvents(const Event &event) {
     const uint32_t flags = event.getTypeFlags();
     uint32_t events = 0;
     if (flags & Event::kRead) {
@@ -93,5 +99,92 @@ uint32_t EventNotifier::toEpollEvents(const Event &event) {
     if (flags & Event::kWrite) {
         events |= EPOLLOUT;
     }
+    if (flags & Event::kError) {
+        events |= EPOLLERR;
+    }
     return events;
 }
+
+#else
+
+#include <poll.h>
+
+PollEventNotifier::PollEventNotifier() {
+    LOG_INFO("using event method: poll");
+}
+
+void PollEventNotifier::registerEvent(const Event &event) {
+    registeredEvents_[event.getFd()] = event;
+    LOG_DEBUGF("fd %d added to poll", event.getFd());
+}
+
+void PollEventNotifier::unregisterEvent(const Event &event) {
+    registeredEvents_.erase(event.getFd());
+    LOG_DEBUGF("fd %d removed from poll", event.getFd());
+}
+
+IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
+    std::vector<pollfd> fds;
+    for (EventMap::const_iterator it = registeredEvents_.begin(); it != registeredEvents_.end(); ++it) {
+        pollfd pfd = {};
+        pfd.fd = it->first;
+        pfd.events = POLLIN | POLLOUT;
+        fds.push_back(pfd);
+    }
+
+    const int result = poll(fds.data(), fds.size(), -1);
+    if (result == -1) {
+        LOG_ERRORF("poll failed: %s", std::strerror(errno));
+        return Err(error::kUnknown);
+    }
+
+    std::vector<Event> events;
+    for (std::vector<pollfd>::const_iterator it = fds.begin(); it < fds.end(); ++it) {
+        const pollfd pfd = *it;
+        if (pfd.revents == 0) {
+            continue;
+        }
+        const uint32_t flags = PollEventNotifier::toEventTypeFlags(pfd.revents);
+        if (flags == 0) {
+            continue;
+        }
+
+        // イベント登録時のフラグと一致するイベントのみ返す
+        if (flags & registeredEvents_[pfd.fd].getTypeFlags()) {
+            events.push_back(Event(pfd.fd, flags));
+        }
+    }
+
+    return Ok(events);
+}
+
+short PollEventNotifier::toPollEvents(const Event &event) {
+    const uint32_t flags = event.getTypeFlags();
+    short events = 0;
+    if (flags & Event::kRead) {
+        events |= POLLIN;
+    }
+    if (flags & Event::kWrite) {
+        events |= POLLOUT;
+    }
+    if (flags & Event::kError) {
+        events |= POLLERR;
+    }
+    return events;
+}
+
+uint32_t PollEventNotifier::toEventTypeFlags(const short pollEvents) {
+    uint32_t flags = 0;
+    if (pollEvents & POLLIN) {
+        flags |= Event::kRead;
+    }
+    if (pollEvents & POLLOUT) {
+        flags |= Event::kWrite;
+    }
+    if (pollEvents & POLLERR) {
+        flags |= Event::kError;
+    }
+    return flags;
+}
+
+#endif

@@ -2,34 +2,72 @@
 #include "write_response_handler.hpp"
 #include "core/action.hpp"
 #include "http/response/response.hpp"
+#include "http/response/response_builder.hpp"
 #include "utils/logger.hpp"
-#include "utils/io/reader.hpp"
 #include "utils/types/try.hpp"
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
-ReadRequestHandler::ReadRequestHandler(bufio::Reader &reader) : reqReader_(reader) {}
+// TODO: config を元に適切な path に解決する
+// 今はカレントディレクトリからの相対パスとして扱う
+Result<std::string, error::AppError> getPath(const http::Request &req) {
+    LOG_DEBUGF("request target: %s", req.getRequestTarget().c_str());
+
+    const std::string path = req.getRequestTarget().substr(1);
+    if (path.empty()) {
+        LOG_DEBUGF("invalid request target: %s", req.getRequestTarget().c_str());
+        return Err(error::kUnknown);
+    }
+    return Ok(path);
+}
+
+// andThen で使いたいので、ref ではなく値を受け取る
+// ReSharper disable once CppPassValueParameterByConstReference
+Result<int, error::AppError> openFile(const std::string path) { // NOLINT(*-unnecessary-value-param)
+    const int fd = open(path.c_str(), O_RDONLY);
+    if (fd == -1) {
+        LOG_DEBUGF("failed to open file: %s", path.c_str());
+        return Err(error::kUnknown);
+    }
+    return Ok(fd);
+}
+
+Result<std::string, error::AppError> readFile(const int rawFd) {
+    close(rawFd);
+    return Err(error::kUnknown);
+}
+
+// ReSharper disable once CppPassValueParameterByConstReference
+http::Response toResponse(const std::string fileContent) { // NOLINT(*-unnecessary-value-param)
+    return http::ResponseBuilder().text(fileContent).build();
+}
+
+ReadRequestHandler::ReadRequestHandler(ReadBuffer &readBuf) : reqReader_(readBuf) {}
 
 IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start ReadRequestHandler");
 
-    const RequestReader::ReadRequestResult result = reqReader_.readRequest();
-    const http::Request req = TRY(result);
+    const Option<http::Request> req = TRY(reqReader_.readRequest());
+    if (req.isNone()) {
+        // read は高々 1 回なので、パースまで完了しなかった
+        LOG_DEBUG("request is not fully read");
+        return Err(error::kRecoverable);
+    }
 
     LOG_DEBUGF("HTTP request parsed");
 
-    // 今は同じ body をそのまま返す
-    http::Headers headers;
-    headers.insert(std::make_pair("Content-Length", utils::toString(req.getBody().size())));
-    headers.insert(std::make_pair("Content-Type", "text/plain"));
-    const http::Response res(http::kStatusOk, "HTTP/1.1", headers, req.getBody());
+    // TODO: すべてのエラーが 404 とは限らない. 適切なレスポンスを返すようにする
+    // TODO: readFile が kWouldBlock を返すと、読み取った req が失われる
+    const http::Response res = getPath(req.unwrap())
+                                   .andThen(openFile)
+                                   .andThen(readFile)
+                                   .map(toResponse)
+                                   .unwrapOr(http::ResponseBuilder().text("not found", http::kStatusNotFound).build());
 
     std::vector<IAction *> actions;
     actions.push_back(new RegisterEventAction(Event(ctx.getEvent().getFd(), Event::kWrite)));
     actions.push_back(new RegisterEventHandlerAction(ctx.getConnection().unwrap(), new WriteResponseHandler(res)));
-    /**
-     * クライアントはこれ以上イベントを起こさない可能性がある
-     * 続きの handler が実行されるように、擬似的にイベントを通知する
-     */
-    actions.push_back(new TriggerPseudoEventAction(ctx.getEvent()));
 
     return Ok(actions);
 }

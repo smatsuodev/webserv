@@ -13,6 +13,12 @@ namespace types {
     public:
         explicit Ok(T val) : val_(val) {}
 
+        // コピーコンストラクタではない
+        // Result<T, E>(Ok<U>) のコンストラクタで Ok<U> -> Ok<T> に変換するために必要
+        // TODO: 提出時に消す
+        template <class U, typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
+        explicit Ok(Ok<U> &other) : val_(other.val()) {}
+
         Ok(const Ok &other) : val_(other.val_) {}
 
         ~Ok() {}
@@ -126,6 +132,33 @@ public:
     // NOLINTNEXTLINE(google-explicit-constructor)
     Result(types::Ok<T> ok) : ok_(new types::Ok<T>(ok)), err_(NULL) {}
 
+    /**
+     * 以下のコードを書けるようにするために必要
+     * (本来 Ok<Option<int>> や Ok<std::string> などの注釈が必要)
+     * Result<Option<int>, E> r = Ok(Some(42));
+     * Result<std::string, E> r2 = Ok("hello");
+     */
+    // U -> T に変換可能であるという制約を付けないと、IDE 上でエラーが出ない (コンパイル時に出る)
+    // TODO: std::is_convertible などは C++11 以降なので、提出時に消す
+    template <class U, typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    Result(types::Ok<U> ok) : ok_(new types::Ok<T>(ok)), err_(NULL) {}
+
+    // result.map(Some<T>) の型 Result<Some<T>, E> から Result<Option<T>, E> に変換するために必要
+    // TODO: 提出時に消す
+    template <class U, typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    Result(const Result<U, E> &other) {
+        if (other.isOk()) {
+            // NOTE: U -> T に変換できる必要がある
+            ok_ = new types::Ok<T>(other.unwrap());
+            err_ = NULL;
+        } else {
+            err_ = new types::Err<E>(other.unwrapErr());
+            ok_ = NULL;
+        }
+    }
+
     // Result<int, std::string> target = Err<std::string>("error"); みたいなことができるようにexplicitをつけない
     // NOLINTNEXTLINE(google-explicit-constructor)
     Result(types::Err<E> err) : ok_(NULL), err_(new types::Err<E>(err)) {}
@@ -212,6 +245,30 @@ public:
 
     bool canUnwrap() const {
         return isOk();
+    }
+
+    template <typename U>
+    Result<U, E> andThen(Result<U, E> (*func)(T)) const {
+        if (isOk()) {
+            return func(ok_->val());
+        }
+        return Err(err_->error());
+    }
+
+    template <typename U>
+    Result<U, E> map(U (*func)(T)) const {
+        if (isOk()) {
+            return Ok(func(ok_->val()));
+        }
+        return Err(err_->error());
+    }
+
+    template <typename F>
+    Result<T, F> mapErr(F (*func)(E)) const {
+        if (isOk()) {
+            return Ok(ok_->val());
+        }
+        return Err(func(err_->error()));
     }
 
 private:
@@ -302,6 +359,22 @@ public:
 
     bool canUnwrap() const {
         return isOk();
+    }
+
+    template <typename U>
+    Result<U, E> andThen(Result<U, E> (*func)()) {
+        if (isOk()) {
+            return func();
+        }
+        return Err(err_->error());
+    }
+
+    template <typename F>
+    Result<void, F> mapErr(F (*func)(E)) {
+        if (isOk()) {
+            return Ok();
+        }
+        return Err(func(err_->error()));
     }
 
 private:

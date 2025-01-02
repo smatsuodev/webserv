@@ -168,6 +168,77 @@ TEST(OptionTest, assignNone2Some) {
     EXPECT_EQ(op.unwrap(), 1);
 }
 
+Option<double> inverse(const int x) {
+    if (x == 0) {
+        return None;
+    }
+    return Some(1.0 / x);
+}
+
+Option<double> inverse(const double x) {
+    if (x == 0) {
+        return None;
+    }
+    return Some(1.0 / x);
+}
+
+TEST(OptionTest, noneAndThen) {
+    const Option<int> op = None;
+    const auto res = op.andThen(inverse);
+    EXPECT_TRUE(res.isNone());
+}
+
+TEST(OptionTest, someAndThen) {
+    const Option<int> op = Some(2);
+    const auto res = op.andThen(inverse);
+    EXPECT_TRUE(res.isSome());
+    EXPECT_DOUBLE_EQ(res.unwrap(), 0.5);
+}
+
+TEST(OptionTest, someAndThenNone) {
+    const Option<int> op = Some(0);
+    const auto res = op.andThen(inverse);
+    EXPECT_TRUE(res.isNone());
+}
+
+TEST(OptionTest, chainAndThen) {
+    const Option<int> op = Some(2);
+    const auto res = op.andThen(inverse).andThen(inverse);
+    EXPECT_TRUE(res.isSome());
+    EXPECT_DOUBLE_EQ(res.unwrap(), 2.0);
+}
+
+int addOne(const int x) {
+    return x + 1;
+}
+
+TEST(OptionTest, noneMap) {
+    const Option<int> op = None;
+    const auto res = op.map(addOne);
+    EXPECT_TRUE(res.isNone());
+}
+
+TEST(OptionTest, someMap) {
+    const Option<int> op = Some(1);
+    const auto res = op.map(addOne);
+    EXPECT_TRUE(res.isSome());
+    EXPECT_EQ(res.unwrap(), 2);
+}
+
+TEST(OptionTest, chainMap) {
+    const Option<int> op = Some(1);
+    const auto res = op.map(addOne).map(addOne);
+    EXPECT_TRUE(res.isSome());
+    EXPECT_EQ(res.unwrap(), 3);
+}
+
+// 前は Some<std::string> の注釈が必要だった
+TEST(OptionTest, optionalString) {
+    const Option<std::string> op = Some("hello");
+    EXPECT_TRUE(op.isSome());
+    EXPECT_EQ(op.unwrap(), "hello");
+}
+
 TEST(OptionTest, exprIsEvaluatedOnce) {
     int cnt = 0;
     auto func = [&]() -> Option<bool> {
@@ -185,16 +256,16 @@ TEST(OptionTest, exprIsEvaluatedOnce) {
 }
 
 TEST(OptionTest, okOrSome) {
-    Option<int> op = Some(1);
-    Result<int, int> res = op.okOr(2);
+    const Option<int> op = Some(1);
+    const Result<int, int> res = op.okOr(2);
 
     EXPECT_TRUE(res.isOk());
     EXPECT_EQ(res.unwrap(), 1);
 }
 
 TEST(OptionTest, okOrNone) {
-    Option<int> op = None;
-    Result<int, int> res = op.okOr(2);
+    const Option<int> op = None;
+    const Result<int, int> res = op.okOr(2);
 
     EXPECT_TRUE(res.isErr());
     EXPECT_EQ(res.unwrapErr(), 2);
