@@ -14,6 +14,11 @@ namespace types {
     template <class T>
     class Some;
 
+    class None;
+
+    template <class T>
+    class Ok;
+
     template <class E>
     class Err;
 }
