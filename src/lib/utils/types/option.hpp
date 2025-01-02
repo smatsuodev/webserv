@@ -1,12 +1,22 @@
 #ifndef SRC_LIB_UTILS_TYPES_OPTION_HPP
 #define SRC_LIB_UTILS_TYPES_OPTION_HPP
 
-#include "result.hpp"
 #include <cstddef>
 #include <stdexcept>
 
 template <class T>
 class Option;
+
+template <class T, class E>
+class Result;
+
+namespace types {
+    template <class T>
+    class Some;
+
+    template <class E>
+    class Err;
+}
 
 namespace types {
     template <class T>
