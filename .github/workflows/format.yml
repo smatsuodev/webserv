@@ -14,8 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          deb http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main
-          deb-src http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          echo "deb-src http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main" | sudo tee -a /etc/apt/sources.list.d/llvm.list
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: clang-format-19
