@@ -123,8 +123,7 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
     for (EventMap::const_iterator it = registeredEvents_.begin(); it != registeredEvents_.end(); ++it) {
         pollfd pfd = {};
         pfd.fd = it->first;
-        // TODO: POLLIN | POLLOUT を通知させる
-        pfd.events = static_cast<short>(PollEventNotifier::toPollEvents(it->second) | POLLERR);
+        pfd.events = POLLIN | POLLOUT;
         fds.push_back(pfd);
     }
 
@@ -145,9 +144,10 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
             continue;
         }
 
-        // TODO: in/out 両方通知するようになったら、期待する event だけ filter する
-        const Event ev(pfd.fd, flags);
-        events.push_back(ev);
+        // イベント登録時のフラグと一致するイベントのみ返す
+        if (flags & registeredEvents_[pfd.fd].getTypeFlags()) {
+            events.push_back(Event(pfd.fd, flags));
+        }
     }
 
     return Ok(events);
