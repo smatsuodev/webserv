@@ -27,7 +27,7 @@ WouldBlockReader::WouldBlockReader(io::IReader &reader, const int n) : reader_(r
 WouldBlockReader::ReadResult WouldBlockReader::read(char *buf, const std::size_t nbyte) {
     if (++counter_ == n_) {
         errno = EAGAIN;
-        return Err(error::kIOWouldBlock);
+        return Err(error::kIOUnknown);
     }
     return reader_.read(buf, nbyte);
 }
@@ -43,7 +43,7 @@ io::IReader::ReadResult WouldBlockReader2::read(char *buf, const std::size_t nby
     flag = !flag;
     if (flag) {
         errno = EAGAIN;
-        return Err(error::kIOWouldBlock);
+        return Err(error::kIOUnknown);
     }
     return reader_.read(buf, nbyte);
 }
