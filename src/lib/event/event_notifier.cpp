@@ -30,15 +30,15 @@ void EpollEventNotifier::registerEvent(const Event &event) {
     const int targetFd = event.getFd();
 
     epoll_event eev = {};
-    eev.events = EpollEventNotifier::toEpollEvents(event) | EPOLLERR | EPOLLET;
+    eev.events = EPOLLIN | EPOLLOUT;
     eev.data.fd = targetFd;
-    const int epollOp = registeredFd_.count(targetFd) == 0 ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
+    const int epollOp = registeredEvents_.count(targetFd) == 0 ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
     if (epoll_ctl(epollFd_, epollOp, targetFd, &eev) == -1) {
         LOG_WARNF("failed to add to epoll fd: %s", std::strerror(errno));
         return;
     }
 
-    registeredFd_.insert(targetFd);
+    registeredEvents_[targetFd] = event;
     LOG_DEBUGF("fd %d added to epoll", targetFd);
 }
 
@@ -50,7 +50,7 @@ void EpollEventNotifier::unregisterEvent(const Event &event) {
         return;
     }
 
-    registeredFd_.erase(targetFd);
+    registeredEvents_.erase(targetFd);
     LOG_DEBUGF("fd %d removed from epoll", targetFd);
 }
 
@@ -62,10 +62,15 @@ EpollEventNotifier::WaitEventsResult EpollEventNotifier::waitEvents() {
         return Err(error::kUnknown);
     }
 
-    std::vector<Event> events(numEvents);
+    std::vector<Event> events;
+    events.reserve(numEvents);
     for (int i = 0; i < numEvents; i++) {
         LOG_DEBUGF("epoll events: fd=%d, events=%d", evs[i].data.fd, evs[i].events);
-        events[i] = Event(evs[i].data.fd, EpollEventNotifier::toEventTypeFlags(evs[i].events));
+        const uint32_t flags = EpollEventNotifier::toEventTypeFlags(evs[i].events);
+        // イベント登録時のフラグと一致するイベントのみ返す
+        if (flags & registeredEvents_[evs[i].data.fd].getTypeFlags()) {
+            events.push_back(Event(evs[i].data.fd, flags));
+        }
     }
 
     return Ok(events);
@@ -123,8 +128,7 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
     for (EventMap::const_iterator it = registeredEvents_.begin(); it != registeredEvents_.end(); ++it) {
         pollfd pfd = {};
         pfd.fd = it->first;
-        // TODO: POLLIN | POLLOUT を通知させる
-        pfd.events = static_cast<short>(PollEventNotifier::toPollEvents(it->second) | POLLERR);
+        pfd.events = POLLIN | POLLOUT;
         fds.push_back(pfd);
     }
 
@@ -145,9 +149,10 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
             continue;
         }
 
-        // TODO: in/out 両方通知するようになったら、期待する event だけ filter する
-        const Event ev(pfd.fd, flags);
-        events.push_back(ev);
+        // イベント登録時のフラグと一致するイベントのみ返す
+        if (flags & registeredEvents_[pfd.fd].getTypeFlags()) {
+            events.push_back(Event(pfd.fd, flags));
+        }
     }
 
     return Ok(events);
