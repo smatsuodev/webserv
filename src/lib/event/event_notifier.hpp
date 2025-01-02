@@ -36,7 +36,8 @@ public:
 
 private:
     AutoFd epollFd_;
-    std::set<int> registeredFd_;
+    typedef std::map<int, Event> EventMap;
+    EventMap registeredEvents_;
 
     static uint32_t toEpollEvents(const Event &event);
     static uint32_t toEventTypeFlags(uint32_t epollEvents);
