@@ -17,7 +17,7 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
             // request-line CRLF
             case kReadingRequestLine: {
                 LOG_DEBUG("read start-line");
-                Option<std::string> result = TRY(getRequestLine(readBuf_));
+                Option<std::string> result = TRY(this->getRequestLine());
                 if (result.isNone()) {
                     if (bytesLoaded == 0) {
                         LOG_WARN("incomplete request-line");
@@ -33,7 +33,7 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
             // *( field-line CRLF ) CRLF
             case kReadingHeaders: {
                 LOG_DEBUG("read headers");
-                Option<RawHeaders> result = TRY(getHeaders(readBuf_));
+                Option<types::Unit> result = TRY(this->getHeaders());
                 if (result.isNone()) {
                     if (bytesLoaded == 0) {
                         LOG_WARN("incomplete headers");
@@ -41,8 +41,7 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
                     }
                     return Ok(None);
                 }
-                headers_ = result.unwrap();
-                contentLength_ = TRY(getContentLength(result.unwrap()));
+                contentLength_ = TRY(this->getContentLength(headers_));
                 state_ = contentLength_.isSome() ? kReadingBody : kDone;
                 break;
             }
@@ -50,8 +49,8 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
             // message-body
             case kReadingBody: {
                 LOG_DEBUG("read message-body");
-                body_ = TRY(getBody(readBuf_, contentLength_.unwrap()));
-                if (body_.isNone()) {
+                const Option<types::Unit> result = TRY(this->getBody(contentLength_.unwrap()));
+                if (result.isNone()) {
                     if (bytesLoaded == 0) {
                         LOG_WARN("incomplete body");
                         return Err(error::kUnknown);
@@ -75,16 +74,16 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
     }
 
     if (state_ != kDone) {
-        LOG_WARN("incomplete request");
-        return Err(error::kUnknown);
+        // バッファが足りない
+        return Ok(None);
     }
 
     const http::Request req = TRY(http::RequestParser::parseRequest(requestLine_, headers_, body_.unwrapOr("")));
     return Ok(Some(req));
 }
 
-RequestReader::GetLineResult RequestReader::getLine(ReadBuffer &readBuf) {
-    const Option<std::string> maybeLine = TRY(readBuf.consumeUntil("\r\n"));
+RequestReader::GetLineResult RequestReader::getLine() const {
+    const Option<std::string> maybeLine = readBuf_.consumeUntil("\r\n");
     if (maybeLine.isNone()) {
         return Ok(None);
     }
@@ -98,16 +97,14 @@ RequestReader::GetLineResult RequestReader::getLine(ReadBuffer &readBuf) {
     return Ok(Some(line));
 }
 
-Result<Option<std::string>, error::AppError> RequestReader::getRequestLine(ReadBuffer &readBuf) {
-    const Option<std::string> reqLine = TRY(getLine(readBuf));
+Result<Option<std::string>, error::AppError> RequestReader::getRequestLine() const {
+    const Option<std::string> reqLine = TRY(this->getLine());
     return Ok(reqLine);
 }
 
-Result<Option<RequestReader::RawHeaders>, error::AppError> RequestReader::getHeaders(ReadBuffer &readBuf) {
-    static RawHeaders headers;
-
+Result<Option<types::Unit>, error::AppError> RequestReader::getHeaders() {
     while (true) {
-        const Option<std::string> line = TRY(getLine(readBuf));
+        const Option<std::string> line = TRY(this->getLine());
         if (line.isNone()) {
             // バッファが足りない
             return Ok(None);
@@ -121,10 +118,10 @@ Result<Option<RequestReader::RawHeaders>, error::AppError> RequestReader::getHea
         if (header.empty()) {
             break;
         }
-        headers.push_back(header);
+        headers_.push_back(header);
     }
 
-    return Ok(Some(headers));
+    return Ok(Some(unit));
 }
 
 Result<Option<size_t>, error::AppError> RequestReader::getContentLength(const RawHeaders &headers) {
@@ -138,15 +135,16 @@ Result<Option<size_t>, error::AppError> RequestReader::getContentLength(const Ra
     return Ok(None);
 }
 
-Result<Option<std::string>, error::AppError> RequestReader::getBody(ReadBuffer &readBuf,
-                                                                    const std::size_t contentLength) {
-    static std::string body;
-
-    while (body.size() < contentLength) {
-        const std::size_t want = contentLength - body.size();
-        const std::string chunk = TRY(readBuf.consume(want));
-        body += chunk;
+Result<Option<types::Unit>, error::AppError> RequestReader::getBody(const std::size_t contentLength) {
+    while (bodyBuf_.size() < contentLength) {
+        const std::size_t want = contentLength - bodyBuf_.size();
+        const std::string chunk = readBuf_.consume(want);
+        if (chunk.empty()) {
+            return Ok(None);
+        }
+        bodyBuf_ += chunk;
     }
 
-    return Ok(Some(body));
+    body_ = Some(bodyBuf_);
+    return Ok(Some(unit));
 }

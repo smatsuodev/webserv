@@ -59,17 +59,20 @@ TEST_F(RequestReaderTest, GetWouldBlock) {
     ReadBuffer readBuf(reader);
     RequestReader reqReader(readBuf);
 
-    // kWouldBlock が返るので、Ok になるまで繰り返す
+    // Request が得られるまで繰り返す
     auto result = reqReader.readRequest();
-    while (result.isErr()) {
+    uint count = 20;
+    while (result.isErr() || result.unwrap().isNone()) {
         result = reqReader.readRequest();
+        ASSERT_GE(count--, 0);
     }
 
     const http::Request expected = http::Request(http::kMethodGet, "/", "HTTP/1.1",
                                                  {
                                                      std::make_pair("Host", "example.com"),
                                                  });
-    EXPECT_EQ(result.unwrap().unwrap(), expected);
+    const auto unwrapped = result.unwrap().unwrap();
+    EXPECT_EQ(unwrapped, expected);
 }
 
 TEST_F(RequestReaderTest, PostWouldBlock) {
@@ -83,9 +86,12 @@ TEST_F(RequestReaderTest, PostWouldBlock) {
     ReadBuffer readBuf(reader);
     RequestReader reqReader(readBuf);
 
+    // Request が得られるまで繰り返す
     auto result = reqReader.readRequest();
-    while (result.isErr()) {
+    uint count = 20;
+    while (result.isErr() || result.unwrap().isNone()) {
         result = reqReader.readRequest();
+        ASSERT_GE(count--, 0);
     }
 
     const http::Request expected = http::Request(http::kMethodPost, "/", "HTTP/1.1",

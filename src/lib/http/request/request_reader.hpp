@@ -3,6 +3,8 @@
 
 #include "request.hpp"
 #include "transport/connection.hpp"
+#include "utils/types/unit.hpp"
+
 #include <vector>
 
 class RequestReader {
@@ -32,14 +34,16 @@ private:
     Option<size_t> contentLength_;
     Option<std::string> body_;
 
+    std::string bodyBuf_;
+
     typedef Result<Option<std::string>, error::AppError> GetLineResult;
-    static GetLineResult getLine(ReadBuffer &);
+    GetLineResult getLine() const;
 
-
-    static Result<Option<std::string>, error::AppError> getRequestLine(ReadBuffer &);
-    static Result<Option<RawHeaders>, error::AppError> getHeaders(ReadBuffer &);
+    // private メンバに書き込むものと、戻り値で返すものが混在してる
+    Result<Option<std::string>, error::AppError> getRequestLine() const;
+    Result<Option<types::Unit>, error::AppError> getHeaders();
     static Result<Option<size_t>, error::AppError> getContentLength(const RawHeaders &);
-    static Result<Option<std::string>, error::AppError> getBody(ReadBuffer &, std::size_t);
+    Result<Option<types::Unit>, error::AppError> getBody(std::size_t);
 };
 
 #endif
