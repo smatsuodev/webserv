@@ -13,9 +13,12 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - run: |
+          deb http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main
+          deb-src http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: clang-format-18
+          packages: clang-format-19
           version: 1.0
-      - run: clang-format -i $(git ls-files '*.cpp' '*.hpp')
+      - run: clang-format-19 -i $(git ls-files '*.cpp' '*.hpp')
       - run: git diff --exit-code
