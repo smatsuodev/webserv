@@ -16,9 +16,6 @@ IEventHandler::InvokeResult WriteResponseHandler::invoke(const Context &ctx) {
     errno = 0;
     const ssize_t bytesWritten = write(conn.getFd(), responseMessage_.c_str() + totalBytesWritten_, bytesToWrite);
     if (bytesWritten == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            return Err(error::kIOWouldBlock);
-        }
         LOG_WARN("failed to write response");
         return Err(error::kIOUnknown);
     }

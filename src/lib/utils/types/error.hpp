@@ -16,7 +16,6 @@ namespace error {
         // IO
         // ReSharper disable CppInconsistentNaming
         kIOUnknown, // EAGAIN も含む
-        kIOWouldBlock, // TODO: 廃止したい
         // ReSharper restore CppInconsistentNaming
 
         // Validation
