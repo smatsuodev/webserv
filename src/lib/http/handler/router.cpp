@@ -2,15 +2,22 @@
 #include "matcher.hpp"
 #include "http/response/response_builder.hpp"
 #include "utils/logger.hpp"
+#include <set>
 
 namespace http {
     Router::Router() {}
 
     Router::~Router() {
+        // メソッドに同じ handler が登録されていると double free になるので、重複を排除する
+        std::set<IHandler *> handlerSet;
         for (HandlerMap::const_iterator it = handlers_.begin(); it != handlers_.end(); ++it) {
             for (MethodHandlerMap::const_iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
-                delete jt->second;
+                handlerSet.insert(jt->second);
             }
+        }
+
+        for (std::set<IHandler *>::iterator it = handlerSet.begin(); it != handlerSet.end(); ++it) {
+            delete *it;
         }
     }
 
