@@ -42,7 +42,14 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
                     return Ok(None);
                 }
                 contentLength_ = TRY(this->getContentLength(headers_));
-                state_ = contentLength_.isSome() ? kReadingBody : kDone;
+                if (contentLength_.isSome()) {
+                    const size_t len = contentLength_.unwrap();
+                    if (len == 0) {
+                        state_ = kDone;
+                    } else {
+                        state_ = kReadingBody;
+                    }
+                }
                 break;
             }
 
