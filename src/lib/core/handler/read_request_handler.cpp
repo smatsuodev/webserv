@@ -23,12 +23,7 @@ IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     }
 
     LOG_DEBUGF("HTTP request parsed");
-
-    // TODO: すべてのエラーが 404 とは限らない. 適切なレスポンスを返すようにする
-    // TODO: readFile が kWouldBlock を返すと、読み取った req が失われる
-    const http::Response res = http::Handler()
-                                   .serve(req.unwrap())
-                                   .unwrapOr(http::ResponseBuilder().text("not found", http::kStatusNotFound).build());
+    const http::Response res = http::Handler().serve(req.unwrap());
 
     std::vector<IAction *> actions;
     actions.push_back(new RegisterEventAction(Event(ctx.getEvent().getFd(), Event::kWrite)));
