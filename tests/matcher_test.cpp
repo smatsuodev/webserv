@@ -60,6 +60,18 @@ TEST_F(MatcherTest, empty) {
     ASSERT_TRUE(result.isNone());
 }
 
+TEST_F(MatcherTest, trailingSlash) {
+    const auto result = matcher.match("/path/");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), Value::kValue2);
+}
+
+TEST_F(MatcherTest, extraSlash) {
+    const auto result = matcher.match("/path//longer///");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), Value::kValue3);
+}
+
 TEST_F(MatcherTest, partial) {
     // 上書き
     matcher = Matcher<Value>({std::make_pair("/path", Value::kValue1)});
