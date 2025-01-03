@@ -238,3 +238,35 @@ TEST(OptionTest, optionalString) {
     EXPECT_TRUE(op.isSome());
     EXPECT_EQ(op.unwrap(), "hello");
 }
+
+TEST(OptionTest, exprIsEvaluatedOnce) {
+    int cnt = 0;
+    auto func = [&]() -> Option<bool> {
+        cnt++;
+        return None;
+    };
+    auto callTry = [&]() -> Option<bool> {
+        TRY(func());
+        return None;
+    };
+
+    callTry();
+
+    EXPECT_EQ(cnt, 1);
+}
+
+TEST(OptionTest, okOrSome) {
+    const Option<int> op = Some(1);
+    const Result<int, int> res = op.okOr(2);
+
+    EXPECT_TRUE(res.isOk());
+    EXPECT_EQ(res.unwrap(), 1);
+}
+
+TEST(OptionTest, okOrNone) {
+    const Option<int> op = None;
+    const Result<int, int> res = op.okOr(2);
+
+    EXPECT_TRUE(res.isErr());
+    EXPECT_EQ(res.unwrapErr(), 2);
+}
