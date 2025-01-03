@@ -10,6 +10,53 @@
 #include <vector>
 
 namespace config {
+    class LocationContext;
+    class ServerContext;
+
+    typedef std::vector<ServerContext> ServerContextList;
+    typedef std::vector<LocationContext> LocationContextList;
+
+    class Config {
+    public:
+        explicit Config(const ServerContextList &servers);
+
+        const ServerContextList &getServers() const;
+
+    private:
+        ServerContextList servers_;
+    };
+
+    class ServerContext {
+    public:
+        typedef std::map<http::HttpStatusCode, std::string> ErrorPageMap;
+
+        explicit ServerContext(
+            const LocationContextList &locations,
+            uint16_t port = 80,
+            const std::string &host = "127.0.0.1",
+            const std::vector<std::string> &serverName = std::vector<std::string>(),
+            const ErrorPageMap &errorPage = ErrorPageMap(),
+            std::size_t clientMaxBodySize = kDefaultClientMaxBodySize
+        );
+
+        const std::string &getHost() const;
+        uint16_t getPort() const;
+        std::size_t getClientMaxBodySize() const;
+        const std::vector<std::string> &getServerName() const;
+        const std::map<http::HttpStatusCode, std::string> &getErrorPage() const;
+        const LocationContextList &getLocations() const;
+
+    private:
+        static const std::size_t kDefaultClientMaxBodySize = 1048576; // 1 MiB
+
+        std::string host_;
+        uint16_t port_;
+        std::size_t clientMaxBodySize_;
+        std::vector<std::string> serverName_;
+        ErrorPageMap errorPage_;
+        LocationContextList locations_;
+    };
+
     class LocationContext {
     public:
         // root, autoindex, index からなるクラス
@@ -58,47 +105,6 @@ namespace config {
         Option<std::string> redirect_;
 
         static AllowedMethods getDefaultAllowedMethods();
-    };
-
-    class ServerContext {
-    public:
-        typedef std::map<http::HttpStatusCode, std::string> ErrorPageMap;
-
-        explicit ServerContext(
-            const std::vector<LocationContext> &locations,
-            uint16_t port = 80,
-            const std::string &host = "127.0.0.1",
-            const std::vector<std::string> &serverName = std::vector<std::string>(),
-            const ErrorPageMap &errorPage = ErrorPageMap(),
-            std::size_t clientMaxBodySize = kDefaultClientMaxBodySize
-        );
-
-        const std::string &getHost() const;
-        uint16_t getPort() const;
-        std::size_t getClientMaxBodySize() const;
-        const std::vector<std::string> &getServerName() const;
-        const std::map<http::HttpStatusCode, std::string> &getErrorPage() const;
-        const std::vector<LocationContext> &getLocations() const;
-
-    private:
-        static const std::size_t kDefaultClientMaxBodySize = 1048576; // 1 MiB
-
-        std::string host_;
-        uint16_t port_;
-        std::size_t clientMaxBodySize_;
-        std::vector<std::string> serverName_;
-        ErrorPageMap errorPage_;
-        std::vector<LocationContext> locations_;
-    };
-
-    class Config {
-    public:
-        explicit Config(const std::vector<ServerContext> &servers);
-
-        const std::vector<ServerContext> &getServers() const;
-
-    private:
-        std::vector<ServerContext> servers_;
     };
 }
 
