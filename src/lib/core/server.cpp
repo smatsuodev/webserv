@@ -86,12 +86,12 @@ void Server::onErrorEvent(const Event &event) {
 }
 
 void Server::executeActions(std::vector<IAction *> actions) {
-    for (std::vector<IAction *>::const_iterator it = actions.begin(); it != actions.end(); ++it) {
-        // TODO: 毎回 router を作り直すのをやめる
-        http::Router router;
-        router.onGet("/", new http::Handler());
-        router.onDelete("/", new http::Handler());
+    // TODO: 毎回 router を作り直すのをやめる
+    http::Router router;
+    router.onGet("/", new http::Handler());
+    router.onDelete("/", new http::Handler());
 
+    for (std::vector<IAction *>::const_iterator it = actions.begin(); it != actions.end(); ++it) {
         IAction *action = *it;
         ActionContext ctx(state_, router);
         action->execute(ctx);
