@@ -42,7 +42,11 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
                     return Ok(None);
                 }
                 contentLength_ = TRY(this->getContentLength(headers_));
-                state_ = contentLength_.isSome() ? kReadingBody : kDone;
+                if (contentLength_.isSome() && contentLength_.unwrap() > 0) {
+                    state_ = kReadingBody;
+                } else {
+                    state_ = kDone;
+                }
                 break;
             }
 
