@@ -9,7 +9,7 @@
 http::IHandler::~IHandler() {}
 
 http::Response http::Handler::deleteMethod(const std::string &path) {
-    struct stat buf = {0};
+    struct stat buf = {};
     if (stat(path.c_str(), &buf) == -1) {
         if (errno == ENOENT) {
             LOG_DEBUGF("file does not exist: %s", path.c_str());
