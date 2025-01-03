@@ -16,6 +16,9 @@ namespace http {
     class Handler : public IHandler {
     public:
         Result<Response, error::AppError> serve(const Request &req);
+
+    private:
+        static Result<Response, error::AppError> deleteMethod(const std::string &path);
     };
 }
 
