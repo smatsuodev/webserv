@@ -10,15 +10,15 @@ namespace http {
     class IHandler {
     public:
         virtual ~IHandler();
-        virtual Result<Response, error::AppError> serve(const Request &req) = 0;
+        virtual Response serve(const Request &req) = 0;
     };
 
     class Handler : public IHandler {
     public:
-        Result<Response, error::AppError> serve(const Request &req);
+        Response serve(const Request &req);
 
     private:
-        static Result<Response, error::AppError> deleteMethod(const std::string &path);
+        static Response deleteMethod(const std::string &path);
     };
 }
 
