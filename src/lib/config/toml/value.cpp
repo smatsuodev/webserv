@@ -144,20 +144,6 @@ namespace toml {
         return None;
     }
 
-    Option<Array *> Value::getArrayPointer() {
-        if (type_ == kArray) {
-            return Some(&arrayValue_);
-        }
-        return None;
-    }
-
-    Option<Table *> Value::getTablePointer() {
-        if (type_ == kArray) {
-            return Some(&tableValue_);
-        }
-        return None;
-    }
-
     /* Array */
     Array::Array() {}
 
@@ -180,10 +166,6 @@ namespace toml {
 
     void Array::addElement(const Value &value) {
         elements_.push_back(value);
-    }
-
-    std::vector<Value> &Array::getElements() {
-        return elements_;
     }
 
     /* Table */
@@ -216,9 +198,5 @@ namespace toml {
             return Some<Value>(it->second);
         }
         return None;
-    }
-
-    std::map<std::string, Value> &Table::getValues() {
-        return values_;
     }
 }

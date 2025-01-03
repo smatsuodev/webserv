@@ -20,8 +20,6 @@ namespace toml {
         bool operator==(const Array &other) const;
 
         void addElement(const Value &value);
-        // parse が楽になるように、可変参照を返してる
-        std::vector<Value> &getElements();
 
     private:
         std::vector<Value> elements_;
@@ -40,8 +38,6 @@ namespace toml {
         void setValue(const std::string &key, const Value &value);
 
         Option<Value> getValue(const std::string &key) const;
-        // parse が楽になるように、可変参照を返してる
-        std::map<std::string, Value> &getValues();
 
     private:
         std::map<std::string, Value> values_;
@@ -76,10 +72,6 @@ namespace toml {
         Option<bool> getBoolean() const;
         Option<Array> getArray() const;
         Option<Table> getTable() const;
-
-        // parse が楽になるように、ポインタを取得できるようにする
-        Option<Array *> getArrayPointer();
-        Option<Table *> getTablePointer();
 
     private:
         ValueType type_;
