@@ -62,3 +62,9 @@ gtest_discover_tests(ref_test)
 
 add_executable(read_buffer_test read_buffer_test.cpp)
 gtest_discover_tests(read_buffer_test)
+
+add_executable(toml_tokenizer_test toml_tokenizer_test.cpp)
+gtest_discover_tests(toml_tokenizer_test)
+
+add_executable(toml_parser_test toml_parser_test.cpp)
+gtest_discover_tests(toml_parser_test)
