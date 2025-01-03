@@ -2,11 +2,11 @@
 #include "write_response_handler.hpp"
 #include "core/action.hpp"
 #include "http/handler/handler.hpp"
+#include "http/handler/router.hpp"
 #include "http/response/response.hpp"
 #include "http/response/response_builder.hpp"
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
-#include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -23,7 +23,13 @@ IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     }
 
     LOG_DEBUGF("HTTP request parsed");
-    const http::Response res = http::Handler().serve(req.unwrap());
+
+    // TODO: 構築済みの router を使い回すようにする
+    http::Router router;
+    router.onGet("/", new http::Handler());
+    router.onDelete("/", new http::Handler());
+
+    const http::Response res = router.serve(req.unwrap());
 
     std::vector<IAction *> actions;
     actions.push_back(new RegisterEventAction(Event(ctx.getEvent().getFd(), Event::kWrite)));

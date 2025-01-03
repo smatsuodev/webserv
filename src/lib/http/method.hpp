@@ -18,6 +18,7 @@ namespace http {
     };
 
     HttpMethod httpMethodFromString(const std::string &method);
+    std::string httpMethodToString(HttpMethod method);
 }
 
 #endif
