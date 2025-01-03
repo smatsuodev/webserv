@@ -68,6 +68,12 @@ TEST_F(MatcherTest, extraSlash) {
     EXPECT_EQ(result.unwrap(), Value::kValue3);
 }
 
+TEST_F(MatcherTest, slashes) {
+    const auto result = matcher.match("///////////////");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), Value::kValue1);
+}
+
 TEST_F(MatcherTest, noLeadingSlash) {
     const auto result = matcher.match("path/longer");
     ASSERT_TRUE(result.isNone());
