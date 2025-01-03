@@ -1,14 +1,7 @@
 #include "read_request_handler.hpp"
-#include "write_response_handler.hpp"
 #include "core/action.hpp"
-#include "http/handler/handler.hpp"
-#include "http/handler/router.hpp"
-#include "http/response/response.hpp"
-#include "http/response/response_builder.hpp"
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
-#include <unistd.h>
-#include <sys/stat.h>
 
 ReadRequestHandler::ReadRequestHandler(ReadBuffer &readBuf) : reqReader_(readBuf) {}
 
@@ -24,16 +17,9 @@ IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
 
     LOG_DEBUGF("HTTP request parsed");
 
-    // TODO: 構築済みの router を使い回すようにする
-    http::Router router;
-    router.onGet("/", new http::Handler());
-    router.onDelete("/", new http::Handler());
-
-    const http::Response res = router.serve(req.unwrap());
-
     std::vector<IAction *> actions;
     actions.push_back(new RegisterEventAction(Event(ctx.getEvent().getFd(), Event::kWrite)));
-    actions.push_back(new RegisterEventHandlerAction(ctx.getConnection().unwrap(), new WriteResponseHandler(res)));
+    actions.push_back(new ServeHttpAction(ctx, req.unwrap()));
 
     return Ok(actions);
 }

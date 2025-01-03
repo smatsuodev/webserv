@@ -2,6 +2,7 @@
 #define SRC_LIB_CORE_ACTION_HPP
 
 #include "event/event_handler.hpp"
+#include "http/request/request.hpp"
 
 class AddConnectionAction : public IAction {
 public:
@@ -60,6 +61,17 @@ public:
 
 private:
     Event event_;
+    bool executed_;
+};
+
+class ServeHttpAction : public IAction {
+public:
+    explicit ServeHttpAction(const Context &ctx, const http::Request &req);
+    void execute(ServerState &state);
+
+private:
+    Context ctx_;
+    http::Request req_;
     bool executed_;
 };
 
