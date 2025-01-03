@@ -20,6 +20,10 @@ protected:
     }
 };
 
+bool operator==(const MatcherTest::Value &lhs, const MatcherTest::Value &rhs) {
+    return static_cast<int>(lhs) == static_cast<int>(rhs);
+}
+
 TEST_F(MatcherTest, exactMatch) {
     EXPECT_EQ(matcher.match("/"), Value::kValue1);
     EXPECT_EQ(matcher.match("/path"), Value::kValue2);
