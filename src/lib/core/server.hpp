@@ -22,7 +22,7 @@ private:
 
     void onHandlerError(const Context &ctx, error::AppError err);
     void onErrorEvent(const Event &event);
-    void executeActions(std::vector<IAction *> actions);
+    static void executeActions(ActionContext &actionCtx, std::vector<IAction *> actions);
 };
 
 #endif

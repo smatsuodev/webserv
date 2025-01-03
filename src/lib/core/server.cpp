@@ -13,6 +13,11 @@ void Server::start() {
     state_.getEventNotifier().registerEvent(Event(listener_.getFd(), Event::kRead));
     state_.getEventHandlerRepository().set(listener_.getFd(), new AcceptHandler(listener_));
 
+    // TODO: config から適切な router を構築する
+    http::Router router;
+    router.onGet("/", new http::Handler());
+    router.onDelete("/", new http::Handler());
+
     LOG_INFOF("server started on port %s:%u", ip_.c_str(), port_);
 
     while (true) {
@@ -45,7 +50,9 @@ void Server::start() {
                 continue;
             }
 
-            this->executeActions(result.unwrap());
+            // TODO: 本来は特定の server の router を探して渡す
+            ActionContext actionCtx(state_, router);
+            Server::executeActions(actionCtx, result.unwrap());
         }
     }
 }
@@ -85,16 +92,10 @@ void Server::onErrorEvent(const Event &event) {
     }
 }
 
-void Server::executeActions(std::vector<IAction *> actions) {
-    // TODO: 毎回 router を作り直すのをやめる
-    http::Router router;
-    router.onGet("/", new http::Handler());
-    router.onDelete("/", new http::Handler());
-
+void Server::executeActions(ActionContext &actionCtx, std::vector<IAction *> actions) {
     for (std::vector<IAction *>::const_iterator it = actions.begin(); it != actions.end(); ++it) {
         IAction *action = *it;
-        ActionContext ctx(state_, router);
-        action->execute(ctx);
+        action->execute(actionCtx);
         delete action;
     }
 }
