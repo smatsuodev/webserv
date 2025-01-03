@@ -15,11 +15,12 @@ Result<http::Response, error::AppError> http::Handler::deleteMethod(const std::s
             LOG_DEBUGF("file does not exist: %s", path.c_str());
             return Ok(http::ResponseBuilder().status(kStatusNotFound).build());
         }
-    } else {
-        if (!S_ISREG(buf.st_mode)) {
-            LOG_DEBUGF("is not a regular file: %s", path.c_str());
-            return Ok(http::ResponseBuilder().status(kStatusForbidden).build());
-        }
+        return Ok(http::ResponseBuilder().status(kStatusInternalServerError).build());
+    }
+
+    if (!S_ISREG(buf.st_mode)) {
+        LOG_DEBUGF("is not a regular file: %s", path.c_str());
+        return Ok(http::ResponseBuilder().status(kStatusForbidden).build());
     }
 
     if (std::remove(path.c_str())) {
