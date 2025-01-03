@@ -21,8 +21,19 @@ protected:
 };
 
 TEST_F(MatcherTest, exactMatch) {
-    EXPECT_EQ(matcher.match("/").unwrap(), Value::kValue1);
-    EXPECT_EQ(matcher.match("/path").unwrap(), Value::kValue2);
-    EXPECT_EQ(matcher.match("/path/longer").unwrap(), Value::kValue3);
-    EXPECT_EQ(matcher.match("/other").unwrap(), Value::kValue4);
+    auto result = matcher.match("/");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), Value::kValue1);
+
+    result = matcher.match("/path");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), Value::kValue2);
+
+    result = matcher.match("/path/longer");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), Value::kValue3);
+
+    result = matcher.match("/other");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), Value::kValue4);
 }
