@@ -1,6 +1,7 @@
 #include "action.hpp"
-
 #include "server.hpp"
+#include "handler/write_response_handler.hpp"
+#include "http/handler/router.hpp"
 
 IAction::~IAction() {}
 
@@ -58,4 +59,23 @@ void UnregisterEventAction::execute(ServerState &state) {
         state.getEventNotifier().unregisterEvent(event_);
         executed_ = true;
     }
+}
+
+ServeHttpAction::ServeHttpAction(const Context &ctx, const http::Request &req)
+    : ctx_(ctx), req_(req), executed_(false) {}
+
+void ServeHttpAction::execute(ServerState &state) {
+    if (executed_) {
+        return;
+    }
+    executed_ = true;
+
+    // TODO: 構築済みの router を使い回すようにする
+    http::Router router;
+    router.onGet("/", new http::Handler());
+    router.onDelete("/", new http::Handler());
+
+    const Connection &conn = ctx_.getConnection().unwrap();
+    const http::Response res = router.serve(req_);
+    state.getEventHandlerRepository().set(conn.getFd(), new WriteResponseHandler(res));
 }
