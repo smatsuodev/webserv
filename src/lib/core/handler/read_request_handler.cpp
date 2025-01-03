@@ -42,6 +42,7 @@ Result<std::string, error::AppError> readFile(const int rawFd) {
 http::Response toResponse(const std::string fileContent) { // NOLINT(*-unnecessary-value-param)
     return http::ResponseBuilder().text(fileContent).build();
 }
+
 ReadRequestHandler::ReadRequestHandler(ReadBuffer &readBuf) : reqReader_(readBuf) {}
 
 IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
