@@ -12,32 +12,52 @@
 namespace config {
     class LocationContext {
     public:
+        // root, autoindex, index からなるクラス
+        class DocumentRootConfig {
+        public:
+            explicit DocumentRootConfig(
+                const std::string &root, bool autoindex = false, const std::string &index = "index.html"
+            );
+
+        private:
+            std::string root_;
+
+        public:
+            const std::string &getRoot() const;
+            bool isAutoindex() const;
+            const std::string &getIndex() const;
+
+        private:
+            bool autoindex_;
+            std::string index_;
+        };
+
+        typedef std::vector<http::HttpMethod> AllowedMethods;
+
         // NOTE: allowedMethods の初期値を指定したいが、C++98 で初期化子リストが使えない
         LocationContext(
             const std::string &path,
-            const std::string &root,
-            const std::string &index = "index.html",
-            bool autoindex = false,
-            const std::vector<http::HttpMethod> &allowedMethods = getDefaultAllowedMethods(),
-            const Option<std::string> &redirect = None
+            const DocumentRootConfig &docRootConfig,
+            const AllowedMethods &allowedMethods = getDefaultAllowedMethods()
+        );
+        LocationContext(
+            const std::string &path,
+            const std::string &redirect,
+            const AllowedMethods &allowedMethods = getDefaultAllowedMethods()
         );
 
         const std::string &getPath() const;
-        const std::string &getRoot() const;
-        const std::string &getIndex() const;
-        bool isAutoindexEnabled() const;
         const std::vector<http::HttpMethod> &getAllowedMethods() const;
         const Option<std::string> &getRedirect() const;
+        const Option<DocumentRootConfig> &getDocumentRootConfig() const;
 
     private:
         std::string path_;
-        std::string root_;
-        std::string index_;
-        bool autoindex_;
         std::vector<http::HttpMethod> allowedMethods_;
+        Option<DocumentRootConfig> docRootConfig_;
         Option<std::string> redirect_;
 
-        static std::vector<http::HttpMethod> getDefaultAllowedMethods();
+        static AllowedMethods getDefaultAllowedMethods();
     };
 
     class ServerContext {
@@ -46,11 +66,11 @@ namespace config {
 
         explicit ServerContext(
             const std::vector<LocationContext> &locations,
-            const std::string &host = "127.0.0.1",
             uint16_t port = 80,
-            std::size_t clientMaxBodySize = kDefaultClientMaxBodySize,
+            const std::string &host = "127.0.0.1",
             const std::vector<std::string> &serverName = std::vector<std::string>(),
-            const ErrorPageMap &errorPage = ErrorPageMap()
+            const ErrorPageMap &errorPage = ErrorPageMap(),
+            std::size_t clientMaxBodySize = kDefaultClientMaxBodySize
         );
 
         const std::string &getHost() const;
