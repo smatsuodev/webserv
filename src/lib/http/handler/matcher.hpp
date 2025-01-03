@@ -13,7 +13,7 @@ namespace http {
         explicit Matcher(const Map &map) : map_(map) {}
         ~Matcher() {}
 
-        Option<T> match(const std::string &key) {
+        Option<T> match(const std::string &key) const {
             if (key.size() > 1 && key[key.size() - 1] == '/') {
                 return match(key.substr(0, key.size() - 1));
             }
