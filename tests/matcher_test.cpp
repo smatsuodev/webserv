@@ -39,11 +39,6 @@ TEST_F(MatcherTest, exactMatch) {
     EXPECT_EQ(result.unwrap(), Value::kValue4);
 }
 
-TEST_F(MatcherTest, noMatch) {
-    const auto result = matcher.match("/not_found");
-    ASSERT_TRUE(result.isNone());
-}
-
 TEST_F(MatcherTest, mustLongestMatch) {
     const auto result = matcher.match("/path/longer/extra");
     ASSERT_TRUE(result.isSome());
@@ -73,16 +68,26 @@ TEST_F(MatcherTest, extraSlash) {
     EXPECT_EQ(result.unwrap(), Value::kValue3);
 }
 
-TEST_F(MatcherTest, partial) {
-    // 上書き
-    matcher = Matcher<Value>({std::make_pair("/path", Value::kValue1)});
-
+TEST(MatcherTest, partial) {
+    const auto matcher = Matcher<int>({std::make_pair("/path", 1)});
     const auto result = matcher.match("/pa");
+    ASSERT_TRUE(result.isNone());
+}
+
+TEST(MatcherTest, partial2) {
+    const auto matcher = Matcher<int>({std::make_pair("/path/longer", 1)});
+    const auto result = matcher.match("/path/lo");
     ASSERT_TRUE(result.isNone());
 }
 
 TEST(MatcherTest, emptyMap) {
     const Matcher<int> matcher({});
     const auto result = matcher.match("/path");
+    ASSERT_TRUE(result.isNone());
+}
+
+TEST(MatcherTest, noMatch) {
+    const Matcher<int> matcher({std::make_pair("/path", 1)});
+    const auto result = matcher.match("/not_found");
     ASSERT_TRUE(result.isNone());
 }
