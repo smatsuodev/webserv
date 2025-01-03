@@ -20,13 +20,9 @@ protected:
     }
 };
 
-bool operator==(const MatcherTest::Value &lhs, const MatcherTest::Value &rhs) {
-    return static_cast<int>(lhs) == static_cast<int>(rhs);
-}
-
 TEST_F(MatcherTest, exactMatch) {
-    EXPECT_EQ(matcher.match("/"), Value::kValue1);
-    EXPECT_EQ(matcher.match("/path"), Value::kValue2);
-    EXPECT_EQ(matcher.match("/path/longer"), Value::kValue3);
-    EXPECT_EQ(matcher.match("/other"), Value::kValue4);
+    EXPECT_EQ(matcher.match("/").unwrap(), Value::kValue1);
+    EXPECT_EQ(matcher.match("/path").unwrap(), Value::kValue2);
+    EXPECT_EQ(matcher.match("/path/longer").unwrap(), Value::kValue3);
+    EXPECT_EQ(matcher.match("/other").unwrap(), Value::kValue4);
 }
