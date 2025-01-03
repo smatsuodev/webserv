@@ -65,6 +65,8 @@ add_library(webserv_lib STATIC
         lib/http/handler/handler.hpp
         lib/utils/io/read_buffer.cpp
         lib/utils/io/read_buffer.hpp
+        lib/config/config.cpp
+        lib/config/config.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
