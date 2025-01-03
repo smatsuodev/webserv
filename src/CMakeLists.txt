@@ -67,6 +67,8 @@ add_library(webserv_lib STATIC
         lib/utils/io/read_buffer.hpp
         lib/config/config.cpp
         lib/config/config.hpp
+        lib/config/toml/value.cpp
+        lib/config/toml/value.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
