@@ -17,6 +17,7 @@ protected:
                  {"/path", Value::kValue2},
                  {"/path/longer", Value::kValue3},
                  {"/other", Value::kValue4}};
+        matcher = Matcher(paths);
     }
 };
 
