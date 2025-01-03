@@ -15,6 +15,7 @@ namespace http {
         void onGet(const std::string &path, IHandler *handler);
         void onPost(const std::string &path, IHandler *handler);
         void onDelete(const std::string &path, IHandler *handler);
+        void on(const std::vector<HttpMethod> &methods, const std::string &path, IHandler *handler);
 
         Response serve(const Request &req);
 

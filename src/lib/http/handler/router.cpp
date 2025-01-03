@@ -41,6 +41,26 @@ namespace http {
         handlers_[path][kMethodDelete] = handler;
     }
 
+    // NOTE: 現在は GET, POST, DELETE のみ対応
+    void Router::on(const std::vector<HttpMethod> &methods, const std::string &path, IHandler *handler) {
+        for (std::vector<HttpMethod>::const_iterator it = methods.begin(); it != methods.end(); ++it) {
+            switch (*it) {
+                case kMethodGet:
+                    this->onGet(path, handler);
+                    break;
+                case kMethodPost:
+                    this->onPost(path, handler);
+                    break;
+                case kMethodDelete:
+                    this->onDelete(path, handler);
+                    break;
+                default:
+                    // do nothing
+                    break;
+            }
+        }
+    }
+
     Response Router::serve(const Request &req) {
         // 適切な handler を探す
         // TODO: Matcher を毎回生成し直すのをやめたい
