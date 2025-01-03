@@ -10,12 +10,12 @@ namespace http {
     class IHandler {
     public:
         virtual ~IHandler();
-        virtual Result<Response, error::AppError> serve(Request &req) = 0;
+        virtual Result<Response, error::AppError> serve(const Request &req) = 0;
     };
 
     class Handler : public IHandler {
     public:
-        Result<Response, error::AppError> serve(Request &req);
+        Result<Response, error::AppError> serve(const Request &req);
     };
 }
 
