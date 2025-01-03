@@ -4,8 +4,25 @@
 #include <cstddef>
 #include <stdexcept>
 
+/* forward-declaration */
 template <class T>
 class Option;
+template <class T, class E>
+class Result;
+
+namespace types {
+    template <class T>
+    class Ok;
+    template <class E>
+    class Err;
+}
+
+// ReSharper disable CppInconsistentNaming
+template <class T>
+types::Ok<T> Ok(T);
+template <class E>
+types::Err<E> Err(E);
+// ReSharper restore CppInconsistentNaming
 
 namespace types {
     template <class T>
@@ -174,6 +191,12 @@ public:
             return Some(func(some_->val()));
         }
         return None;
+    }
+
+    template <class E>
+    Result<T, E> okOr(E err) const {
+        if (isSome()) return Ok(some_->val());
+        return Err(err);
     }
 
 private:

@@ -22,10 +22,14 @@ TEST_F(RequestReaderTest, GetNormal) {
     const auto result = reqReader.readRequest();
     EXPECT_TRUE(result.isOk());
 
-    const http::Request expected = http::Request(http::kMethodGet, "/", "HTTP/1.1",
-                                                 {
-                                                     std::make_pair("Host", "example.com"),
-                                                 });
+    const http::Request expected = http::Request(
+        http::kMethodGet,
+        "/",
+        "HTTP/1.1",
+        {
+            std::make_pair("Host", "example.com"),
+        }
+    );
     EXPECT_EQ(result.unwrap().unwrap(), expected);
 }
 
@@ -42,12 +46,16 @@ TEST_F(RequestReaderTest, PostNormal) {
     const auto result = reqReader.readRequest();
     EXPECT_TRUE(result.isOk());
 
-    const http::Request expected = http::Request(http::kMethodPost, "/", "HTTP/1.1",
-                                                 {
-                                                     std::make_pair("Content-Length", "5"),
-                                                     std::make_pair("Host", "example.com"),
-                                                 },
-                                                 "hello");
+    const http::Request expected = http::Request(
+        http::kMethodPost,
+        "/",
+        "HTTP/1.1",
+        {
+            std::make_pair("Content-Length", "5"),
+            std::make_pair("Host", "example.com"),
+        },
+        "hello"
+    );
     EXPECT_EQ(result.unwrap().unwrap(), expected);
 }
 
@@ -67,10 +75,14 @@ TEST_F(RequestReaderTest, GetWouldBlock) {
         ASSERT_GE(count--, 0);
     }
 
-    const http::Request expected = http::Request(http::kMethodGet, "/", "HTTP/1.1",
-                                                 {
-                                                     std::make_pair("Host", "example.com"),
-                                                 });
+    const http::Request expected = http::Request(
+        http::kMethodGet,
+        "/",
+        "HTTP/1.1",
+        {
+            std::make_pair("Host", "example.com"),
+        }
+    );
     const auto unwrapped = result.unwrap().unwrap();
     EXPECT_EQ(unwrapped, expected);
 }
@@ -94,11 +106,15 @@ TEST_F(RequestReaderTest, PostWouldBlock) {
         ASSERT_GE(count--, 0);
     }
 
-    const http::Request expected = http::Request(http::kMethodPost, "/", "HTTP/1.1",
-                                                 {
-                                                     std::make_pair("Content-Length", "5"),
-                                                     std::make_pair("Host", "example.com"),
-                                                 },
-                                                 "hello");
+    const http::Request expected = http::Request(
+        http::kMethodPost,
+        "/",
+        "HTTP/1.1",
+        {
+            std::make_pair("Content-Length", "5"),
+            std::make_pair("Host", "example.com"),
+        },
+        "hello"
+    );
     EXPECT_EQ(result.unwrap().unwrap(), expected);
 }

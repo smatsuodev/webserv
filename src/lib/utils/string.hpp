@@ -26,6 +26,8 @@ namespace utils {
     // 先頭・末尾の空白もエラーとする
     typedef Result<unsigned long, error::AppError> StoulResult;
     StoulResult stoul(const std::string &str);
+    std::string trim(const std::string &str);
+    std::vector<std::string> split(const std::string &str, char delimiter);
 
     // std::strnstr は標準ライブラリに含まれず環境によってはビルドできないため, strnstr と同様のものを自作する
     // haystack, needle が NULL の場合は None を返す

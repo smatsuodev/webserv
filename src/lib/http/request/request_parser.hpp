@@ -12,8 +12,8 @@ namespace http {
         typedef std::pair<std::string, std::string> HeaderField;
 
         typedef Result<Request, error::AppError> ParseResult;
-        static ParseResult parseRequest(const std::string &requestLine, const std::vector<std::string> &headers,
-                                        const std::string &body);
+        static ParseResult
+        parseRequest(const std::string &requestLine, const std::vector<std::string> &headers, const std::string &body);
 
         typedef Result<HeaderField, error::AppError> ParseHeaderFieldLineResult;
         static ParseHeaderFieldLineResult parseHeaderFieldLine(const std::string &line);

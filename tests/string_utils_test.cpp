@@ -216,3 +216,54 @@ TEST(StrnstrNone, nullNeedle) {
     const auto result = utils::strnstr(s, nullptr, 3);
     EXPECT_TRUE(result.isNone());
 }
+
+TEST(Trim, empty) {
+    const auto result = utils::trim("");
+    EXPECT_EQ(result, "");
+}
+
+TEST(Trim, spaces) {
+    const auto result = utils::trim("\t\n\v\f\r ");
+    EXPECT_EQ(result, "");
+}
+
+TEST(Trim, normal) {
+    const auto result = utils::trim("\t\n\v\f\r word\t\n\v\f\r ");
+    EXPECT_EQ(result, "word");
+}
+
+TEST(Split, empty) {
+    const auto result = utils::split("", '.');
+    const std::vector<std::string> expected = {""};
+    EXPECT_EQ(result, expected);
+}
+
+TEST(Split, onlyDelimiter) {
+    const auto result = utils::split(".", '.');
+    const std::vector<std::string> expected = {"", ""};
+    EXPECT_EQ(result, expected);
+}
+
+TEST(Split, delimiters) {
+    const auto result = utils::split("...", '.');
+    const std::vector<std::string> expected = {"", "", "", ""};
+    EXPECT_EQ(result, expected);
+}
+
+TEST(Split, singleWord) {
+    const auto result = utils::split("word", '.');
+    const std::vector<std::string> expected = {"word"};
+    EXPECT_EQ(result, expected);
+}
+
+TEST(Split, wordAround) {
+    const auto result = utils::split(".word.", '.');
+    const std::vector<std::string> expected = {"", "word", ""};
+    EXPECT_EQ(result, expected);
+}
+
+TEST(Split, normal) {
+    const auto result = utils::split("a.b.c", '.');
+    const std::vector<std::string> expected = {"a", "b", "c"};
+    EXPECT_EQ(result, expected);
+}

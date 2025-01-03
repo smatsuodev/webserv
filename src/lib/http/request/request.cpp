@@ -1,7 +1,12 @@
 #include "request.hpp"
 
-http::Request::Request(const HttpMethod method, const std::string &requestTarget, const std::string &httpVersion,
-                       const Headers &headers, const std::string &body)
+http::Request::Request(
+    const HttpMethod method,
+    const std::string &requestTarget,
+    const std::string &httpVersion,
+    const Headers &headers,
+    const std::string &body
+)
     : method_(method), requestTarget_(requestTarget), httpVersion_(httpVersion), headers_(headers), body_(body) {}
 
 bool http::Request::operator==(const Request &other) const {

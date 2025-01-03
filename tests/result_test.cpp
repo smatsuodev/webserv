@@ -351,3 +351,19 @@ TEST(ResultTest, okString) {
     ASSERT_TRUE(r.isOk());
     EXPECT_EQ(r.unwrap(), "hello");
 }
+
+TEST(ResultTest, exprIsEvaluatedOnce) {
+    int cnt = 0;
+    auto func = [&]() -> Result<void, bool> {
+        cnt++;
+        return Err(true);
+    };
+    auto callTry = [&]() -> Result<void, bool> {
+        TRY(func());
+        return Ok();
+    };
+
+    callTry();
+
+    EXPECT_EQ(cnt, 1);
+}
