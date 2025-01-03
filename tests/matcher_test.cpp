@@ -68,6 +68,11 @@ TEST_F(MatcherTest, extraSlash) {
     EXPECT_EQ(result.unwrap(), Value::kValue3);
 }
 
+TEST_F(MatcherTest, noLeadingSlash) {
+    const auto result = matcher.match("path/longer");
+    ASSERT_TRUE(result.isNone());
+}
+
 TEST(MatcherTestSpecial, partial) {
     const auto matcher = Matcher<int>({std::make_pair("/path", 1)});
     const auto result = matcher.match("/pa");
