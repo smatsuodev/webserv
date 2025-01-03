@@ -1,0 +1,28 @@
+[[server]]
+host = 'localhost'
+port = 8080
+
+[[server.location]]
+path = '/'
+root = 'example/html'
+
+[[server.location]]
+path = '/other'
+root = 'example/html/other'
+index = 'top.html'
+
+[[server.location]]
+path = '/redirect'
+redirect = 'http://localhost:8080/other'
+
+# upload 専用
+[[server.location]]
+path = '/upload'
+root = 'example/html/uploads'
+allowed_methods = ['POST']
+
+# upload したファイルの取得
+[[server.location]]
+path = '/files'
+root = 'example/html/uploads'
+autoindex = 'on'
