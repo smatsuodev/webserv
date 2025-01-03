@@ -40,7 +40,7 @@ namespace http {
 
     Response ResponseBuilder::build() {
         if (body_.isNone()) {
-            this->text("");
+            this->text("", status_);
         }
         return Response(status_, httpVersion_, headers_, body_.unwrap());
     }
