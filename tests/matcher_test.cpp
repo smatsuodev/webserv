@@ -37,3 +37,33 @@ TEST_F(MatcherTest, exactMatch) {
     ASSERT_TRUE(result.isSome());
     EXPECT_EQ(result.unwrap(), Value::kValue4);
 }
+
+TEST_F(MatcherTest, noMatch) {
+    const auto result = matcher.match("/not_found");
+    ASSERT_TRUE(result.isNone());
+}
+
+TEST_F(MatcherTest, mustLongestMatch) {
+    const auto result = matcher.match("/path/longer/extra");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), Value::kValue3);
+}
+
+TEST_F(MatcherTest, matchRoot) {
+    const auto result = matcher.match("/foo/bar/baz");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), Value::kValue1);
+}
+
+TEST_F(MatcherTest, empty) {
+    const auto result = matcher.match("");
+    ASSERT_TRUE(result.isNone());
+}
+
+TEST_F(MatcherTest, partial) {
+    // 上書き
+    matcher = Matcher<Value>({std::make_pair("/path", Value::kValue1)});
+
+    const auto result = matcher.match("/pa");
+    ASSERT_TRUE(result.isNone());
+}
