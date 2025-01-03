@@ -4,6 +4,7 @@
 #include "handler.hpp"
 
 namespace http {
+    // TODO: router に登録して使う
     class RedirectHandler : public IHandler {
     public:
         explicit RedirectHandler(const std::string &destination);
