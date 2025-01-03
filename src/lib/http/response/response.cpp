@@ -1,8 +1,9 @@
 #include "response.hpp"
 #include "utils/string.hpp"
 
-http::Response::Response(const HttpStatusCode status, const std::string &httpVersion, const Headers &headers,
-                         const std::string &body)
+http::Response::Response(
+    const HttpStatusCode status, const std::string &httpVersion, const Headers &headers, const std::string &body
+)
     : status_(status), httpVersion_(httpVersion), headers_(headers), body_(body) {}
 
 bool http::Response::operator==(const Response &other) const {

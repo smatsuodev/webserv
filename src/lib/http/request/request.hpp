@@ -9,9 +9,13 @@
 namespace http {
     class Request {
     public:
-        explicit Request(HttpMethod method, const std::string &requestTarget,
-                         const std::string &httpVersion = "HTTP/1.1", const Headers &headers = Headers(),
-                         const std::string &body = "");
+        explicit Request(
+            HttpMethod method,
+            const std::string &requestTarget,
+            const std::string &httpVersion = "HTTP/1.1",
+            const Headers &headers = Headers(),
+            const std::string &body = ""
+        );
 
         bool operator==(const Request &other) const;
 

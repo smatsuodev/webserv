@@ -3,9 +3,9 @@
 #include "utils/types/try.hpp"
 
 namespace http {
-    RequestParser::ParseResult RequestParser::parseRequest(const std::string &requestLine,
-                                                           const std::vector<std::string> &headers,
-                                                           const std::string &body) {
+    RequestParser::ParseResult RequestParser::parseRequest(
+        const std::string &requestLine, const std::vector<std::string> &headers, const std::string &body
+    ) {
         // TODO: parse query
         const RequestLine parsedRequestLine = TRY(parseRequestLine(requestLine));
 
@@ -14,10 +14,13 @@ namespace http {
             parsedHeaders.insert(TRY(parseHeaderFieldLine(headers[i])));
         }
 
-        return Ok(Request(parsedRequestLine.first.first, // method
-                          parsedRequestLine.first.second, // request-target
-                          parsedRequestLine.second, // HTTP-version
-                          parsedHeaders, body));
+        return Ok(Request(
+            parsedRequestLine.first.first, // method
+            parsedRequestLine.first.second, // request-target
+            parsedRequestLine.second, // HTTP-version
+            parsedHeaders,
+            body
+        ));
     }
 
     // field-line = field-name ":" OWS field-value OWS
