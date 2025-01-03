@@ -69,6 +69,8 @@ add_library(webserv_lib STATIC
         lib/config/config.hpp
         lib/config/toml/value.cpp
         lib/config/toml/value.hpp
+        lib/http/handler/router.cpp
+        lib/http/handler/router.hpp
         lib/http/handler/matcher.hpp
 )
 # lib/ を include path に追加
