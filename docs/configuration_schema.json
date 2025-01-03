@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Webserv Configuration",
+  "description": "Configuration schema for webserv",
+  "type": "object",
+  "properties": {
+    "server": {
+      "type": "array",
+      "description": "Array of server configurations",
+      "items": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "Hostname or IP address to listen on",
+            "default": "localhost"
+          },
+          "port": {
+            "type": "integer",
+            "description": "Port number to listen on",
+            "default": 80,
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "server_name": {
+            "type": "array",
+            "description": "Server names (optional)",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error_page": {
+            "type": "object",
+            "description": "Error page mappings (optional)",
+            "patternProperties": {
+              "^[0-9]+$": {
+                "type": "string"
+              }
+            }
+          },
+          "client_max_body_size": {
+            "type": "integer",
+            "description": "Maximum body size in bytes",
+            "default": 1048576,
+            "minimum": 0
+          },
+          "location": {
+            "type": "array",
+            "description": "Array of location configurations",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "root"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Path to match"
+                },
+                "allowed_methods": {
+                  "type": "array",
+                  "description": "Allowed HTTP methods",
+                  "default": [
+                    "GET"
+                  ],
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "DELETE"
+                    ]
+                  }
+                },
+                "root": {
+                  "type": "string",
+                  "description": "Root directory path"
+                },
+                "index": {
+                  "type": "string",
+                  "default": "index.html",
+                  "description": "Index file or files"
+                },
+                "autoindex": {
+                  "type": "string",
+                  "description": "Enable/disable directory listing",
+                  "enum": [
+                    "on",
+                    "off"
+                  ],
+                  "default": "off"
+                },
+                "redirect": {
+                  "type": "string",
+                  "description": "Redirect URL (optional)"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "host",
+          "port"
+        ]
+      }
+    }
+  },
+  "required": [
+    "server"
+  ]
+}

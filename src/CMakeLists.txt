@@ -61,6 +61,8 @@ add_library(webserv_lib STATIC
         lib/http/response/response_builder.cpp
         lib/http/response/response_builder.hpp
         lib/utils/ref.hpp
+        lib/http/handler/handler.cpp
+        lib/http/handler/handler.hpp
         lib/utils/io/read_buffer.cpp
         lib/utils/io/read_buffer.hpp
         lib/config/config.cpp
