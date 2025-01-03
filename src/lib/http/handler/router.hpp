@@ -2,6 +2,7 @@
 #define SRC_LIB_HTTP_HANDLER_ROUTER_HPP
 
 #include "handler.hpp"
+#include "matcher.hpp"
 #include "config/config.hpp"
 
 namespace http {
@@ -18,12 +19,14 @@ namespace http {
         Response serve(const Request &req);
 
     private:
-        typedef std::map<std::string, IHandler *> HandlerMap;
-        typedef std::vector<HttpMethod> AllowedMethodList;
-        typedef std::map<IHandler *, AllowedMethodList> AllowedMethodMap;
+        // (HttpMethod, Path) -> IHandler とするのが自然だが、Method Not Allowed を返すために必要なデータ構造にしている
+        typedef std::string Path;
+        typedef std::map<HttpMethod, IHandler *> MethodHandlerMap;
+        typedef std::map<Path, MethodHandlerMap> HandlerMap;
 
         HandlerMap handlers_;
-        AllowedMethodMap allowedMethods_;
+
+        Matcher<Path> createMatcher() const;
     };
 }
 
