@@ -81,3 +81,28 @@ Option<char *> utils::strnstr(const char *haystack, const char *needle, const st
     }
     return Some(const_cast<char *>(haystack + pos));
 }
+
+std::string utils::trim(const std::string &str) {
+    size_t start = 0;
+    while (start < str.length() && std::isspace(str[start]))
+        start++;
+    size_t end = str.length();
+    while (end > start && std::isspace(str[end - 1]))
+        end--;
+    return str.substr(start, end - start);
+}
+
+std::vector<std::string> utils::split(const std::string &str, const char delimiter) {
+    std::vector<std::string> result;
+    std::string::size_type start = 0;
+
+    std::string::size_type end = str.find(delimiter);
+    while (end != std::string::npos) {
+        result.push_back(str.substr(start, end - start));
+        start = end + 1;
+        end = str.find(delimiter, start);
+    }
+    result.push_back(str.substr(start));
+
+    return result;
+}
