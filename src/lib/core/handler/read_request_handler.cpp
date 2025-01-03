@@ -10,40 +10,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-// TODO: config を元に適切な path に解決する
-// 今はカレントディレクトリからの相対パスとして扱う
-Result<std::string, error::AppError> getPath(const http::Request &req) {
-    LOG_DEBUGF("request target: %s", req.getRequestTarget().c_str());
-
-    const std::string path = req.getRequestTarget().substr(1);
-    if (path.empty()) {
-        LOG_DEBUGF("invalid request target: %s", req.getRequestTarget().c_str());
-        return Err(error::kUnknown);
-    }
-    return Ok(path);
-}
-
-// andThen で使いたいので、ref ではなく値を受け取る
-// ReSharper disable once CppPassValueParameterByConstReference
-Result<int, error::AppError> openFile(const std::string path) { // NOLINT(*-unnecessary-value-param)
-    const int fd = open(path.c_str(), O_RDONLY);
-    if (fd == -1) {
-        LOG_DEBUGF("failed to open file: %s", path.c_str());
-        return Err(error::kUnknown);
-    }
-    return Ok(fd);
-}
-
-Result<std::string, error::AppError> readFile(const int rawFd) {
-    close(rawFd);
-    return Err(error::kUnknown);
-}
-
-// ReSharper disable once CppPassValueParameterByConstReference
-http::Response toResponse(const std::string fileContent) { // NOLINT(*-unnecessary-value-param)
-    return http::ResponseBuilder().text(fileContent).build();
-}
-
 ReadRequestHandler::ReadRequestHandler(ReadBuffer &readBuf) : reqReader_(readBuf) {}
 
 IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
