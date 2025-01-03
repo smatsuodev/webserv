@@ -80,3 +80,9 @@ TEST_F(MatcherTest, partial) {
     const auto result = matcher.match("/pa");
     ASSERT_TRUE(result.isNone());
 }
+
+TEST(MatcherTest, emptyMap) {
+    const Matcher<int> matcher({});
+    const auto result = matcher.match("/path");
+    ASSERT_TRUE(result.isNone());
+}
