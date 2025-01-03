@@ -9,7 +9,7 @@ namespace config {
     LocationContext::LocationContext(
         const std::string &path, const std::string &redirect, const AllowedMethods &allowedMethods
     )
-        : path_(path), docRootConfig_(None), redirect_(Some(redirect)) {}
+        : path_(path), allowedMethods_(allowedMethods), docRootConfig_(None), redirect_(Some(redirect)) {}
 
     const std::string &LocationContext::getPath() const {
         return path_;
