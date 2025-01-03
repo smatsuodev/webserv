@@ -13,10 +13,12 @@ public:
 
 protected:
     void SetUp() override {
-        paths = {{"/", Value::kValue1},
-                 {"/path", Value::kValue2},
-                 {"/path/longer", Value::kValue3},
-                 {"/other", Value::kValue4}};
+        paths = {
+            {"/", Value::kValue1},
+            {"/path", Value::kValue2},
+            {"/path/longer", Value::kValue3},
+            {"/other", Value::kValue4}
+        };
         matcher = Matcher(paths);
     }
 };
