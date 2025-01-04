@@ -49,8 +49,7 @@ RequestReader::ReadRequestResult RequestReader::readRequest(const Context &ctx) 
                     const std::size_t len = contentLength_.unwrap();
                     if (len > clientMaxBodySize_) {
                         LOG_WARNF("Content-Length is too large: %zu", len);
-                        // TODO: 適切なエラーレスポンスを返すために、固有のエラーを返すべき
-                        return Err(error::kUnknown);
+                        return Err(error::kHttpPayloadTooLarge);
                     }
                     state_ = kReadingBody;
                 } else {

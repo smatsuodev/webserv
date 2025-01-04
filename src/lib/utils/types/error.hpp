@@ -25,6 +25,9 @@ namespace error {
         // Parse
         // 出し分けてもあんまり意味はないので、分類してない
         kParseUnknown,
+
+        // HTTP
+        kHttpPayloadTooLarge,
     };
 
     // mapErr で使う想定

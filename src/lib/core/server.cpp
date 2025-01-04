@@ -60,17 +60,19 @@ void Server::start() {
     }
 }
 
+/**
+ * TODO: 可能ならエラーレスポンスを返す (Internal Server Error, Payload Too Large など)
+ * ここでやることではないかもしれない
+ */
 void Server::onHandlerError(const Context &ctx, const error::AppError err) {
     // IO のエラーは epoll で検知するので、ここでは無視 (EAGAIN の可能性があるため)
     if (err == error::kRecoverable || err == error::kIOUnknown) {
         return;
     }
 
+    // 致命的なエラーはコネクションを切断
     LOG_WARNF("handler error");
-
     const Event &ev = ctx.getEvent();
-
-    // kIOWouldBlock 以外のエラーはコネクションを閉じる
     if (ev.getFd() != listener_.getFd()) {
         state_.getEventNotifier().unregisterEvent(ev);
         state_.getEventHandlerRepository().remove(ev.getFd());
