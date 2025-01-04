@@ -10,8 +10,8 @@
 #include <cerrno>
 #include <cstring>
 
-Listener::Listener(const std::string &ip, const unsigned short port, const int backlog)
-    : serverFd_(Listener::setupSocket(ip, port, backlog)) {}
+Listener::Listener(const Endpoint &endpoint, const int backlog)
+    : serverFd_(Listener::setupSocket(endpoint.getIp(), endpoint.getPort(), backlog)), endpoint_(endpoint) {}
 
 Listener::~Listener() {
     LOG_DEBUG("Listener: destruct");
@@ -19,6 +19,10 @@ Listener::~Listener() {
 
 int Listener::getFd() const {
     return this->serverFd_.get();
+}
+
+const Endpoint &Listener::getEndpoint() const {
+    return endpoint_;
 }
 
 Listener::AcceptConnectionResult Listener::acceptConnection() const {

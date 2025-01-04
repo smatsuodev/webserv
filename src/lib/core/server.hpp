@@ -7,15 +7,12 @@
 
 class Server {
 public:
-    Server(const std::string &ip, unsigned short port);
+    explicit Server(const Endpoint &endpoint);
     ~Server();
 
     void start();
 
 private:
-    std::string ip_;
-    unsigned short port_;
-
     // NOTE: Server の作成と同時に初期化されるがよいか?
     Listener listener_;
     ServerState state_;
