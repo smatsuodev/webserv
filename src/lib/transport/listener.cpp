@@ -34,6 +34,7 @@ Listener::AcceptConnectionResult Listener::acceptConnection() const {
         LOG_WARNF("failed to accept connection: %s", std::strerror(errno));
         return Err<std::string>("failed to accept connection");
     }
+    const Endpoint clientEndpoint(inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
     const Result<void, error::AppError> result = utils::setNonBlocking(fd);
     if (result.isErr()) {
@@ -41,11 +42,9 @@ Listener::AcceptConnectionResult Listener::acceptConnection() const {
         return Err<std::string>("failed to set non-blocking fd");
     }
 
-    LOG_INFOF(
-        "connection established from %s:%u (fd: %d)", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port), fd
-    );
+    LOG_INFOF("connection established from %s (fd: %d)", clientEndpoint.toString().c_str(), fd);
 
-    return Ok(new Connection(fd));
+    return Ok(new Connection(fd, this->getEndpoint(), clientEndpoint));
 }
 
 int Listener::setupSocket(const std::string &ip, const unsigned short port, const int backlog) {
