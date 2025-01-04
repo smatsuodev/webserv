@@ -27,7 +27,7 @@ void Server::start() {
             const Event &ev = events[i];
             LOG_DEBUGF("event arrived for fd %d (flags: %x)", ev.getFd(), ev.getTypeFlags());
 
-            if (ev.getTypeFlags() & Event::kError) {
+            if (ev.isError()) {
                 this->onErrorEvent(ev);
                 continue;
             }
@@ -69,8 +69,7 @@ void Server::onHandlerError(const Context &ctx, const error::AppError err) {
 }
 
 void Server::onErrorEvent(const Event &event) {
-    if (!(event.getTypeFlags() & Event::kError)) {
-        // kError 以外は無視
+    if (!event.isError()) {
         return;
     }
 
