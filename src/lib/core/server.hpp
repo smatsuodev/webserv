@@ -4,22 +4,28 @@
 #include "event/event_handler.hpp"
 #include "transport/listener.hpp"
 #include "server_state.hpp"
+#include "config/config.hpp"
+#include "http/handler/router.hpp"
 
 class Server {
 public:
-    explicit Server(const Address &listenAddress);
+    explicit Server(const config::Config &config);
     ~Server();
 
     void start();
 
 private:
+    config::Config config_;
+
     // NOTE: Server の作成と同時に初期化されるがよいか?
     Listener listener_;
     ServerState state_;
 
     void onHandlerError(const Context &ctx, error::AppError err);
     void onErrorEvent(const Event &event);
-    void executeActions(std::vector<IAction *> actions);
+    static void executeActions(ActionContext &actionCtx, std::vector<IAction *> actions);
+    // router は各 virtual server 固有
+    static http::Router createRouter(const config::ServerContext &serverConfig);
 };
 
 #endif

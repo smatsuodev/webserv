@@ -10,8 +10,7 @@
 
 #include <vector>
 
-class Server;
-class ServerState;
+class ActionContext;
 
 // イベントハンドラーに呼び出された文脈を提供する
 class Context {
@@ -31,7 +30,8 @@ private:
 class IAction {
 public:
     virtual ~IAction();
-    virtual void execute(ServerState &state) = 0;
+    // NOTE: core の ActionContext に依存していて、設計的に微妙?
+    virtual void execute(ActionContext &ctx) = 0;
 };
 
 // IEventHandler は Context を受けとり、IAction を返す
