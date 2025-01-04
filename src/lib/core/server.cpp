@@ -7,7 +7,8 @@
 #include "utils/logger.hpp"
 
 // TODO: config を元に listener のインスタンスを作る
-Server::Server(const config::Config &config) : config_(config), listener_(Address("0.0.0.0", 8080)) {}
+Server::Server(const config::Config &config)
+    : config_(config), resolver_(config), listener_(Address("0.0.0.0", 8080)) {}
 
 Server::~Server() {}
 
@@ -44,7 +45,7 @@ void Server::start() {
                 LOG_DEBUGF("event handler for fd %d is not registered", ev.getFd());
                 continue;
             }
-            Context ctx(state_.getConnectionRepository().get(ev.getFd()), ev);
+            Context ctx(state_.getConnectionRepository().get(ev.getFd()), ev, resolver_);
 
             const IEventHandler::InvokeResult result = handler.unwrap().get().invoke(ctx);
             if (result.isErr()) {

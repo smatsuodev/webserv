@@ -16,6 +16,7 @@ public:
 
 private:
     config::Config config_;
+    config::Resolver resolver_;
 
     // NOTE: Server の作成と同時に初期化されるがよいか?
     Listener listener_;
