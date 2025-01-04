@@ -59,22 +59,18 @@ namespace config {
 
     class LocationContext {
     public:
-        // root, autoindex, index からなるクラス
         class DocumentRootConfig {
         public:
             explicit DocumentRootConfig(
                 const std::string &root, bool autoindex = false, const std::string &index = "index.html"
             );
 
-        private:
-            std::string root_;
-
-        public:
             const std::string &getRoot() const;
-            bool isAutoindex() const;
+            bool isAutoindexEnabled() const;
             const std::string &getIndex() const;
 
         private:
+            std::string root_;
             bool autoindex_;
             std::string index_;
         };
