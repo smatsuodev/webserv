@@ -7,7 +7,7 @@
 #include "utils/logger.hpp"
 
 // TODO: config を元に listener のインスタンスを作る
-Server::Server(const config::Config &config) : config_(config), listener_("0.0.0.0", 8080) {}
+Server::Server(const config::Config &config) : config_(config), listener_(Endpoint("0.0.0.0", 8080)) {}
 
 Server::~Server() {}
 
@@ -15,7 +15,7 @@ void Server::start() {
     // TODO: 複数 virtual server は未対応
     const config::ServerContext &serverConfig = config_.getServers()[0];
 
-    LOG_INFOF("server started on port %s:%u", serverConfig.getHost().c_str(), serverConfig.getPort());
+    LOG_INFOF("server started on port %s", listener_.getEndpoint().toString().c_str());
 
     // router を構築
     http::Router router = Server::createRouter(serverConfig);
@@ -36,7 +36,7 @@ void Server::start() {
             const Event &ev = events[i];
             LOG_DEBUGF("event arrived for fd %d (flags: %x)", ev.getFd(), ev.getTypeFlags());
 
-            if (ev.getTypeFlags() & Event::kError) {
+            if (ev.isError()) {
                 this->onErrorEvent(ev);
                 continue;
             }
@@ -80,8 +80,7 @@ void Server::onHandlerError(const Context &ctx, const error::AppError err) {
 }
 
 void Server::onErrorEvent(const Event &event) {
-    if (!(event.getTypeFlags() & Event::kError)) {
-        // kError 以外は無視
+    if (!event.isError()) {
         return;
     }
 
