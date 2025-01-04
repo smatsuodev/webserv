@@ -22,7 +22,7 @@ public:
 private:
     AutoFd serverFd_;
 
-    static int setupSocket(const std::string &ip, unsigned short port, int backlog);
+    static int setupSocket(const Address &listenAddress, int backlog);
 };
 
 #endif

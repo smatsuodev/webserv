@@ -11,9 +11,7 @@
 #include <cstring>
 
 Listener::Listener(const Address &listenAddress, const int backlog)
-    : serverFd_(Listener::setupSocket(listenAddress.getIp(), listenAddress.getPort(), backlog)) {
-    LOG_DEBUGF("start listening on %s", listenAddress.toString().c_str());
-}
+    : serverFd_(Listener::setupSocket(listenAddress, backlog)) {}
 
 Listener::~Listener() {
     LOG_DEBUG("Listener: destruct");
@@ -53,7 +51,7 @@ Listener::AcceptConnectionResult Listener::acceptConnection() const {
     return Ok(new Connection(fd, localAddress, foreignAddress));
 }
 
-int Listener::setupSocket(const std::string &ip, const unsigned short port, const int backlog) {
+int Listener::setupSocket(const Address &listenAddress, const int backlog) {
     const int rawFd = socket(AF_INET, SOCK_STREAM, 0);
     if (rawFd == -1) {
         LOG_ERRORF("failed to create socket: %s", std::strerror(errno));
@@ -77,9 +75,9 @@ int Listener::setupSocket(const std::string &ip, const unsigned short port, cons
     sockaddr_in addr = {};
     addr.sin_family = AF_INET;
     // host to network byte order (short)
-    addr.sin_port = htons(port);
-    if (inet_pton(AF_INET, ip.c_str(), &addr.sin_addr) == -1) {
-        LOG_ERRORF("invalid IP address: %s", ip.c_str());
+    addr.sin_port = htons(listenAddress.getPort());
+    if (inet_pton(AF_INET, listenAddress.getIp().c_str(), &addr.sin_addr) == -1) {
+        LOG_ERRORF("invalid IP address: %s", listenAddress.getIp().c_str());
         throw std::runtime_error("invalid IP address");
     }
 
@@ -93,7 +91,7 @@ int Listener::setupSocket(const std::string &ip, const unsigned short port, cons
         throw std::runtime_error("failed to listen on socket");
     }
 
-    LOG_DEBUGF("listening on socket (fd: %d)", rawFd);
+    LOG_DEBUGF("listening on %s (fd: %d)", listenAddress.toString().c_str(), rawFd);
 
     return fd.release();
 }
