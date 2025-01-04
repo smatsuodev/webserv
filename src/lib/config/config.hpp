@@ -19,6 +19,9 @@ namespace config {
     class Config {
     public:
         explicit Config(const ServerContextList &servers);
+        Config(const Config &other);
+
+        Config &operator=(const Config &rhs);
         bool operator==(const Config &rhs) const;
 
         const ServerContextList &getServers() const;
@@ -39,6 +42,9 @@ namespace config {
             const ErrorPageMap &errorPage = ErrorPageMap(),
             std::size_t clientMaxBodySize = kDefaultClientMaxBodySize
         );
+        ServerContext(const ServerContext &other);
+
+        ServerContext &operator=(const ServerContext &rhs);
         bool operator==(const ServerContext &rhs) const;
 
         const std::string &getHost() const;
@@ -65,6 +71,9 @@ namespace config {
             explicit DocumentRootConfig(
                 const std::string &root, bool autoindex = false, const std::string &index = "index.html"
             );
+            DocumentRootConfig(const DocumentRootConfig &other);
+
+            DocumentRootConfig &operator=(const DocumentRootConfig &rhs);
             bool operator==(const DocumentRootConfig &rhs) const;
 
             const std::string &getRoot() const;
@@ -90,6 +99,9 @@ namespace config {
             const std::string &redirect,
             const AllowedMethods &allowedMethods = getDefaultAllowedMethods()
         );
+        LocationContext(const LocationContext &other);
+
+        LocationContext &operator=(const LocationContext &rhs);
         bool operator==(const LocationContext &rhs) const;
 
         const std::string &getPath() const;
