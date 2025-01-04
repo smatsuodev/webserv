@@ -51,6 +51,7 @@ Listener::AcceptConnectionResult Listener::acceptConnection() const {
     return Ok(new Connection(fd, localAddress, foreignAddress));
 }
 
+// TODO: ホスト名を解決できるようにする
 int Listener::setupSocket(const Address &listenAddress, const int backlog) {
     const int rawFd = socket(AF_INET, SOCK_STREAM, 0);
     if (rawFd == -1) {
