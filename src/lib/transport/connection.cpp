@@ -1,8 +1,8 @@
 #include "connection.hpp"
 #include "utils/logger.hpp"
 
-Connection::Connection(const int fd, const Endpoint &listenerEndpoint, const Endpoint &clientEndpoint)
-    : clientFd_(fd), listenerEndpoint_(listenerEndpoint), clientEndpoint_(clientEndpoint), fdReader_(clientFd_),
+Connection::Connection(const int fd, const Address &localAddress, const Address &foreignAddress)
+    : clientFd_(fd), localAddress_(localAddress), foreignAddress_(foreignAddress), fdReader_(clientFd_),
       buffer_(fdReader_) {}
 
 Connection::~Connection() {
@@ -13,12 +13,12 @@ int Connection::getFd() const {
     return clientFd_.get();
 }
 
-const Endpoint &Connection::getListenerEndpoint() const {
-    return listenerEndpoint_;
+const Address &Connection::getLocalAddress() const {
+    return localAddress_;
 }
 
-const Endpoint &Connection::getClientEndpoint() const {
-    return clientEndpoint_;
+const Address &Connection::getForeignAddress() const {
+    return foreignAddress_;
 }
 
 ReadBuffer &Connection::getReadBuffer() {

@@ -7,7 +7,7 @@
 
 class Server {
 public:
-    explicit Server(const Endpoint &endpoint);
+    explicit Server(const Address &listenAddress);
     ~Server();
 
     void start();

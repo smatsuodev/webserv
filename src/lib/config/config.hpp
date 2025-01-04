@@ -19,6 +19,10 @@ namespace config {
     class Config {
     public:
         explicit Config(const ServerContextList &servers);
+        Config(const Config &other);
+
+        Config &operator=(const Config &rhs);
+        bool operator==(const Config &rhs) const;
 
         const ServerContextList &getServers() const;
 
@@ -31,13 +35,17 @@ namespace config {
         typedef std::map<http::HttpStatusCode, std::string> ErrorPageMap;
 
         explicit ServerContext(
+            const std::string &host,
+            uint16_t port,
             const LocationContextList &locations,
-            uint16_t port = 80,
-            const std::string &host = "127.0.0.1",
             const std::vector<std::string> &serverName = std::vector<std::string>(),
             const ErrorPageMap &errorPage = ErrorPageMap(),
             std::size_t clientMaxBodySize = kDefaultClientMaxBodySize
         );
+        ServerContext(const ServerContext &other);
+
+        ServerContext &operator=(const ServerContext &rhs);
+        bool operator==(const ServerContext &rhs) const;
 
         const std::string &getHost() const;
         uint16_t getPort() const;
@@ -48,7 +56,6 @@ namespace config {
 
     private:
         static const std::size_t kDefaultClientMaxBodySize = 1048576; // 1 MiB
-
         std::string host_;
         uint16_t port_;
         std::size_t clientMaxBodySize_;
@@ -64,6 +71,10 @@ namespace config {
             explicit DocumentRootConfig(
                 const std::string &root, bool autoindex = false, const std::string &index = "index.html"
             );
+            DocumentRootConfig(const DocumentRootConfig &other);
+
+            DocumentRootConfig &operator=(const DocumentRootConfig &rhs);
+            bool operator==(const DocumentRootConfig &rhs) const;
 
             const std::string &getRoot() const;
             bool isAutoindexEnabled() const;
@@ -88,6 +99,10 @@ namespace config {
             const std::string &redirect,
             const AllowedMethods &allowedMethods = getDefaultAllowedMethods()
         );
+        LocationContext(const LocationContext &other);
+
+        LocationContext &operator=(const LocationContext &rhs);
+        bool operator==(const LocationContext &rhs) const;
 
         const std::string &getPath() const;
         const std::vector<http::HttpMethod> &getAllowedMethods() const;

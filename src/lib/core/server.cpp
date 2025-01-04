@@ -5,7 +5,7 @@
 #include "transport/listener.hpp"
 #include "utils/logger.hpp"
 
-Server::Server(const Endpoint &endpoint) : listener_(endpoint) {}
+Server::Server(const Address &listenAddress) : listener_(listenAddress) {}
 
 Server::~Server() {}
 
@@ -17,8 +17,6 @@ void Server::start() {
     http::Router router;
     router.onGet("/", new http::Handler());
     router.onDelete("/", new http::Handler());
-
-    LOG_INFOF("server started on port %s", listener_.getEndpoint().toString().c_str());
 
     while (true) {
         const IEventNotifier::WaitEventsResult waitResult = state_.getEventNotifier().waitEvents();
