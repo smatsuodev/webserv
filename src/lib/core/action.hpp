@@ -9,14 +9,14 @@
 // NOTE: router が必要なのは ServeHttpAction のみ。設計的に微妙?
 class ActionContext {
 public:
-    ActionContext(ServerState &state, http::Router &router);
+    ActionContext(ServerState &state, http::IHandler &router);
 
     ServerState &getState() const;
-    http::Router &getRouter() const;
+    http::IHandler &getRouter() const;
 
 private:
     ServerState &state_;
-    http::Router &router_;
+    http::IHandler &router_;
 };
 
 class AddConnectionAction : public IAction {
