@@ -36,7 +36,7 @@ namespace config {
         return root_;
     }
 
-    bool LocationContext::DocumentRootConfig::isAutoindex() const {
+    bool LocationContext::DocumentRootConfig::isAutoindexEnabled() const {
         return autoindex_;
     }
 

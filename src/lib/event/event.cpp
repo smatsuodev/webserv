@@ -21,3 +21,7 @@ int Event::getFd() const {
 uint32_t Event::getTypeFlags() const {
     return typeFlags_;
 }
+
+bool Event::isError() const {
+    return typeFlags_ & (kError | kHangUp);
+}
