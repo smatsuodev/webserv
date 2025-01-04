@@ -6,8 +6,6 @@
 
 class ReadRequestHandler : public IEventHandler {
 public:
-    // NOTE: ReadBuffer に直接依存するべきか?
-    explicit ReadRequestHandler(ReadBuffer &readBuf);
     InvokeResult invoke(const Context &ctx);
 
 private:

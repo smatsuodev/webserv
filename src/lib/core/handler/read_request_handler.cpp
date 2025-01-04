@@ -3,12 +3,10 @@
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
 
-ReadRequestHandler::ReadRequestHandler(ReadBuffer &readBuf) : reqReader_(readBuf) {}
-
 IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start ReadRequestHandler");
 
-    const Option<http::Request> req = TRY(reqReader_.readRequest());
+    const Option<http::Request> req = TRY(reqReader_.readRequest(ctx));
     if (req.isNone()) {
         // read は高々 1 回なので、パースまで完了しなかった
         LOG_DEBUG("request is not fully read");

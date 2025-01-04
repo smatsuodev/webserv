@@ -2,18 +2,16 @@
 #define SRC_LIB_HTTP_REQUEST_READER_HPP
 
 #include "../../http/request/request.hpp"
-#include "../../transport/connection.hpp"
 #include "../../utils/types/unit.hpp"
-
+#include "event/event_handler.hpp"
 #include <vector>
 
 class RequestReader {
 public:
-    // NOTE: ReadBuffer に直接依存するべきか?
-    explicit RequestReader(ReadBuffer &readBuf);
+    RequestReader();
 
     typedef Result<Option<http::Request>, error::AppError> ReadRequestResult;
-    ReadRequestResult readRequest();
+    ReadRequestResult readRequest(const Context &ctx);
 
 private:
     // 読み込みは途中で中断され得るので、どこまで進んだか記録する
@@ -26,7 +24,6 @@ private:
 
     typedef std::vector<std::string> RawHeaders;
 
-    ReadBuffer &readBuf_;
     State state_;
 
     std::string requestLine_;
@@ -37,13 +34,13 @@ private:
     std::string bodyBuf_;
 
     typedef Result<Option<std::string>, error::AppError> GetLineResult;
-    GetLineResult getLine() const;
+    static GetLineResult getLine(ReadBuffer &readBuf);
 
     // private メンバに書き込むものと、戻り値で返すものが混在してる
-    Result<Option<std::string>, error::AppError> getRequestLine() const;
-    Result<Option<types::Unit>, error::AppError> getHeaders();
+    Result<Option<std::string>, error::AppError> getRequestLine(ReadBuffer &readBuf) const;
+    Result<Option<types::Unit>, error::AppError> getHeaders(ReadBuffer &readBuf);
     static Result<Option<size_t>, error::AppError> getContentLength(const RawHeaders &);
-    Result<Option<types::Unit>, error::AppError> getBody(std::size_t);
+    Result<Option<types::Unit>, error::AppError> getBody(ReadBuffer&readBuf,std::size_t);
 };
 
 #endif

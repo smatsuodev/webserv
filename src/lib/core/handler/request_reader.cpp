@@ -4,20 +4,20 @@
 #include "../../utils/types/try.hpp"
 #include "../../utils/logger.hpp"
 
-RequestReader::RequestReader(ReadBuffer &readBuf)
-    : readBuf_(readBuf), state_(kReadingRequestLine), contentLength_(None), body_(None) {}
+RequestReader::RequestReader() : state_(kReadingRequestLine), contentLength_(None), body_(None) {}
 
-RequestReader::ReadRequestResult RequestReader::readRequest() {
+RequestReader::ReadRequestResult RequestReader::readRequest(const Context &ctx) {
     LOG_DEBUG("start RequestReader::readRequest");
 
-    const std::size_t bytesLoaded = TRY(readBuf_.load());
+    ReadBuffer &readBuf = ctx.getConnection().unwrap().get().getReadBuffer();
 
-    while (state_ != kDone && readBuf_.size() > 0) {
+    const std::size_t bytesLoaded = TRY(readBuf.load());
+    while (state_ != kDone && readBuf.size() > 0) {
         switch (state_) {
             // request-line CRLF
             case kReadingRequestLine: {
                 LOG_DEBUG("read start-line");
-                Option<std::string> result = TRY(this->getRequestLine());
+                Option<std::string> result = TRY(this->getRequestLine(readBuf));
                 if (result.isNone()) {
                     if (bytesLoaded == 0) {
                         LOG_WARN("incomplete request-line");
@@ -33,7 +33,7 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
             // *( field-line CRLF ) CRLF
             case kReadingHeaders: {
                 LOG_DEBUG("read headers");
-                Option<types::Unit> result = TRY(this->getHeaders());
+                Option<types::Unit> result = TRY(this->getHeaders(readBuf));
                 if (result.isNone()) {
                     if (bytesLoaded == 0) {
                         LOG_WARN("incomplete headers");
@@ -53,7 +53,7 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
             // message-body
             case kReadingBody: {
                 LOG_DEBUG("read message-body");
-                const Option<types::Unit> result = TRY(this->getBody(contentLength_.unwrap()));
+                const Option<types::Unit> result = TRY(this->getBody(readBuf, contentLength_.unwrap()));
                 if (result.isNone()) {
                     if (bytesLoaded == 0) {
                         LOG_WARN("incomplete body");
@@ -86,8 +86,8 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
     return Ok(Some(req));
 }
 
-RequestReader::GetLineResult RequestReader::getLine() const {
-    const Option<std::string> maybeLine = readBuf_.consumeUntil("\r\n");
+RequestReader::GetLineResult RequestReader::getLine(ReadBuffer &readBuf) {
+    const Option<std::string> maybeLine = readBuf.consumeUntil("\r\n");
     if (maybeLine.isNone()) {
         return Ok(None);
     }
@@ -101,14 +101,14 @@ RequestReader::GetLineResult RequestReader::getLine() const {
     return Ok(Some(line));
 }
 
-Result<Option<std::string>, error::AppError> RequestReader::getRequestLine() const {
-    const Option<std::string> reqLine = TRY(this->getLine());
+Result<Option<std::string>, error::AppError> RequestReader::getRequestLine(ReadBuffer &readBuf) const {
+    const Option<std::string> reqLine = TRY(this->getLine(readBuf));
     return Ok(reqLine);
 }
 
-Result<Option<types::Unit>, error::AppError> RequestReader::getHeaders() {
+Result<Option<types::Unit>, error::AppError> RequestReader::getHeaders(ReadBuffer &readBuf) {
     while (true) {
-        const Option<std::string> line = TRY(this->getLine());
+        const Option<std::string> line = TRY(this->getLine(readBuf));
         if (line.isNone()) {
             // バッファが足りない
             return Ok(None);
@@ -139,10 +139,11 @@ Result<Option<size_t>, error::AppError> RequestReader::getContentLength(const Ra
     return Ok(None);
 }
 
-Result<Option<types::Unit>, error::AppError> RequestReader::getBody(const std::size_t contentLength) {
+Result<Option<types::Unit>, error::AppError>
+RequestReader::getBody(ReadBuffer &readBuf, const std::size_t contentLength) {
     while (bodyBuf_.size() < contentLength) {
         const std::size_t want = contentLength - bodyBuf_.size();
-        const std::string chunk = readBuf_.consume(want);
+        const std::string chunk = readBuf.consume(want);
         if (chunk.empty()) {
             return Ok(None);
         }
