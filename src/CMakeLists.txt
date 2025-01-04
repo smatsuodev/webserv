@@ -71,8 +71,10 @@ add_library(webserv_lib STATIC
         lib/config/toml/value.hpp
         lib/http/handler/redirect_handler.cpp
         lib/http/handler/redirect_handler.hpp
-        lib/transport/endpoint.cpp
-        lib/transport/endpoint.hpp
+        lib/transport/address.cpp
+        lib/transport/address.hpp
+        lib/config/resolver.cpp
+        lib/config/resolver.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

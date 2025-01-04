@@ -62,3 +62,6 @@ gtest_discover_tests(ref_test)
 
 add_executable(read_buffer_test read_buffer_test.cpp)
 gtest_discover_tests(read_buffer_test)
+
+add_executable(config_resolver_test config_resolver_test.cpp)
+gtest_discover_tests(config_resolver_test)
