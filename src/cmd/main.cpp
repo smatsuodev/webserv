@@ -14,12 +14,12 @@ Config loadConfig() {
     LocationContext location2("/src", LocationContext::DocumentRootConfig("./src"));
     LocationContext location3("/redirect", "https://example.com");
 
-    return Config({ServerContext({location1, location2, location3}, 8080)});
+    return Config({ServerContext("0.0.0.0", 8080, {location1, location2, location3})});
 }
 
 int main() {
     const Config config = loadConfig();
 
-    Server s(Endpoint("0.0.0.0", 8080));
+    Server s(Address("0.0.0.0", 8080));
     s.start();
 }
