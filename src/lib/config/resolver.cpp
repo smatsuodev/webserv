@@ -1,4 +1,5 @@
 #include "resolver.hpp"
+#include <algorithm>
 
 namespace config {
     Resolver::Resolver(const Config &config) : config_(config) {}
