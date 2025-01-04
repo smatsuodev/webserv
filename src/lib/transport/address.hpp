@@ -1,11 +1,11 @@
-#ifndef SRC_LIB_TRANSPORT_ENDPOINT_HPP
-#define SRC_LIB_TRANSPORT_ENDPOINT_HPP
+#ifndef SRC_LIB_TRANSPORT_ADDRESS_HPP
+#define SRC_LIB_TRANSPORT_ADDRESS_HPP
 
 #include <string>
 
-class Endpoint {
+class Address {
 public:
-    Endpoint(const std::string &ip, unsigned short port);
+    Address(const std::string &ip, unsigned short port);
 
     const std::string &getIp() const;
     unsigned short getPort() const;

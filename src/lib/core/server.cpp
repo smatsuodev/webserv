@@ -7,15 +7,13 @@
 #include "utils/logger.hpp"
 
 // TODO: config を元に listener のインスタンスを作る
-Server::Server(const config::Config &config) : config_(config), listener_(Endpoint("0.0.0.0", 8080)) {}
+Server::Server(const config::Config &config) : config_(config), listener_(Address("0.0.0.0", 8080)) {}
 
 Server::~Server() {}
 
 void Server::start() {
     // TODO: 複数 virtual server は未対応
     const config::ServerContext &serverConfig = config_.getServers()[0];
-
-    LOG_INFOF("server started on port %s", listener_.getEndpoint().toString().c_str());
 
     // router を構築
     http::Router router = Server::createRouter(serverConfig);
