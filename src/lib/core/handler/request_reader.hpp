@@ -28,7 +28,8 @@ private:
 
     std::string requestLine_;
     RawHeaders headers_;
-    Option<size_t> contentLength_;
+    Option<std::size_t> contentLength_;
+    std::size_t clientMaxBodySize_; // Host ヘッダー読み込み後に解決される
     Option<std::string> body_;
 
     std::string bodyBuf_;
@@ -40,7 +41,8 @@ private:
     Result<Option<std::string>, error::AppError> getRequestLine(ReadBuffer &readBuf) const;
     Result<Option<types::Unit>, error::AppError> getHeaders(ReadBuffer &readBuf);
     static Result<Option<size_t>, error::AppError> getContentLength(const RawHeaders &);
-    Result<Option<types::Unit>, error::AppError> getBody(ReadBuffer&readBuf,std::size_t);
+    static Result<std::size_t, error::AppError> resolveClientMaxBodySize(const Context &, const RawHeaders &);
+    Result<Option<types::Unit>, error::AppError> getBody(ReadBuffer &readBuf, std::size_t);
 };
 
 #endif

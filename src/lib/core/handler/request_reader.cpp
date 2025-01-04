@@ -4,12 +4,14 @@
 #include "../../utils/types/try.hpp"
 #include "../../utils/logger.hpp"
 
-RequestReader::RequestReader() : state_(kReadingRequestLine), contentLength_(None), body_(None) {}
+RequestReader::RequestReader()
+    : state_(kReadingRequestLine), contentLength_(None), clientMaxBodySize_(0), body_(None) {}
 
 RequestReader::ReadRequestResult RequestReader::readRequest(const Context &ctx) {
     LOG_DEBUG("start RequestReader::readRequest");
 
-    ReadBuffer &readBuf = ctx.getConnection().unwrap().get().getReadBuffer();
+    Connection &conn = ctx.getConnection().unwrap();
+    ReadBuffer &readBuf = conn.getReadBuffer();
 
     const std::size_t bytesLoaded = TRY(readBuf.load());
     while (state_ != kDone && readBuf.size() > 0) {
@@ -42,7 +44,14 @@ RequestReader::ReadRequestResult RequestReader::readRequest(const Context &ctx) 
                     return Ok(None);
                 }
                 contentLength_ = TRY(this->getContentLength(headers_));
+                clientMaxBodySize_ = TRY(RequestReader::resolveClientMaxBodySize(ctx, headers_));
                 if (contentLength_.isSome() && contentLength_.unwrap() > 0) {
+                    const std::size_t len = contentLength_.unwrap();
+                    if (len > clientMaxBodySize_) {
+                        LOG_WARNF("Content-Length is too large: %zu", len);
+                        // TODO: 適切なエラーレスポンスを返すために、固有のエラーを返すべき
+                        return Err(error::kUnknown);
+                    }
                     state_ = kReadingBody;
                 } else {
                     state_ = kDone;
@@ -137,6 +146,33 @@ Result<Option<size_t>, error::AppError> RequestReader::getContentLength(const Ra
         }
     }
     return Ok(None);
+}
+
+Result<std::size_t, error::AppError>
+RequestReader::resolveClientMaxBodySize(const Context &ctx, const RawHeaders &headers) {
+    // Host ヘッダーを探す
+    Option<std::string> hostHeaderValue = None;
+    for (RawHeaders::const_iterator it = headers.begin(); it != headers.end(); ++it) {
+        const http::RequestParser::HeaderField &field = TRY(http::RequestParser::parseHeaderFieldLine(*it));
+        if (field.first == "Host") {
+            hostHeaderValue = Some(field.second);
+            break;
+        }
+    }
+    if (hostHeaderValue.isNone()) {
+        // Host ヘッダーは必須
+        return Err(error::kParseUnknown);
+    }
+
+    const Address &localAddr = ctx.getConnection().unwrap().get().getLocalAddress();
+    const Option<config::ServerContext> config = ctx.getResolver().resolve(localAddr, hostHeaderValue.unwrap());
+    if (config.isNone()) {
+        // accept しているので、通常は見つかるはず
+        LOG_WARN("config not found");
+        return Err(error::kUnknown);
+    }
+
+    return Ok(config.unwrap().getClientMaxBodySize());
 }
 
 Result<Option<types::Unit>, error::AppError>
