@@ -35,7 +35,7 @@ namespace types {
         ~Some() {}
 
         Some &operator=(const Some &other) {
-            if (*this != other) {
+            if (this != &other) {
                 val_ = other.val_;
             }
             return *this;
