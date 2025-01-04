@@ -71,6 +71,8 @@ add_library(webserv_lib STATIC
         lib/config/toml/value.hpp
         lib/http/handler/redirect_handler.cpp
         lib/http/handler/redirect_handler.hpp
+        lib/transport/endpoint.cpp
+        lib/transport/endpoint.hpp
         lib/http/handler/matcher.hpp
 )
 # lib/ を include path に追加
