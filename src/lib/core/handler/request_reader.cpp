@@ -1,8 +1,8 @@
 #include "request_reader.hpp"
-#include "utils/string.hpp"
-#include "request_parser.hpp"
-#include "utils/types/try.hpp"
-#include "utils/logger.hpp"
+#include "../../utils/string.hpp"
+#include "../../http/request/request_parser.hpp"
+#include "../../utils/types/try.hpp"
+#include "../../utils/logger.hpp"
 
 RequestReader::RequestReader(ReadBuffer &readBuf)
     : readBuf_(readBuf), state_(kReadingRequestLine), contentLength_(None), body_(None) {}

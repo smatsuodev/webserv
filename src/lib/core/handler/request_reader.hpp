@@ -1,9 +1,9 @@
 #ifndef SRC_LIB_HTTP_REQUEST_READER_HPP
 #define SRC_LIB_HTTP_REQUEST_READER_HPP
 
-#include "request.hpp"
-#include "transport/connection.hpp"
-#include "utils/types/unit.hpp"
+#include "../../http/request/request.hpp"
+#include "../../transport/connection.hpp"
+#include "../../utils/types/unit.hpp"
 
 #include <vector>
 
