@@ -5,13 +5,13 @@
 
 IAction::~IAction() {}
 
-ActionContext::ActionContext(ServerState &state, http::Router &router) : state_(state), router_(router) {}
+ActionContext::ActionContext(ServerState &state, http::IHandler &router) : state_(state), router_(router) {}
 
 ServerState &ActionContext::getState() const {
     return state_;
 }
 
-http::Router &ActionContext::getRouter() const {
+http::IHandler &ActionContext::getRouter() const {
     return router_;
 }
 
