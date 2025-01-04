@@ -31,9 +31,9 @@ namespace config {
         typedef std::map<http::HttpStatusCode, std::string> ErrorPageMap;
 
         explicit ServerContext(
-            const LocationContextList &locations,
-            uint16_t port = 80,
-            const std::string &host = "0.0.0.0",
+            const std::string &host,
+            uint16_t port,
+            const LocationContextList &locations = LocationContextList(),
             const std::vector<std::string> &serverName = std::vector<std::string>(),
             const ErrorPageMap &errorPage = ErrorPageMap(),
             std::size_t clientMaxBodySize = kDefaultClientMaxBodySize

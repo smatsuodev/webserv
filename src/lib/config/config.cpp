@@ -75,9 +75,9 @@ namespace config {
     }
 
     ServerContext::ServerContext(
-        const std::vector<LocationContext> &locations,
-        const uint16_t port,
         const std::string &host,
+        const uint16_t port,
+        const std::vector<LocationContext> &locations,
         const std::vector<std::string> &serverName,
         const ErrorPageMap &errorPage,
         const std::size_t clientMaxBodySize
