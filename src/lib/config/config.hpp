@@ -19,6 +19,7 @@ namespace config {
     class Config {
     public:
         explicit Config(const ServerContextList &servers);
+        bool operator==(const Config &rhs) const;
 
         const ServerContextList &getServers() const;
 
@@ -33,11 +34,12 @@ namespace config {
         explicit ServerContext(
             const std::string &host,
             uint16_t port,
-            const LocationContextList &locations = LocationContextList(),
+            const LocationContextList &locations,
             const std::vector<std::string> &serverName = std::vector<std::string>(),
             const ErrorPageMap &errorPage = ErrorPageMap(),
             std::size_t clientMaxBodySize = kDefaultClientMaxBodySize
         );
+        bool operator==(const ServerContext &rhs) const;
 
         const std::string &getHost() const;
         uint16_t getPort() const;
@@ -48,7 +50,6 @@ namespace config {
 
     private:
         static const std::size_t kDefaultClientMaxBodySize = 1048576; // 1 MiB
-
         std::string host_;
         uint16_t port_;
         std::size_t clientMaxBodySize_;
@@ -64,6 +65,7 @@ namespace config {
             explicit DocumentRootConfig(
                 const std::string &root, bool autoindex = false, const std::string &index = "index.html"
             );
+            bool operator==(const DocumentRootConfig &rhs) const;
 
             const std::string &getRoot() const;
             bool isAutoindexEnabled() const;
@@ -88,6 +90,7 @@ namespace config {
             const std::string &redirect,
             const AllowedMethods &allowedMethods = getDefaultAllowedMethods()
         );
+        bool operator==(const LocationContext &rhs) const;
 
         const std::string &getPath() const;
         const std::vector<http::HttpMethod> &getAllowedMethods() const;
