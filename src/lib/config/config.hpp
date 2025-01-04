@@ -33,7 +33,7 @@ namespace config {
         explicit ServerContext(
             const LocationContextList &locations,
             uint16_t port = 80,
-            const std::string &host = "127.0.0.1",
+            const std::string &host = "0.0.0.0",
             const std::vector<std::string> &serverName = std::vector<std::string>(),
             const ErrorPageMap &errorPage = ErrorPageMap(),
             std::size_t clientMaxBodySize = kDefaultClientMaxBodySize
