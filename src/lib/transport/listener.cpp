@@ -10,8 +10,10 @@
 #include <cerrno>
 #include <cstring>
 
-Listener::Listener(const Endpoint &endpoint, const int backlog)
-    : serverFd_(Listener::setupSocket(endpoint.getIp(), endpoint.getPort(), backlog)), endpoint_(endpoint) {}
+Listener::Listener(const Address &listenAddress, const int backlog)
+    : serverFd_(Listener::setupSocket(listenAddress.getIp(), listenAddress.getPort(), backlog)) {
+    LOG_DEBUGF("start listening on %s", listenAddress.toString().c_str());
+}
 
 Listener::~Listener() {
     LOG_DEBUG("Listener: destruct");
@@ -21,20 +23,15 @@ int Listener::getFd() const {
     return this->serverFd_.get();
 }
 
-const Endpoint &Listener::getEndpoint() const {
-    return endpoint_;
-}
-
 Listener::AcceptConnectionResult Listener::acceptConnection() const {
-    sockaddr_in clientAddr = {};
-    int clientAddrLen = sizeof(clientAddr);
-    const int fd =
-        accept(serverFd_, reinterpret_cast<sockaddr *>(&clientAddr), reinterpret_cast<socklen_t *>(&clientAddrLen));
+    sockaddr_in sockAddr = {};
+    socklen_t sockAddrLen = sizeof(sockAddr);
+    const int fd = accept(serverFd_, reinterpret_cast<sockaddr *>(&sockAddr), &sockAddrLen);
     if (fd == -1) {
         LOG_WARNF("failed to accept connection: %s", std::strerror(errno));
         return Err<std::string>("failed to accept connection");
     }
-    const Endpoint clientEndpoint(inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+    const Address foreignAddress(inet_ntoa(sockAddr.sin_addr), ntohs(sockAddr.sin_port));
 
     const Result<void, error::AppError> result = utils::setNonBlocking(fd);
     if (result.isErr()) {
@@ -42,9 +39,18 @@ Listener::AcceptConnectionResult Listener::acceptConnection() const {
         return Err<std::string>("failed to set non-blocking fd");
     }
 
-    LOG_INFOF("connection established from %s (fd: %d)", clientEndpoint.toString().c_str(), fd);
+    LOG_INFOF("connection established from %s (fd: %d)", foreignAddress.toString().c_str(), fd);
 
-    return Ok(new Connection(fd, this->getEndpoint(), clientEndpoint));
+    // local address を取得
+    sockaddr_in localAddr = {};
+    socklen_t localAddrLen = sizeof(localAddr);
+    if (getsockname(fd, reinterpret_cast<sockaddr *>(&localAddr), &localAddrLen) == -1) {
+        LOG_ERRORF("failed to get local address: %s", std::strerror(errno));
+        return Err<std::string>("failed to get local address");
+    }
+    const Address localAddress(inet_ntoa(localAddr.sin_addr), ntohs(localAddr.sin_port));
+
+    return Ok(new Connection(fd, localAddress, foreignAddress));
 }
 
 int Listener::setupSocket(const std::string &ip, const unsigned short port, const int backlog) {

@@ -5,15 +5,13 @@
 #include "transport/listener.hpp"
 #include "utils/logger.hpp"
 
-Server::Server(const Endpoint &endpoint) : listener_(endpoint) {}
+Server::Server(const Address &listenAddress) : listener_(listenAddress) {}
 
 Server::~Server() {}
 
 void Server::start() {
     state_.getEventNotifier().registerEvent(Event(listener_.getFd(), Event::kRead));
     state_.getEventHandlerRepository().set(listener_.getFd(), new AcceptHandler(listener_));
-
-    LOG_INFOF("server started on port %s", listener_.getEndpoint().toString().c_str());
 
     while (true) {
         const IEventNotifier::WaitEventsResult waitResult = state_.getEventNotifier().waitEvents();

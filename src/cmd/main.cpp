@@ -20,6 +20,6 @@ Config loadConfig() {
 int main() {
     const Config config = loadConfig();
 
-    Server s(Endpoint("0.0.0.0", 8080));
+    Server s(Address("0.0.0.0", 8080));
     s.start();
 }
