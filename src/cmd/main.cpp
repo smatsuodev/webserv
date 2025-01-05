@@ -12,9 +12,12 @@ Config loadConfig() {
     );
     // src/ は GET だけ許可
     LocationContext location2("/src", LocationContext::DocumentRootConfig("./src"));
-    LocationContext location3("/redirect", "https://example.com");
+    ServerContext server1("0.0.0.0", 8080, {location1, location2});
 
-    return Config({ServerContext("0.0.0.0", 8080, {location1, location2, location3})});
+    // 全部 example.com にリダイレクト
+    ServerContext server2("0.0.0.0", 8081, {LocationContext("/", "https://example.com")});
+
+    return Config({server1, server2});
 }
 
 int main() {
