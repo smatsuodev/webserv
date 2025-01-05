@@ -40,4 +40,16 @@ private:
     T *ptr_;
 };
 
+namespace utils {
+    template <typename T>
+    Ref<T> ref(T &ref) {
+        return Ref<T>(ref);
+    }
+
+    template <typename T>
+    Ref<const T> cref(const T &ref) {
+        return Ref<const T>(ref);
+    }
+}
+
 #endif
