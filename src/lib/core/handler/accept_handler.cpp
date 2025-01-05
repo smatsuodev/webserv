@@ -7,7 +7,7 @@
 
 AcceptHandler::AcceptHandler(Listener &listener) : listener_(listener) {}
 
-IEventHandler::InvokeResult AcceptHandler::invoke(const Context &) {
+IEventHandler::InvokeResult AcceptHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start AcceptHandler");
 
     // TODO: accept がブロックしたら?
@@ -24,7 +24,7 @@ IEventHandler::InvokeResult AcceptHandler::invoke(const Context &) {
     std::vector<IAction *> actions;
     actions.push_back(new RegisterEventAction(eventToRegister));
     actions.push_back(new AddConnectionAction(newConnection));
-    actions.push_back(new RegisterEventHandlerAction(*newConnection, new ReadRequestHandler()));
+    actions.push_back(new RegisterEventHandlerAction(*newConnection, new ReadRequestHandler(ctx)));
 
     return Ok(actions);
 }

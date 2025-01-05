@@ -8,10 +8,29 @@
 
 class RequestReader {
 public:
-    RequestReader();
+    /**
+     * config::Resolver は (localAddress, Host) -> ServerContext
+     * RequestReader をテストしやすくするための IF
+     */
+    class IConfigResolver {
+    public:
+        virtual ~IConfigResolver();
+        virtual Option<config::ServerContext> resolve(const std::string &host) const = 0;
+    };
+    class ConfigResolver : public IConfigResolver {
+    public:
+        ConfigResolver(const config::Resolver &resolver, const Address &localAddr);
+        Option<config::ServerContext> resolve(const std::string &host) const;
+
+    private:
+        config::Resolver resolver_;
+        Address localAddr_;
+    };
+
+    explicit RequestReader(IConfigResolver &resolver);
 
     typedef Result<Option<http::Request>, error::AppError> ReadRequestResult;
-    ReadRequestResult readRequest(const Context &ctx);
+    ReadRequestResult readRequest(ReadBuffer &readBuf);
 
 private:
     // 読み込みは途中で中断され得るので、どこまで進んだか記録する
@@ -24,6 +43,7 @@ private:
 
     typedef std::vector<std::string> RawHeaders;
 
+    IConfigResolver &resolver_;
     State state_;
 
     std::string requestLine_;
@@ -41,7 +61,7 @@ private:
     Result<Option<std::string>, error::AppError> getRequestLine(ReadBuffer &readBuf) const;
     Result<Option<types::Unit>, error::AppError> getHeaders(ReadBuffer &readBuf);
     static Result<Option<size_t>, error::AppError> getContentLength(const RawHeaders &);
-    static Result<std::size_t, error::AppError> resolveClientMaxBodySize(const Context &, const RawHeaders &);
+    Result<std::size_t, error::AppError> resolveClientMaxBodySize(const RawHeaders &) const;
     Result<Option<types::Unit>, error::AppError> getBody(ReadBuffer &readBuf, std::size_t);
 };
 

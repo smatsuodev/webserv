@@ -4,14 +4,11 @@
 #include "../../utils/types/try.hpp"
 #include "../../utils/logger.hpp"
 
-RequestReader::RequestReader()
-    : state_(kReadingRequestLine), contentLength_(None), clientMaxBodySize_(0), body_(None) {}
+RequestReader::RequestReader(IConfigResolver &resolver)
+    : resolver_(resolver), state_(kReadingRequestLine), contentLength_(None), clientMaxBodySize_(0), body_(None) {}
 
-RequestReader::ReadRequestResult RequestReader::readRequest(const Context &ctx) {
+RequestReader::ReadRequestResult RequestReader::readRequest(ReadBuffer &readBuf) {
     LOG_DEBUG("start RequestReader::readRequest");
-
-    Connection &conn = ctx.getConnection().unwrap();
-    ReadBuffer &readBuf = conn.getReadBuffer();
 
     const std::size_t bytesLoaded = TRY(readBuf.load());
     while (state_ != kDone && readBuf.size() > 0) {
@@ -44,7 +41,8 @@ RequestReader::ReadRequestResult RequestReader::readRequest(const Context &ctx) 
                     return Ok(None);
                 }
                 contentLength_ = TRY(this->getContentLength(headers_));
-                clientMaxBodySize_ = TRY(RequestReader::resolveClientMaxBodySize(ctx, headers_));
+                // config から client_max_body_size を取得
+                clientMaxBodySize_ = TRY(this->resolveClientMaxBodySize(headers_));
                 if (contentLength_.isSome() && contentLength_.unwrap() > 0) {
                     const std::size_t len = contentLength_.unwrap();
                     if (len > clientMaxBodySize_) {
@@ -147,8 +145,7 @@ Result<Option<size_t>, error::AppError> RequestReader::getContentLength(const Ra
     return Ok(None);
 }
 
-Result<std::size_t, error::AppError>
-RequestReader::resolveClientMaxBodySize(const Context &ctx, const RawHeaders &headers) {
+Result<std::size_t, error::AppError> RequestReader::resolveClientMaxBodySize(const RawHeaders &headers) const {
     // Host ヘッダーを探す
     Option<std::string> hostHeaderValue = None;
     for (RawHeaders::const_iterator it = headers.begin(); it != headers.end(); ++it) {
@@ -163,8 +160,7 @@ RequestReader::resolveClientMaxBodySize(const Context &ctx, const RawHeaders &he
         return Err(error::kParseUnknown);
     }
 
-    const Address &localAddr = ctx.getConnection().unwrap().get().getLocalAddress();
-    const Option<config::ServerContext> config = ctx.getResolver().resolve(localAddr, hostHeaderValue.unwrap());
+    const Option<config::ServerContext> config = resolver_.resolve(hostHeaderValue.unwrap());
     if (config.isNone()) {
         // accept しているので、通常は見つかるはず
         LOG_WARN("config not found");
@@ -187,4 +183,13 @@ RequestReader::getBody(ReadBuffer &readBuf, const std::size_t contentLength) {
 
     body_ = Some(bodyBuf_);
     return Ok(Some(unit));
+}
+
+RequestReader::IConfigResolver::~IConfigResolver() {}
+
+RequestReader::ConfigResolver::ConfigResolver(const config::Resolver &resolver, const Address &localAddr)
+    : resolver_(resolver), localAddr_(localAddr) {}
+
+Option<config::ServerContext> RequestReader::ConfigResolver::resolve(const std::string &host) const {
+    return resolver_.resolve(localAddr_, host);
 }

@@ -1,12 +1,26 @@
 #include <gtest/gtest.h>
+#include <fakeit.hpp>
 #include "./utils/reader.hpp"
 #include "../src/lib/core/handler/request_reader.hpp"
+#include "core/server.hpp"
 #include "utils/logger.hpp"
-
 #include <utility>
 
+using namespace fakeit;
+using namespace config;
+
 class RequestReaderTest : public ::testing::Test {
+public:
+    RequestReaderTest() {
+        const ServerContext config = ServerContext("0.0.0.0", 80, {});
+        When(Method(resolverMock_, resolve)).AlwaysReturn(Some(config));
+        reqReader_ = std::make_unique<RequestReader>(resolverMock_.get());
+    }
+
 protected:
+    Mock<RequestReader::IConfigResolver> resolverMock_;
+    std::unique_ptr<RequestReader> reqReader_;
+
     void SetUp() override {
         SET_LOG_LEVEL(Logger::kError);
     }
@@ -17,9 +31,8 @@ TEST_F(RequestReaderTest, GetNormal) {
                                 "Host: example.com\r\n\r\n";
     StringReader reader(request);
     ReadBuffer readBuf(reader);
-    RequestReader reqReader(readBuf);
 
-    const auto result = reqReader.readRequest();
+    const auto result = reqReader_->readRequest(readBuf);
     EXPECT_TRUE(result.isOk());
 
     const http::Request expected = http::Request(
@@ -41,9 +54,8 @@ TEST_F(RequestReaderTest, PostNormal) {
                                 "hello";
     StringReader reader(request);
     ReadBuffer readBuf(reader);
-    RequestReader reqReader(readBuf);
 
-    const auto result = reqReader.readRequest();
+    const auto result = reqReader_->readRequest(readBuf);
     EXPECT_TRUE(result.isOk());
 
     const http::Request expected = http::Request(
@@ -65,13 +77,12 @@ TEST_F(RequestReaderTest, GetWouldBlock) {
     StringReader sReader(request);
     WouldBlockReader2 reader(sReader);
     ReadBuffer readBuf(reader);
-    RequestReader reqReader(readBuf);
 
     // Request が得られるまで繰り返す
-    auto result = reqReader.readRequest();
+    auto result = reqReader_->readRequest(readBuf);
     uint count = 20;
     while (result.isErr() || result.unwrap().isNone()) {
-        result = reqReader.readRequest();
+        result = reqReader_->readRequest(readBuf);
         ASSERT_GE(count--, 0);
     }
 
@@ -96,13 +107,12 @@ TEST_F(RequestReaderTest, PostWouldBlock) {
     StringReader sReader(request);
     WouldBlockReader2 reader(sReader);
     ReadBuffer readBuf(reader);
-    RequestReader reqReader(readBuf);
 
     // Request が得られるまで繰り返す
-    auto result = reqReader.readRequest();
+    auto result = reqReader_->readRequest(readBuf);
     uint count = 20;
     while (result.isErr() || result.unwrap().isNone()) {
-        result = reqReader.readRequest();
+        result = reqReader_->readRequest(readBuf);
         ASSERT_GE(count--, 0);
     }
 

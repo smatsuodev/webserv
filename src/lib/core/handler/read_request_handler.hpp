@@ -6,9 +6,11 @@
 
 class ReadRequestHandler : public IEventHandler {
 public:
+    explicit ReadRequestHandler(const Context &ctx);
     InvokeResult invoke(const Context &ctx);
 
 private:
+    std::auto_ptr<RequestReader::IConfigResolver> resolver_; // RequestReader に渡す参照先として必要
     RequestReader reqReader_;
 };
 

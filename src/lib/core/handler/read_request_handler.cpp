@@ -3,10 +3,17 @@
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
 
+ReadRequestHandler::ReadRequestHandler(const Context &ctx)
+    : resolver_(
+          new RequestReader::ConfigResolver(ctx.getResolver(), ctx.getConnection().unwrap().get().getLocalAddress())
+      ),
+      reqReader_(*resolver_) {}
+
 IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start ReadRequestHandler");
 
-    const Option<http::Request> req = TRY(reqReader_.readRequest(ctx));
+    ReadBuffer &readBuf = ctx.getConnection().unwrap().get().getReadBuffer();
+    const Option<http::Request> req = TRY(reqReader_.readRequest(readBuf));
     if (req.isNone()) {
         // read は高々 1 回なので、パースまで完了しなかった
         LOG_DEBUG("request is not fully read");
