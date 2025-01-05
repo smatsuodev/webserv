@@ -120,3 +120,21 @@ TEST_F(ResolverTest, ResolveWithMultipleWildcards) {
     ASSERT_TRUE(result3.isSome());
     EXPECT_EQ(result3.unwrap(), servers[0]);
 }
+
+TEST_F(ResolverTest, ResolveWithPortInHostHeader) {
+    ServerContextList servers;
+    servers.push_back(createServer("127.0.0.1", 80, {"localhost"}));
+    servers.push_back(createServer("127.0.0.1", 80, {"example.com"}));
+
+    const Config config(servers);
+    const Resolver resolver(config);
+
+    // ポートは無視される
+    const auto result = resolver.resolve(Address("127.0.0.1", 80), "localhost:80");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), servers[0]);
+
+    const auto result2 = resolver.resolve(Address("127.0.0.1", 80), "example.com:80");
+    ASSERT_TRUE(result2.isSome());
+    EXPECT_EQ(result2.unwrap(), servers[1]);
+}
