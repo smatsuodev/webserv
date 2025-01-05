@@ -18,10 +18,12 @@ private:
     config::Config config_;
     config::Resolver resolver_;
 
-    // NOTE: Server の作成と同時に初期化されるがよいか?
-    Listener listener_;
     ServerState state_;
+    // Listener がコピー不可なのでポインタで持つ
+    std::vector<Listener *> listeners_;
+    std::set<int> listenerFds_;
 
+    void setupListeners();
     void onHandlerError(const Context &ctx, error::AppError err);
     void onErrorEvent(const Event &event);
     static void executeActions(ActionContext &actionCtx, std::vector<IAction *> actions);

@@ -6,22 +6,21 @@
 #include "transport/listener.hpp"
 #include "utils/logger.hpp"
 
-// TODO: config を元に listener のインスタンスを作る
-Server::Server(const config::Config &config)
-    : config_(config), resolver_(config), listener_(Address("0.0.0.0", 8080)) {}
+Server::Server(const config::Config &config) : config_(config), resolver_(config) {}
 
-Server::~Server() {}
+Server::~Server() {
+    for (std::vector<Listener *>::const_iterator it = listeners_.begin(); it != listeners_.end(); ++it) {
+        delete *it;
+    }
+}
 
 void Server::start() {
-    // TODO: 複数 virtual server は未対応
-    const config::ServerContext &serverConfig = config_.getServers()[0];
+    this->setupListeners();
 
     // router を構築
+    // TODO: 複数 virtual server は未対応
+    const config::ServerContext &serverConfig = config_.getServers()[0];
     http::Router router = Server::createRouter(serverConfig);
-
-    // 最初の event, event handler
-    state_.getEventNotifier().registerEvent(Event(listener_.getFd(), Event::kRead));
-    state_.getEventHandlerRepository().set(listener_.getFd(), new AcceptHandler(listener_));
 
     while (true) {
         const IEventNotifier::WaitEventsResult waitResult = state_.getEventNotifier().waitEvents();
@@ -60,6 +59,22 @@ void Server::start() {
     }
 }
 
+void Server::setupListeners() {
+    const config::ServerContextList &servers = config_.getServers();
+    listeners_.reserve(servers.size());
+    for (config::ServerContextList::const_iterator it = servers.begin(); it != servers.end(); ++it) {
+        // TODO: host を解決してから渡す or Listener が host を解決するようにする
+        Listener *listener = new Listener(Address(it->getHost(), it->getPort()));
+        listeners_.push_back(listener);
+
+        const int fd = listener->getFd();
+        listenerFds_.insert(fd);
+
+        state_.getEventNotifier().registerEvent(Event(fd, Event::kRead));
+        state_.getEventHandlerRepository().set(fd, new AcceptHandler(*listener));
+    }
+}
+
 /**
  * TODO: 可能ならエラーレスポンスを返す (Internal Server Error, Payload Too Large など)
  * ここでやることではないかもしれない
@@ -73,7 +88,7 @@ void Server::onHandlerError(const Context &ctx, const error::AppError err) {
     // 致命的なエラーはコネクションを切断
     LOG_WARNF("handler error");
     const Event &ev = ctx.getEvent();
-    if (ev.getFd() != listener_.getFd()) {
+    if (listenerFds_.count(ev.getFd()) == 0) {
         state_.getEventNotifier().unregisterEvent(ev);
         state_.getEventHandlerRepository().remove(ev.getFd());
         state_.getConnectionRepository().remove(ev.getFd());
@@ -89,7 +104,7 @@ void Server::onErrorEvent(const Event &event) {
     LOG_WARNF("error event arrived for fd %d", fd);
 
     // (たぶん) 継続不可なので cleanup
-    if (event.getFd() != listener_.getFd()) {
+    if (listenerFds_.count(fd) == 0) {
         state_.getEventNotifier().unregisterEvent(event);
         state_.getEventHandlerRepository().remove(fd);
         state_.getConnectionRepository().remove(fd);
