@@ -4,9 +4,11 @@
 #include "handler.hpp"
 #include "matcher.hpp"
 #include "config/config.hpp"
+#include "utils/non_copyable.hpp"
 
 namespace http {
-    class Router : public IHandler {
+    // IHandler * を持っているので、double free を避けるために NonCopyable にしている
+    class Router : NonCopyable, public IHandler {
     public:
         Router();
         ~Router();
