@@ -3,6 +3,7 @@
 
 #include "event/event_handler.hpp"
 #include "request_reader.hpp"
+#include <memory>
 
 class ReadRequestHandler : public IEventHandler {
 public:
