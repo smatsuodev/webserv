@@ -2,7 +2,6 @@
 #include <fakeit.hpp>
 #include "./utils/reader.hpp"
 #include "../src/lib/core/handler/request_reader.hpp"
-#include "core/server.hpp"
 #include "utils/logger.hpp"
 #include <utility>
 
