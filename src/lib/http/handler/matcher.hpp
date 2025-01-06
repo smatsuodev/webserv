@@ -2,6 +2,7 @@
 #define SRC_LIB_HTTP_HANDLER_MATCHER_HPP
 
 #include "utils/types/option.hpp"
+#include "utils/string.hpp"
 #include <map>
 #include <iterator>
 
@@ -17,14 +18,13 @@ namespace http {
         ~Matcher() {}
 
         Option<T> match(const std::string &key) const {
-            if (key.empty() || key.front() != '/') {
+            if (key.empty()) {
                 return None;
             }
             std::string bestKey;
-            for (const std::pair<std::string, T> &entry : map_) {
-                const std::string &candidate = entry.first;
-                if (key.size() >= candidate.size() && key.compare(0, candidate.size(), candidate) == 0 &&
-                    candidate.size() > bestKey.size()) {
+            for (typename Map::const_iterator it = map_.begin(); it != map_.end(); ++it) {
+                const std::string &candidate = it->first;
+                if (utils::startsWith(key, candidate) && candidate.size() > bestKey.size()) {
                     bestKey = candidate;
                 }
             }
