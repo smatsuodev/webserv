@@ -2,14 +2,23 @@
 #include "action.hpp"
 #include "event/event_notifier.hpp"
 #include "./handler/accept_handler.hpp"
+#include "http/handler/redirect_handler.hpp"
 #include "transport/listener.hpp"
 #include "utils/logger.hpp"
 
-Server::Server(const Address &listenAddress) : listener_(listenAddress) {}
+// TODO: config を元に listener のインスタンスを作る
+Server::Server(const config::Config &config) : config_(config), listener_(Address("0.0.0.0", 8080)) {}
 
 Server::~Server() {}
 
 void Server::start() {
+    // TODO: 複数 virtual server は未対応
+    const config::ServerContext &serverConfig = config_.getServers()[0];
+
+    // router を構築
+    http::Router router = Server::createRouter(serverConfig);
+
+    // 最初の event, event handler
     state_.getEventNotifier().registerEvent(Event(listener_.getFd(), Event::kRead));
     state_.getEventHandlerRepository().set(listener_.getFd(), new AcceptHandler(listener_));
 
@@ -43,7 +52,9 @@ void Server::start() {
                 continue;
             }
 
-            this->executeActions(result.unwrap());
+            // TODO: 本来は特定の server の router を探して渡す
+            ActionContext actionCtx(state_, router);
+            Server::executeActions(actionCtx, result.unwrap());
         }
     }
 }
@@ -82,10 +93,29 @@ void Server::onErrorEvent(const Event &event) {
     }
 }
 
-void Server::executeActions(std::vector<IAction *> actions) {
+void Server::executeActions(ActionContext &actionCtx, std::vector<IAction *> actions) {
     for (std::vector<IAction *>::const_iterator it = actions.begin(); it != actions.end(); ++it) {
         IAction *action = *it;
-        action->execute(state_);
+        action->execute(actionCtx);
         delete action;
     }
+}
+
+http::Router Server::createRouter(const config::ServerContext &serverConfig) {
+    http::Router router;
+
+    config::LocationContextList locations = serverConfig.getLocations();
+    for (config::LocationContextList::const_iterator it = locations.begin(); it != locations.end(); ++it) {
+        const config::LocationContext &location = *it;
+        http::IHandler *handler = NULL;
+        if (location.getRedirect().isSome()) {
+            handler = new http::RedirectHandler(location.getRedirect().unwrap());
+        } else {
+            // TODO: 設定を渡す
+            handler = new http::Handler();
+        }
+        router.on(location.getAllowedMethods(), location.getPath(), handler);
+    }
+
+    return router;
 }

@@ -2,11 +2,27 @@
 #define SRC_LIB_CORE_ACTION_HPP
 
 #include "event/event_handler.hpp"
+#include "http/handler/router.hpp"
+#include "http/request/request.hpp"
+#include "server_state.hpp"
+
+// NOTE: router が必要なのは ServeHttpAction のみ。設計的に微妙?
+class ActionContext {
+public:
+    ActionContext(ServerState &state, http::IHandler &router);
+
+    ServerState &getState() const;
+    http::IHandler &getRouter() const;
+
+private:
+    ServerState &state_;
+    http::IHandler &router_;
+};
 
 class AddConnectionAction : public IAction {
 public:
     explicit AddConnectionAction(Connection *conn);
-    void execute(ServerState &state);
+    void execute(ActionContext &ctx);
 
 private:
     Connection *conn_;
@@ -15,7 +31,7 @@ private:
 class RemoveConnectionAction : public IAction {
 public:
     explicit RemoveConnectionAction(Connection &conn);
-    void execute(ServerState &state);
+    void execute(ActionContext &ctx);
 
 private:
     Connection &conn_;
@@ -25,7 +41,7 @@ private:
 class RegisterEventHandlerAction : public IAction {
 public:
     RegisterEventHandlerAction(Connection &conn, IEventHandler *handler);
-    void execute(ServerState &state);
+    void execute(ActionContext &ctx);
 
 private:
     Connection &conn_;
@@ -36,7 +52,7 @@ private:
 class UnregisterEventHandlerAction : public IAction {
 public:
     explicit UnregisterEventHandlerAction(Connection &conn);
-    void execute(ServerState &state);
+    void execute(ActionContext &ctx);
 
 private:
     Connection &conn_;
@@ -46,7 +62,7 @@ private:
 class RegisterEventAction : public IAction {
 public:
     explicit RegisterEventAction(const Event &event);
-    void execute(ServerState &state);
+    void execute(ActionContext &ctx);
 
 private:
     Event event_;
@@ -56,10 +72,21 @@ private:
 class UnregisterEventAction : public IAction {
 public:
     explicit UnregisterEventAction(const Event &event);
-    void execute(ServerState &state);
+    void execute(ActionContext &ctx);
 
 private:
     Event event_;
+    bool executed_;
+};
+
+class ServeHttpAction : public IAction {
+public:
+    explicit ServeHttpAction(const Context &eventCtx, const http::Request &req);
+    void execute(ActionContext &actionCtx);
+
+private:
+    Context eventCtx_;
+    http::Request req_;
     bool executed_;
 };
 
