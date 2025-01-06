@@ -92,3 +92,26 @@ TEST(MatcherTestSpecial, noMatch) {
     const auto result = matcher.match("/not_found");
     ASSERT_TRUE(result.isNone());
 }
+
+TEST(MatcherTestSpecial, notPath) {
+    const Matcher<int> matcher({std::make_pair("a", 1), std::make_pair("ab", 2), std::make_pair("abc", 3)});
+
+    const auto result = matcher.match("a");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap(), 1);
+
+    const auto result2 = matcher.match("ab");
+    ASSERT_TRUE(result2.isSome());
+    EXPECT_EQ(result2.unwrap(), 2);
+
+    const auto result3 = matcher.match("abc");
+    ASSERT_TRUE(result3.isSome());
+    EXPECT_EQ(result3.unwrap(), 3);
+
+    const auto result4 = matcher.match("abcd");
+    ASSERT_TRUE(result4.isSome());
+    EXPECT_EQ(result4.unwrap(), 3);
+
+    const auto result5 = matcher.match("xyz");
+    ASSERT_TRUE(result5.isNone());
+}
