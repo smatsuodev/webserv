@@ -71,6 +71,8 @@ add_library(webserv_lib STATIC
         lib/config/toml/value.hpp
         lib/http/handler/redirect_handler.cpp
         lib/http/handler/redirect_handler.hpp
+        lib/http/handler/router.cpp
+        lib/http/handler/router.hpp
         lib/http/handler/matcher.hpp
         lib/transport/address.cpp
         lib/transport/address.hpp
