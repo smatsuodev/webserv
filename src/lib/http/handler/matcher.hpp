@@ -8,33 +8,31 @@
 namespace http {
     template <typename T>
     class Matcher {
-    public:
+    private:
         typedef std::map<std::string, T> Map;
+        Map map_;
+
+    public:
         explicit Matcher(const Map &map) : map_(map) {}
         ~Matcher() {}
 
         Option<T> match(const std::string &key) const {
-            if (key.size() > 1 && key[key.size() - 1] == '/') {
-                return match(key.substr(0, key.size() - 1));
-            }
-            if (key.find("//") != std::string::npos) {
-                return match(key.substr(0, key.find("//") + 1) + key.substr(key.find("//") + 2));
-            }
-            typename Map::const_iterator it = map_.find(key);
-            if (it == map_.end()) {
-                if (key.find_last_of('/') != std::string::npos) {
-                    if (key.substr(0, key.find_last_of('/')).empty()) { // /root -> / になるのを防ぎたい
-                        return match("/");
-                    }
-                    return match(key.substr(0, key.find_last_of('/')));
-                }
+            if (key.empty() || key.front() != '/') {
                 return None;
             }
-            return Some(it->second);
+            std::string bestKey;
+            for (const std::pair<std::string, T> &entry : map_) {
+                const std::string &candidate = entry.first;
+                if (key.size() >= candidate.size() && key.compare(0, candidate.size(), candidate) == 0 &&
+                    candidate.size() > bestKey.size()) {
+                    bestKey = candidate;
+                }
+            }
+            if (bestKey.empty()) {
+                return None;
+            }
+            return Some(map_.at(bestKey));
         }
-
-    private:
-        Map map_;
     };
 
 
