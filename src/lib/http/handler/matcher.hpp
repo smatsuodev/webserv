@@ -21,17 +21,17 @@ namespace http {
             if (key.empty()) {
                 return None;
             }
-            std::string bestKey;
+            Option<std::string> bestKey = None;
             for (typename Map::const_iterator it = map_.begin(); it != map_.end(); ++it) {
                 const std::string &candidate = it->first;
-                if (utils::startsWith(key, candidate) && candidate.size() > bestKey.size()) {
-                    bestKey = candidate;
+                if (utils::startsWith(key, candidate) && candidate.size() > bestKey.unwrapOr("").size()) {
+                    bestKey = Some(candidate);
                 }
             }
-            if (bestKey.empty()) {
+            if (bestKey.isNone()) {
                 return None;
             }
-            return Some(map_.at(bestKey));
+            return Some(map_.at(bestKey.unwrap()));
         }
     };
 
