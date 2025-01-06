@@ -1,23 +1,22 @@
 #include "request_reader.hpp"
-#include "utils/string.hpp"
-#include "request_parser.hpp"
-#include "utils/types/try.hpp"
-#include "utils/logger.hpp"
+#include "../../utils/string.hpp"
+#include "../../http/request/request_parser.hpp"
+#include "../../utils/types/try.hpp"
+#include "../../utils/logger.hpp"
 
-RequestReader::RequestReader(ReadBuffer &readBuf)
-    : readBuf_(readBuf), state_(kReadingRequestLine), contentLength_(None), body_(None) {}
+RequestReader::RequestReader(IConfigResolver &resolver)
+    : resolver_(resolver), state_(kReadingRequestLine), contentLength_(None), clientMaxBodySize_(0), body_(None) {}
 
-RequestReader::ReadRequestResult RequestReader::readRequest() {
+RequestReader::ReadRequestResult RequestReader::readRequest(ReadBuffer &readBuf) {
     LOG_DEBUG("start RequestReader::readRequest");
 
-    const std::size_t bytesLoaded = TRY(readBuf_.load());
-
-    while (state_ != kDone && readBuf_.size() > 0) {
+    const std::size_t bytesLoaded = TRY(readBuf.load());
+    while (state_ != kDone && readBuf.size() > 0) {
         switch (state_) {
             // request-line CRLF
             case kReadingRequestLine: {
                 LOG_DEBUG("read start-line");
-                Option<std::string> result = TRY(this->getRequestLine());
+                Option<std::string> result = TRY(this->getRequestLine(readBuf));
                 if (result.isNone()) {
                     if (bytesLoaded == 0) {
                         LOG_WARN("incomplete request-line");
@@ -33,7 +32,7 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
             // *( field-line CRLF ) CRLF
             case kReadingHeaders: {
                 LOG_DEBUG("read headers");
-                Option<types::Unit> result = TRY(this->getHeaders());
+                Option<types::Unit> result = TRY(this->getHeaders(readBuf));
                 if (result.isNone()) {
                     if (bytesLoaded == 0) {
                         LOG_WARN("incomplete headers");
@@ -42,7 +41,14 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
                     return Ok(None);
                 }
                 contentLength_ = TRY(this->getContentLength(headers_));
+                // config から client_max_body_size を取得
+                clientMaxBodySize_ = TRY(this->resolveClientMaxBodySize(headers_));
                 if (contentLength_.isSome() && contentLength_.unwrap() > 0) {
+                    const std::size_t len = contentLength_.unwrap();
+                    if (len > clientMaxBodySize_) {
+                        LOG_WARNF("Content-Length is too large: %zu", len);
+                        return Err(error::kHttpPayloadTooLarge);
+                    }
                     state_ = kReadingBody;
                 } else {
                     state_ = kDone;
@@ -53,7 +59,7 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
             // message-body
             case kReadingBody: {
                 LOG_DEBUG("read message-body");
-                const Option<types::Unit> result = TRY(this->getBody(contentLength_.unwrap()));
+                const Option<types::Unit> result = TRY(this->getBody(readBuf, contentLength_.unwrap()));
                 if (result.isNone()) {
                     if (bytesLoaded == 0) {
                         LOG_WARN("incomplete body");
@@ -86,8 +92,8 @@ RequestReader::ReadRequestResult RequestReader::readRequest() {
     return Ok(Some(req));
 }
 
-RequestReader::GetLineResult RequestReader::getLine() const {
-    const Option<std::string> maybeLine = readBuf_.consumeUntil("\r\n");
+RequestReader::GetLineResult RequestReader::getLine(ReadBuffer &readBuf) {
+    const Option<std::string> maybeLine = readBuf.consumeUntil("\r\n");
     if (maybeLine.isNone()) {
         return Ok(None);
     }
@@ -101,14 +107,14 @@ RequestReader::GetLineResult RequestReader::getLine() const {
     return Ok(Some(line));
 }
 
-Result<Option<std::string>, error::AppError> RequestReader::getRequestLine() const {
-    const Option<std::string> reqLine = TRY(this->getLine());
+Result<Option<std::string>, error::AppError> RequestReader::getRequestLine(ReadBuffer &readBuf) const {
+    const Option<std::string> reqLine = TRY(this->getLine(readBuf));
     return Ok(reqLine);
 }
 
-Result<Option<types::Unit>, error::AppError> RequestReader::getHeaders() {
+Result<Option<types::Unit>, error::AppError> RequestReader::getHeaders(ReadBuffer &readBuf) {
     while (true) {
-        const Option<std::string> line = TRY(this->getLine());
+        const Option<std::string> line = TRY(this->getLine(readBuf));
         if (line.isNone()) {
             // バッファが足りない
             return Ok(None);
@@ -139,10 +145,36 @@ Result<Option<size_t>, error::AppError> RequestReader::getContentLength(const Ra
     return Ok(None);
 }
 
-Result<Option<types::Unit>, error::AppError> RequestReader::getBody(const std::size_t contentLength) {
+Result<std::size_t, error::AppError> RequestReader::resolveClientMaxBodySize(const RawHeaders &headers) const {
+    // Host ヘッダーを探す
+    Option<std::string> hostHeaderValue = None;
+    for (RawHeaders::const_iterator it = headers.begin(); it != headers.end(); ++it) {
+        const http::RequestParser::HeaderField &field = TRY(http::RequestParser::parseHeaderFieldLine(*it));
+        if (field.first == "Host") {
+            hostHeaderValue = Some(field.second);
+            break;
+        }
+    }
+    if (hostHeaderValue.isNone()) {
+        // Host ヘッダーは必須
+        return Err(error::kParseUnknown);
+    }
+
+    const Option<config::ServerContext> config = resolver_.resolve(hostHeaderValue.unwrap());
+    if (config.isNone()) {
+        // accept しているので、通常は見つかるはず
+        LOG_WARN("config not found");
+        return Err(error::kUnknown);
+    }
+
+    return Ok(config.unwrap().getClientMaxBodySize());
+}
+
+Result<Option<types::Unit>, error::AppError>
+RequestReader::getBody(ReadBuffer &readBuf, const std::size_t contentLength) {
     while (bodyBuf_.size() < contentLength) {
         const std::size_t want = contentLength - bodyBuf_.size();
-        const std::string chunk = readBuf_.consume(want);
+        const std::string chunk = readBuf.consume(want);
         if (chunk.empty()) {
             return Ok(None);
         }
@@ -151,4 +183,13 @@ Result<Option<types::Unit>, error::AppError> RequestReader::getBody(const std::s
 
     body_ = Some(bodyBuf_);
     return Ok(Some(unit));
+}
+
+RequestReader::IConfigResolver::~IConfigResolver() {}
+
+RequestReader::ConfigResolver::ConfigResolver(const config::Resolver &resolver, const Address &localAddr)
+    : resolver_(resolver), localAddr_(localAddr) {}
+
+Option<config::ServerContext> RequestReader::ConfigResolver::resolve(const std::string &host) const {
+    return resolver_.resolve(localAddr_, host);
 }

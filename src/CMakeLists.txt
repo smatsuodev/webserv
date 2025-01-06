@@ -49,8 +49,8 @@ add_library(webserv_lib STATIC
         lib/http/request/request_parser.hpp
         lib/core/handler/read_request_handler.cpp
         lib/core/handler/read_request_handler.hpp
-        lib/http/request/request_reader.cpp
-        lib/http/request/request_reader.hpp
+        lib/core/handler/request_reader.cpp
+        lib/core/handler/request_reader.hpp
         lib/core/server_state.cpp
         lib/core/server_state.hpp
         lib/http/header.hpp

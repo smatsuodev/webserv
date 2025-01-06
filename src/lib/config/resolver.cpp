@@ -4,7 +4,10 @@
 namespace config {
     Resolver::Resolver(const Config &config) : config_(config) {}
 
-    Option<ServerContext> Resolver::resolve(const Address &address, const std::string &host) const {
+    Option<ServerContext> Resolver::resolve(const Address &address, const std::string &hostHeader) const {
+        // Host は host(:port) で指定される。port は無視する。
+        const std::string host = hostHeader.substr(0, hostHeader.find(':'));
+
         // 先に address で絞り込む
         ServerContextList servers = config_.getServers();
         ServerContextList candidates;

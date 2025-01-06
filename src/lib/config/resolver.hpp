@@ -9,7 +9,7 @@ namespace config {
     class Resolver {
     public:
         explicit Resolver(const Config &config);
-        Option<ServerContext> resolve(const Address &address, const std::string &host) const;
+        Option<ServerContext> resolve(const Address &address, const std::string &hostHeader) const;
 
     private:
         Config config_;

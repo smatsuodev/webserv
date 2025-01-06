@@ -5,6 +5,7 @@
 #include "utils/types/result.hpp"
 #include "utils/types/option.hpp"
 #include "event.hpp"
+#include "config/resolver.hpp"
 #include "transport/connection.hpp"
 #include "utils/ref.hpp"
 
@@ -15,15 +16,21 @@ class ActionContext;
 // イベントハンドラーに呼び出された文脈を提供する
 class Context {
 public:
-    Context(const Option<Ref<Connection> > &conn, const Event &event);
+    /**
+     * NOTE: resolver は常に変わらない。Context に含めてもよいか?
+     * 設定を探すために必要なので、ある意味文脈を提供するものではある
+     */
+    Context(const Option<Ref<Connection> > &conn, const Event &event, const config::Resolver &resolver);
 
     Option<Ref<Connection> > getConnection() const;
     const Event &getEvent() const;
+    const config::Resolver &getResolver() const;
 
 private:
     // accept 前は connection は存在しない
     Option<Ref<Connection> > conn_;
     Event event_;
+    config::Resolver resolver_;
 };
 
 // IEventHandler が返す Command オブジェクト

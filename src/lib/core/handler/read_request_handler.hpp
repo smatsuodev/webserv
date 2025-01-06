@@ -2,15 +2,16 @@
 #define SRC_LIB_CORE_HANDLER_READ_REQUEST_HANDLER_HPP
 
 #include "event/event_handler.hpp"
-#include "http/request/request_reader.hpp"
+#include "request_reader.hpp"
+#include <memory>
 
 class ReadRequestHandler : public IEventHandler {
 public:
-    // NOTE: ReadBuffer に直接依存するべきか?
-    explicit ReadRequestHandler(ReadBuffer &readBuf);
+    explicit ReadRequestHandler(const Context &ctx);
     InvokeResult invoke(const Context &ctx);
 
 private:
+    std::auto_ptr<RequestReader::IConfigResolver> resolver_; // RequestReader に渡す参照先として必要
     RequestReader reqReader_;
 };
 
