@@ -24,7 +24,7 @@ namespace http {
             Option<std::string> bestKey = None;
             for (typename Map::const_iterator it = map_.begin(); it != map_.end(); ++it) {
                 const std::string &candidate = it->first;
-                if (utils::startsWith(key, candidate) && candidate.size() > bestKey.unwrapOr("").size()) {
+                if (utils::startsWith(key, candidate) && (bestKey.isNone() || candidate.size() > bestKey.unwrap().size())) {
                     bestKey = Some(candidate);
                 }
             }
