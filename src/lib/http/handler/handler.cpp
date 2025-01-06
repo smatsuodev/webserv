@@ -19,6 +19,11 @@ http::Response http::Handler::deleteMethod(const std::string &path) {
         return ResponseBuilder().status(kStatusInternalServerError).build();
     }
 
+    if (S_ISDIR(buf.st_mode)) {
+        LOG_DEBUGF("is a directory: %s", path.c_str());
+        return ResponseBuilder().status(kStatusForbidden).build();
+    }
+
     if (!S_ISREG(buf.st_mode)) {
         LOG_DEBUGF("is not a regular file: %s", path.c_str());
         return ResponseBuilder().status(kStatusForbidden).build();
