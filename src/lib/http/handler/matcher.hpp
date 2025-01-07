@@ -3,6 +3,7 @@
 
 #include "utils/types/option.hpp"
 #include "utils/string.hpp"
+#include <map>
 
 namespace http {
     template <typename T>
