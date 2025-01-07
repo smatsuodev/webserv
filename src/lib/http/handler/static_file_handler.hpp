@@ -9,6 +9,7 @@ namespace http {
     public:
         explicit StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig);
         virtual Response serve(const Request &req);
+
     private:
         config::LocationContext::DocumentRootConfig docRootConfig_;
     };
