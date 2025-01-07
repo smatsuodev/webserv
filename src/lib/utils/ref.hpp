@@ -10,7 +10,14 @@ public:
     // 通常の ref と区別せず扱えるように、explicit を付けない
     // ReSharper disable once CppNonExplicitConvertingConstructor
     Ref(T &ref) : ptr_(&ref) {} // NOLINT(*-explicit-constructor)
+
     Ref(const Ref &ref) : ptr_(ref.ptr_) {}
+
+    // Ref<T> -> Ref<const T> を可能にする
+    // TODO: C++11 の機能を使っているので、提出時に修正
+    template <typename U = T>
+    // ReSharper disable once CppNonExplicitConvertingConstructor
+    Ref(const Ref<typename std::remove_const<U>::type> &ref) : ptr_(&ref.get()) {} // NOLINT(*-explicit-constructor)
 
     ~Ref() {
         // あくまで reference なので、delete しない
@@ -24,6 +31,7 @@ public:
     }
 
     // 通常の ref と区別せず扱えるように、explicit を付けない
+    // ReSharper disable once CppNonExplicitConversionOperator
     operator T &() const { // NOLINT(*-explicit-constructor)
         return *ptr_;
     }
