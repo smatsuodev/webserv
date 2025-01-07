@@ -15,9 +15,14 @@ Config loadConfig() {
     ServerContext server1("0.0.0.0", 8080, {location1, location2});
 
     // 全部 example.com にリダイレクト
-    ServerContext server2("0.0.0.0", 8081, {LocationContext("/", "https://example.com")});
+    ServerContext server2("0.0.0.0", 8081, {LocationContext("/", "https://example.com")}, {"redirect.example.com"});
 
-    return Config({server1, server2});
+    // 同じ 8081 ポートで別のサーバーを定義
+    ServerContext server3(
+        "0.0.0.0", 8081, {LocationContext("/", LocationContext::DocumentRootConfig("./docs"))}, {"docs.example.com"}
+    );
+
+    return Config({server1, server2, server3});
 }
 
 int main() {
