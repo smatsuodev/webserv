@@ -4,14 +4,11 @@
 #include <sys/stat.h>
 
 namespace http {
+    DeleteFileHandler::DeleteFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)
+        : docRootConfig_(docRootConfig) {}
     Response DeleteFileHandler::serve(const Request &req) {
+        const std::string path = docRootConfig_.getRoot() + '/' + req.getRequestTarget();
         LOG_DEBUGF("request target: %s", req.getRequestTarget().c_str());
-        const std::string path = req.getRequestTarget().substr(1);
-
-        if (path.empty()) {
-            LOG_DEBUGF("invalid request target: %s", req.getRequestTarget().c_str());
-            return ResponseBuilder().status(kStatusNotFound).build();
-        }
 
         struct stat buf = {};
         if (stat(path.c_str(), &buf) == -1) {

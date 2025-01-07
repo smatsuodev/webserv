@@ -26,16 +26,17 @@ void VirtualServer::registerHandlers(const config::LocationContext &location) {
     std::vector<http::HttpMethod> allowedMethods = location.getAllowedMethods();
     for (std::vector<http::HttpMethod>::const_iterator iter = allowedMethods.begin(); iter != allowedMethods.end();
          ++iter) {
+        config::LocationContext::DocumentRootConfig documentRootConfig = location.getDocumentRootConfig().unwrap();
         switch (*iter) {
             case http::kMethodGet: {
                 LOG_DEBUGF("register GET handler: %s", location.getPath().c_str());
-                http::IHandler *handler = new http::StaticFileHandler();
+                http::IHandler *handler = new http::StaticFileHandler(documentRootConfig);
                 router_.onGet(location.getPath(), handler);
                 break;
             }
             case http::kMethodDelete: {
                 LOG_DEBUGF("register DELETE handler: %s", location.getPath().c_str());
-                http::IHandler *handler = new http::DeleteFileHandler();
+                http::IHandler *handler = new http::DeleteFileHandler(documentRootConfig);
                 router_.onDelete(location.getPath(), handler);
                 break;
             }

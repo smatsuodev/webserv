@@ -6,14 +6,12 @@
 #include "static_file_handler.hpp"
 
 namespace http {
-    Response StaticFileHandler::serve(const Request &req) {
-        LOG_DEBUGF("request target: %s", req.getRequestTarget().c_str());
-        const std::string path = req.getRequestTarget().substr(1);
+    StaticFileHandler::StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)
+        : docRootConfig_(docRootConfig) {}
 
-        if (path.empty()) {
-            LOG_DEBUGF("invalid request target: %s", req.getRequestTarget().c_str());
-            return ResponseBuilder().status(kStatusNotFound).build();
-        }
+    Response StaticFileHandler::serve(const Request &req) {
+        const std::string path = docRootConfig_.getRoot() + '/' + req.getRequestTarget();
+        LOG_DEBUGF("request target: %s", req.getRequestTarget().c_str());
 
         struct stat buf = {};
         if (stat(path.c_str(), &buf) == -1) {
