@@ -68,7 +68,8 @@ int Listener::setupSocket(const Address &listenAddress, const int backlog) {
     }
 
     const int opt = 1;
-    if (setsockopt(rawFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+    if (setsockopt(rawFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1 ||
+        setsockopt(rawFd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1) {
         LOG_ERRORF("failed to set socket options: %s", std::strerror(errno));
         throw std::runtime_error("failed to set socket options");
     }
