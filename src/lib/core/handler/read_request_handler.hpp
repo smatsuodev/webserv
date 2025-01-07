@@ -3,11 +3,10 @@
 
 #include "event/event_handler.hpp"
 #include "request_reader.hpp"
-#include <memory>
 
 class ReadRequestHandler : public IEventHandler {
 public:
-    explicit ReadRequestHandler(const Context &ctx);
+    explicit ReadRequestHandler(const VirtualServerResolver &vsResolver);
     InvokeResult invoke(const Context &ctx);
 
 private:

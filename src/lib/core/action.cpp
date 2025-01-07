@@ -1,18 +1,12 @@
 #include "action.hpp"
-#include "server.hpp"
-#include "handler/write_response_handler.hpp"
 #include "http/handler/router.hpp"
 
 IAction::~IAction() {}
 
-ActionContext::ActionContext(ServerState &state, http::IHandler &router) : state_(state), router_(router) {}
+ActionContext::ActionContext(ServerState &state) : state_(state) {}
 
 ServerState &ActionContext::getState() const {
     return state_;
-}
-
-http::IHandler &ActionContext::getRouter() const {
-    return router_;
 }
 
 AddConnectionAction::AddConnectionAction(Connection *conn) : conn_(conn) {}
@@ -71,8 +65,8 @@ void UnregisterEventAction::execute(ActionContext &ctx) {
     }
 }
 
-ServeHttpAction::ServeHttpAction(const Context &eventCtx, const http::Request &req)
-    : eventCtx_(eventCtx), req_(req), executed_(false) {}
+ServeHttpAction::ServeHttpAction(const Context &eventCtx, const http::Request &req, EventHandlerFactory *factory)
+    : eventCtx_(eventCtx), req_(req), factory_(factory), executed_(false) {}
 
 void ServeHttpAction::execute(ActionContext &actionCtx) {
     if (executed_) {
@@ -81,6 +75,13 @@ void ServeHttpAction::execute(ActionContext &actionCtx) {
     executed_ = true;
 
     const Connection &conn = eventCtx_.getConnection().unwrap();
-    const http::Response res = actionCtx.getRouter().serve(req_);
-    actionCtx.getState().getEventHandlerRepository().set(conn.getFd(), new WriteResponseHandler(res));
+    // Host ヘッダーは必須なので存在するはず
+    const std::string hostHeader = req_.getHeader("Host").unwrap();
+    // accept 後は resolver は存在するはず
+    const Option<Ref<VirtualServer> > vs = eventCtx_.getResolver().unwrap().resolve(hostHeader);
+
+    // accept したので VirtualServer は存在するはず
+    const http::Response res = vs.unwrap().get().getRouter().serve(req_);
+    IEventHandler *nextHandler = factory_(res);
+    actionCtx.getState().getEventHandlerRepository().set(conn.getFd(), nextHandler);
 }
