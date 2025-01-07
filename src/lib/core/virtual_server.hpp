@@ -13,6 +13,7 @@ public:
     http::Router &getRouter();
 
     bool operator==(const VirtualServer &rhs) const;
+    void registerHandlers(const config::LocationContext &location);
 
 private:
     config::ServerContext serverConfig_;
