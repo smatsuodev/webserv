@@ -13,6 +13,11 @@ http::Router &VirtualServer::getRouter() {
     return router_;
 }
 
+// NOTE: テストなどに必要。設定に対して http::Router は一意なので、serverConfig_ だけで比較している。
+bool VirtualServer::operator==(const VirtualServer &rhs) const {
+    return serverConfig_ == rhs.serverConfig_;
+}
+
 void VirtualServer::setupRouter() {
     config::LocationContextList locations = serverConfig_.getLocations();
     for (config::LocationContextList::const_iterator it = locations.begin(); it != locations.end(); ++it) {

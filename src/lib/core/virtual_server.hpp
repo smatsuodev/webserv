@@ -12,6 +12,8 @@ public:
     const config::ServerContext &getServerConfig() const;
     http::Router &getRouter();
 
+    bool operator==(const VirtualServer &rhs) const;
+
 private:
     config::ServerContext serverConfig_;
     http::Router router_;
