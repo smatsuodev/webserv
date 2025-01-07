@@ -9,21 +9,6 @@
 http::IHandler::~IHandler() {}
 
 http::Response http::Handler::deleteMethod(const std::string &path) {
-    struct stat buf = {};
-    if (stat(path.c_str(), &buf) == -1) {
-        if (errno == ENOENT) {
-            LOG_DEBUGF("file does not exist: %s", path.c_str());
-            return ResponseBuilder().status(kStatusNotFound).build();
-        }
-        LOG_DEBUGF("failed to stat file: %s", path.c_str());
-        return ResponseBuilder().status(kStatusInternalServerError).build();
-    }
-
-    if (!S_ISREG(buf.st_mode)) {
-        LOG_DEBUGF("is not a regular file: %s", path.c_str());
-        return ResponseBuilder().status(kStatusForbidden).build();
-    }
-
     if (std::remove(path.c_str())) {
         LOG_DEBUGF("failed to delete file: %s", path.c_str());
         return ResponseBuilder().status(kStatusInternalServerError).build();
@@ -39,6 +24,26 @@ http::Response http::Handler::serve(const http::Request &req) {
     if (path.empty()) {
         LOG_DEBUGF("invalid request target: %s", req.getRequestTarget().c_str());
         return ResponseBuilder().status(kStatusNotFound).build();
+    }
+
+    struct stat buf = {};
+    if (stat(path.c_str(), &buf) == -1) {
+        if (errno == ENOENT) {
+            LOG_DEBUGF("file does not exist: %s", path.c_str());
+            return ResponseBuilder().status(kStatusNotFound).build();
+        }
+        LOG_DEBUGF("failed to stat file: %s", path.c_str());
+        return ResponseBuilder().status(kStatusInternalServerError).build();
+    }
+
+    if (S_ISDIR(buf.st_mode)) {
+        LOG_DEBUGF("is a directory: %s", path.c_str());
+        return ResponseBuilder().status(kStatusForbidden).build();
+    }
+
+    if (!S_ISREG(buf.st_mode)) {
+        LOG_DEBUGF("is not a regular file: %s", path.c_str());
+        return ResponseBuilder().status(kStatusForbidden).build();
     }
 
     if (req.getMethod() == kMethodDelete) {

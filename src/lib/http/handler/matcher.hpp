@@ -2,39 +2,38 @@
 #define SRC_LIB_HTTP_HANDLER_MATCHER_HPP
 
 #include "utils/types/option.hpp"
+#include "utils/string.hpp"
 #include <map>
 #include <iterator>
 
 namespace http {
     template <typename T>
     class Matcher {
-    public:
+    private:
         typedef std::map<std::string, T> Map;
+        Map map_;
+
+    public:
         explicit Matcher(const Map &map) : map_(map) {}
         ~Matcher() {}
 
         Option<T> match(const std::string &key) const {
-            if (key.size() > 1 && key[key.size() - 1] == '/') {
-                return match(key.substr(0, key.size() - 1));
-            }
-            if (key.find("//") != std::string::npos) {
-                return match(key.substr(0, key.find("//") + 1) + key.substr(key.find("//") + 2));
-            }
-            typename Map::const_iterator it = map_.find(key);
-            if (it == map_.end()) {
-                if (key.find_last_of('/') != std::string::npos) {
-                    if (key.substr(0, key.find_last_of('/')).empty()) { // /root -> / になるのを防ぎたい
-                        return match("/");
-                    }
-                    return match(key.substr(0, key.find_last_of('/')));
-                }
+            if (key.empty()) {
                 return None;
             }
-            return Some(it->second);
+            Option<std::string> bestKey = None;
+            for (typename Map::const_iterator it = map_.begin(); it != map_.end(); ++it) {
+                const std::string &candidate = it->first;
+                if (utils::startsWith(key, candidate) &&
+                    (bestKey.isNone() || candidate.size() > bestKey.unwrap().size())) {
+                    bestKey = Some(candidate);
+                }
+            }
+            if (bestKey.isNone()) {
+                return None;
+            }
+            return Some(map_.at(bestKey.unwrap()));
         }
-
-    private:
-        Map map_;
     };
 
 
