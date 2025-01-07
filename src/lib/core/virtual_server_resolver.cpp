@@ -1,5 +1,6 @@
 #include "virtual_server_resolver.hpp"
 #include "utils/logger.hpp"
+#include <algorithm>
 
 VirtualServerResolver::VirtualServerResolver(const VirtualServerList &virtualServers, const Ref<const Connection> &conn)
     : virtualServers_(virtualServers), conn_(conn) {}
