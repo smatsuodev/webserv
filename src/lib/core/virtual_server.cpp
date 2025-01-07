@@ -37,4 +37,3 @@ bool VirtualServer::isMatch(const Address &address) const {
     return serverConfig_.getPort() == address.getPort() &&
         (serverConfig_.getHost() == "0.0.0.0" || serverConfig_.getHost() == address.getIp());
 }
-

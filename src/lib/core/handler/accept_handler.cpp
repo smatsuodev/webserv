@@ -29,7 +29,8 @@ IEventHandler::InvokeResult AcceptHandler::invoke(const Context &ctx) {
     actions.push_back(new RegisterEventAction(eventToRegister));
     actions.push_back(new AddConnectionAction(newConnection));
     actions.push_back(
-        new RegisterEventHandlerAction(*newConnection, new ReadRequestHandler(newCtx.getResolver().unwrap())));
+        new RegisterEventHandlerAction(*newConnection, new ReadRequestHandler(newCtx.getResolver().unwrap()))
+    );
 
     return Ok(actions);
 }

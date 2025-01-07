@@ -50,6 +50,6 @@ Option<Ref<VirtualServer> > VirtualServerResolver::resolve(const std::string &ho
 VirtualServerResolverFactory::VirtualServerResolverFactory(const VirtualServerList &virtualServers)
     : virtualServers_(virtualServers) {}
 
-VirtualServerResolver VirtualServerResolverFactory::create(const Ref<Connection> &conn){
+VirtualServerResolver VirtualServerResolverFactory::create(const Ref<Connection> &conn) {
     return VirtualServerResolver(virtualServers_, conn);
 }
