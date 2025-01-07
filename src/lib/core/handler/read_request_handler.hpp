@@ -7,7 +7,7 @@
 
 class ReadRequestHandler : public IEventHandler {
 public:
-    explicit ReadRequestHandler(const Context &ctx);
+    explicit ReadRequestHandler(const VirtualServerResolver &vsResolver);
     InvokeResult invoke(const Context &ctx);
 
 private:

@@ -66,5 +66,5 @@ gtest_discover_tests(read_buffer_test)
 add_executable(matcher_test matcher_test.cpp)
 gtest_discover_tests(matcher_test)
 
-add_executable(config_resolver_test config_resolver_test.cpp)
-gtest_discover_tests(config_resolver_test)
+add_executable(virtual_server_resolver_test virtual_server_resolver_test.cpp)
+gtest_discover_tests(virtual_server_resolver_test)

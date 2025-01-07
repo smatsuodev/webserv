@@ -4,6 +4,8 @@
 #include "../../http/request/request.hpp"
 #include "../../utils/types/unit.hpp"
 #include "event/event_handler.hpp"
+#include "config/config.hpp"
+#include "../virtual_server_resolver.hpp"
 #include <vector>
 
 class RequestReader {
@@ -19,12 +21,11 @@ public:
     };
     class ConfigResolver : public IConfigResolver {
     public:
-        ConfigResolver(const config::Resolver &resolver, const Address &localAddr);
+        explicit ConfigResolver(const VirtualServerResolver &vsResolver);
         Option<config::ServerContext> resolve(const std::string &host) const;
 
     private:
-        config::Resolver resolver_;
-        Address localAddr_;
+        VirtualServerResolver resolver_;
     };
 
     explicit RequestReader(IConfigResolver &resolver);

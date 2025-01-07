@@ -1,13 +1,16 @@
 #include "read_request_handler.hpp"
+#include "write_response_handler.hpp"
 #include "core/action.hpp"
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
 
-ReadRequestHandler::ReadRequestHandler(const Context &ctx)
-    : resolver_(
-          new RequestReader::ConfigResolver(ctx.getResolver(), ctx.getConnection().unwrap().get().getLocalAddress())
-      ),
-      reqReader_(*resolver_) {}
+// http::Response は ServeHttpAction で生成されるので、event handler を生成する関数を渡す
+IEventHandler *writeResponseHandlerFactory(const http::Response &res) {
+    return new WriteResponseHandler(res);
+}
+
+ReadRequestHandler::ReadRequestHandler(const VirtualServerResolver &vsResolver)
+    : resolver_(new RequestReader::ConfigResolver(vsResolver)), reqReader_(*resolver_) {}
 
 IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start ReadRequestHandler");
@@ -24,7 +27,7 @@ IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
 
     std::vector<IAction *> actions;
     actions.push_back(new RegisterEventAction(Event(ctx.getEvent().getFd(), Event::kWrite)));
-    actions.push_back(new ServeHttpAction(ctx, req.unwrap()));
+    actions.push_back(new ServeHttpAction(ctx, req.unwrap(), writeResponseHandlerFactory));
 
     return Ok(actions);
 }

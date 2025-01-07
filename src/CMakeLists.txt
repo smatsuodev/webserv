@@ -76,8 +76,10 @@ add_library(webserv_lib STATIC
         lib/http/handler/matcher.hpp
         lib/transport/address.cpp
         lib/transport/address.hpp
-        lib/config/resolver.cpp
-        lib/config/resolver.hpp
+        lib/core/virtual_server_resolver.cpp
+        lib/core/virtual_server_resolver.hpp
+        lib/core/virtual_server.cpp
+        lib/core/virtual_server.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

@@ -187,9 +187,12 @@ RequestReader::getBody(ReadBuffer &readBuf, const std::size_t contentLength) {
 
 RequestReader::IConfigResolver::~IConfigResolver() {}
 
-RequestReader::ConfigResolver::ConfigResolver(const config::Resolver &resolver, const Address &localAddr)
-    : resolver_(resolver), localAddr_(localAddr) {}
+RequestReader::ConfigResolver::ConfigResolver(const VirtualServerResolver &vsResolver) : resolver_(vsResolver) {}
 
 Option<config::ServerContext> RequestReader::ConfigResolver::resolve(const std::string &host) const {
-    return resolver_.resolve(localAddr_, host);
+    const Option<Ref<VirtualServer> > vs = resolver_.resolve(host);
+    if (vs.isNone()) {
+        return None;
+    }
+    return Some(vs.unwrap().get().getServerConfig());
 }

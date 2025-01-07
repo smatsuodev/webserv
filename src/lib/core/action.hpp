@@ -2,21 +2,17 @@
 #define SRC_LIB_CORE_ACTION_HPP
 
 #include "event/event_handler.hpp"
-#include "http/handler/router.hpp"
 #include "http/request/request.hpp"
 #include "server_state.hpp"
+#include "virtual_server_resolver.hpp"
 
-// NOTE: router が必要なのは ServeHttpAction のみ。設計的に微妙?
 class ActionContext {
 public:
-    ActionContext(ServerState &state, http::IHandler &router);
-
+    explicit ActionContext(ServerState &state);
     ServerState &getState() const;
-    http::IHandler &getRouter() const;
 
 private:
     ServerState &state_;
-    http::IHandler &router_;
 };
 
 class AddConnectionAction : public IAction {
@@ -81,12 +77,15 @@ private:
 
 class ServeHttpAction : public IAction {
 public:
-    explicit ServeHttpAction(const Context &eventCtx, const http::Request &req);
+    typedef IEventHandler *(EventHandlerFactory)(const http::Response &);
+
+    ServeHttpAction(const Context &eventCtx, const http::Request &req, EventHandlerFactory *factory);
     void execute(ActionContext &actionCtx);
 
 private:
     Context eventCtx_;
     http::Request req_;
+    EventHandlerFactory *factory_;
     bool executed_;
 };
 

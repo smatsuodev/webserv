@@ -1,0 +1,30 @@
+classDiagram
+%% 継承
+    IAction <|-- ServeHttpAction
+%% 合成
+    Server *-- ServerState
+%% 依存 (引数の受け渡し)
+    IEventHandler ..> IAction: return
+    IEventHandler ..> Context: arg
+    IAction ..> ActionContext: arg
+    Server ..> IEventHandler: invoke
+    Server ..> IAction: execute
+    ServeHttpAction ..> Request
+    ServeHttpAction ..> Response: create
+%% 関連 (参照の保持)
+    ActionContext --> ServerState
+
+    class Context {
+        + getConnection()
+        + getEvent()
+    }
+
+    class IEventHandler {
+        <<interface>>
+        + invoke(ctx)
+    }
+
+    class IAction {
+        <<interface>>
+        + execute(actionCtx)
+    }
