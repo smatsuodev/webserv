@@ -80,6 +80,10 @@ add_library(webserv_lib STATIC
         lib/core/virtual_server_resolver.hpp
         lib/core/virtual_server.cpp
         lib/core/virtual_server.hpp
+        lib/http/handler/static_file_handler.cpp
+        lib/http/handler/static_file_handler.hpp
+        lib/http/handler/delete_file_handler.cpp
+        lib/http/handler/delete_file_handler.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

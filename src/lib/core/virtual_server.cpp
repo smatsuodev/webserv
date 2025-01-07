@@ -1,5 +1,8 @@
 #include "virtual_server.hpp"
+#include "http/handler/delete_file_handler.hpp"
 #include "http/handler/redirect_handler.hpp"
+#include "http/handler/static_file_handler.hpp"
+#include "utils/logger.hpp"
 
 VirtualServer::VirtualServer(const config::ServerContext &serverConfig) : serverConfig_(serverConfig) {
     this->setupRouter();
@@ -18,18 +21,41 @@ bool VirtualServer::operator==(const VirtualServer &rhs) const {
     return serverConfig_ == rhs.serverConfig_;
 }
 
+void VirtualServer::registerHandlers(const config::LocationContext &location) {
+    // TODO: 設定を渡す
+    std::vector<http::HttpMethod> allowedMethods = location.getAllowedMethods();
+    for (std::vector<http::HttpMethod>::const_iterator iter = allowedMethods.begin(); iter != allowedMethods.end();
+         ++iter) {
+        switch (*iter) {
+            case http::kMethodGet: {
+                LOG_DEBUGF("register GET handler: %s", location.getPath().c_str());
+                http::IHandler *handler = new http::StaticFileHandler();
+                router_.onGet(location.getPath(), handler);
+                break;
+            }
+            case http::kMethodDelete: {
+                LOG_DEBUGF("register DELETE handler: %s", location.getPath().c_str());
+                http::IHandler *handler = new http::DeleteFileHandler();
+                router_.onDelete(location.getPath(), handler);
+                break;
+            }
+            default:
+                // do nothing
+                break;
+        }
+    }
+}
+
 void VirtualServer::setupRouter() {
     config::LocationContextList locations = serverConfig_.getLocations();
     for (config::LocationContextList::const_iterator it = locations.begin(); it != locations.end(); ++it) {
         const config::LocationContext &location = *it;
-        http::IHandler *handler = NULL;
         if (location.getRedirect().isSome()) {
-            handler = new http::RedirectHandler(location.getRedirect().unwrap());
+            http::IHandler *handler = new http::RedirectHandler(location.getRedirect().unwrap());
+            router_.on(location.getAllowedMethods(), location.getPath(), handler);
         } else {
-            // TODO: 設定を渡す
-            handler = new http::Handler();
+            this->registerHandlers(location);
         }
-        router_.on(location.getAllowedMethods(), location.getPath(), handler);
     }
 }
 
