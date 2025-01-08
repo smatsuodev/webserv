@@ -12,7 +12,7 @@ namespace http {
     StaticFileHandler::StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)
         : docRootConfig_(docRootConfig) {}
 
-    static std::string makeAppropriatePath(const std::string &path) {
+    static std::string removeUnneededPaths(const std::string &path) {
         std::string result;
         bool lastWasSlash = false;
 
@@ -31,48 +31,48 @@ namespace http {
         if (result.size() > 1 && result.back() == '/') {
             result.pop_back();
         }
-        if (result.size() > 1 && result.front() == '.') {
+        if (result.front() == '.') {
             result = result.substr(1);
         }
         return result;
     }
 
-    std::string StaticFileHandler::getNextLink(const std::string &newPath, struct dirent *dp) {
-        std::string nextLink;
-        if (dp->d_name == std::string(".") || dp->d_name == std::string("..")) {
-            if (dp->d_name == std::string(".")) {
-                nextLink = newPath;
-            } else {
-                nextLink = newPath.substr(0, newPath.find_last_of('/'));
-                if (nextLink.empty()) {
-                    nextLink = "/";
-                }
+    std::string StaticFileHandler::getNextLink(const std::string &newPath, const std::string &dName) {
+        if (dName == std::string(".") || dName == std::string("..")) {
+            if (dName == std::string(".")) {
+                return newPath + "/";
             }
-        } else {
-            nextLink = newPath + "/" + dp->d_name;
+            return newPath.substr(0, newPath.find_last_of('/')) + "/";
         }
-        return nextLink;
+        return newPath + "/" + dName + "/";
     }
+
 
     Response StaticFileHandler::directoryListing(const std::string &path) {
         DIR *dir = opendir(path.c_str());
-        if (dir == nullptr) {
+        if (dir == NULL) {
             LOG_DEBUGF("failed to open directory: %s", path.c_str());
             return ResponseBuilder().status(kStatusInternalServerError).build();
         }
 
-        std::string newPath = makeAppropriatePath(path);
-        std::string title = "Index of " + newPath;
+        std::string newPath = removeUnneededPaths(path);
+        std::string title = "Index of " + newPath + "/";
 
-        std::string res = "<html><head><title>" + title + "</title></head>";
+        std::string res = "<!DOCTYPE html>";
+        res += "<html><head><title>" + title + "</title></head>";
         res += "<body><h1>" + title + "</h1><hr>";
 
         res += "<ul>";
         struct dirent *dp;
         while ((dp = readdir(dir)) != NULL) {
+            const std::string dName = dp->d_name;
+            const std::string dNameLink = getNextLink(newPath, dName);
+            if (dName == std::string(".")) {
+                continue;
+            }
             res += "<li>";
-            res += "<a href=\"" + getNextLink(newPath, dp) + "\">";
-            res += dp->d_name;
+            res += "<a href=\"" + dNameLink + "\">";
+            res += dName;
             if (dp->d_type == DT_DIR) {
                 res += "/";
             }
@@ -82,8 +82,8 @@ namespace http {
         }
         closedir(dir);
         res += "</ul>";
-
         res += "</body></html>";
+
         return ResponseBuilder().html(res).build();
     }
 
