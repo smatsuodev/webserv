@@ -28,9 +28,7 @@ namespace http {
                 lastWasSlash = false;
             }
         }
-        // cannot use std::string::back()
-        // if (result.size() > 1 && result.back() == '/') {
-        if (!result.empty() && result.back() == '/') {
+        if (!result.empty() && result[result.size() - 1] == '/') {
             result.pop_back();
         }
         if (result.front() == '.') {
@@ -40,15 +38,15 @@ namespace http {
     }
 
     std::string
-    StaticFileHandler::getNextLink(const std::string &path, const std::string &dName, const unsigned char dType) {
+    StaticFileHandler::getNextLink(const std::string &newPath, const std::string &dName, const unsigned char dType) {
         const std::string isDir = (dType == DT_DIR) ? "/" : "";
         if (dName == "." || dName == "..") {
             if (dName == ".") {
-                return path + isDir;
+                return newPath + isDir;
             }
-            return path.substr(0, path.find_last_of('/')) + isDir;
+            return newPath.substr(0, newPath.find_last_of('/')) + isDir;
         }
-        return path + "/" + dName + isDir;
+        return newPath + "/" + dName + isDir;
     }
 
     Result<std::string, HttpStatusCode> StaticFileHandler::makeDirectoryListingResponse(const std::string &path) {
