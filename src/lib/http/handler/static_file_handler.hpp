@@ -8,6 +8,7 @@ namespace http {
     class StaticFileHandler : public IHandler {
     public:
         explicit StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig);
+        static Response directoryListing(const std::string &path);
         virtual Response serve(const Request &req);
 
     private:
