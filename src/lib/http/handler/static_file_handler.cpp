@@ -28,7 +28,9 @@ namespace http {
                 lastWasSlash = false;
             }
         }
-        if (result.size() > 1 && result.back() == '/') {
+        // cannot use std::string::back()
+        // if (result.size() > 1 && result.back() == '/') {
+        if (!result.empty() && result.back() == '/') {
             result.pop_back();
         }
         if (result.front() == '.') {
@@ -37,14 +39,16 @@ namespace http {
         return result;
     }
 
-    std::string StaticFileHandler::getNextLink(const std::string &newPath, const std::string &dName) {
-        if (dName == std::string(".") || dName == std::string("..")) {
-            if (dName == std::string(".")) {
-                return newPath + "/";
+    std::string
+    StaticFileHandler::getNextLink(const std::string &path, const std::string &dName, const unsigned char dType) {
+        const std::string isDir = (dType == DT_DIR) ? "/" : "";
+        if (dName == "." || dName == "..") {
+            if (dName == ".") {
+                return path + isDir;
             }
-            return newPath.substr(0, newPath.find_last_of('/')) + "/";
+            return path.substr(0, path.find_last_of('/')) + isDir;
         }
-        return newPath + "/" + dName + "/";
+        return path + "/" + dName + isDir;
     }
 
     Result<std::string, HttpStatusCode> StaticFileHandler::makeDirectoryListingResponse(const std::string &path) {
@@ -53,8 +57,8 @@ namespace http {
             LOG_DEBUGF("failed to open directory: %s", path.c_str());
             return Err(kStatusInternalServerError);
         }
-        const std::string newPath = removeUnneededPaths(path);
-        const std::string title = "Index of " + newPath + "/";
+        const std::string normalizedPath = removeUnneededPaths(path);
+        const std::string title = "Index of " + normalizedPath + "/";
         std::string res = "<!DOCTYPE html>";
         res += "<html>";
         res += "<head><title>" + title + "</title></head>";
@@ -65,7 +69,8 @@ namespace http {
         struct dirent *dp;
         while ((dp = readdir(dir)) != NULL) {
             const std::string dName = dp->d_name;
-            const std::string dNameLink = getNextLink(newPath, dName);
+            const unsigned char dType = dp->d_type;
+            const std::string dNameLink = getNextLink(normalizedPath, dName, dType);
             if (dName == std::string(".")) {
                 continue;
             }
