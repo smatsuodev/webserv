@@ -47,21 +47,20 @@ namespace http {
         return newPath + "/" + dName + "/";
     }
 
-
-    Response StaticFileHandler::directoryListing(const std::string &path) {
+    Result<std::string, HttpStatusCode> StaticFileHandler::makeDirectoryListingResponse(const std::string &path) {
         DIR *dir = opendir(path.c_str());
         if (dir == NULL) {
             LOG_DEBUGF("failed to open directory: %s", path.c_str());
-            return ResponseBuilder().status(kStatusInternalServerError).build();
+            return Err(kStatusInternalServerError);
         }
-
-        std::string newPath = removeUnneededPaths(path);
-        std::string title = "Index of " + newPath + "/";
-
+        const std::string newPath = removeUnneededPaths(path);
+        const std::string title = "Index of " + newPath + "/";
         std::string res = "<!DOCTYPE html>";
-        res += "<html><head><title>" + title + "</title></head>";
-        res += "<body><h1>" + title + "</h1><hr>";
-
+        res += "<html>";
+        res += "<head><title>" + title + "</title></head>";
+        res += "<body>";
+        res += "<h1>" + title + "</h1>";
+        res += "<hr>";
         res += "<ul>";
         struct dirent *dp;
         while ((dp = readdir(dir)) != NULL) {
@@ -77,13 +76,24 @@ namespace http {
                 res += "/";
             }
             res += "</a>";
-            // TODO: ファイルサイズ、更新日時
             res += "</li>";
         }
         closedir(dir);
         res += "</ul>";
-        res += "</body></html>";
+        res += "<hr>";
+        res += "</body>";
+        res += "</html>";
+        return Ok(res);
+    }
 
+
+    Response StaticFileHandler::directoryListing(const std::string &path) {
+        const Result<std::string, HttpStatusCode> result = makeDirectoryListingResponse(path);
+        if (result.isErr()) {
+            return ResponseBuilder().status(result.unwrapErr()).build();
+        }
+
+        const std::string res = result.unwrap();
         return ResponseBuilder().html(res).build();
     }
 
