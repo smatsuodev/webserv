@@ -12,11 +12,12 @@ namespace http {
     StaticFileHandler::StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)
         : docRootConfig_(docRootConfig) {}
 
-    static std::string removeDuplicateSlashes(const std::string &path) {
+    static std::string makeAppropriatePath(const std::string &path) {
         std::string result;
         bool lastWasSlash = false;
 
-        for (char c : path) {
+        for (std::size_t i = 0; i < path.size(); i++) {
+            const char c = path[i];
             if (c == '/') {
                 if (!lastWasSlash) {
                     result += c;
@@ -36,50 +37,54 @@ namespace http {
         return result;
     }
 
-    Response StaticFileHandler::directoryListing(const std::string &path) {
-        std::string newPath = removeDuplicateSlashes(path);
+    std::string StaticFileHandler::getNextLink(const std::string &newPath, struct dirent *dp) {
+        std::string nextLink;
+        if (dp->d_name == std::string(".") || dp->d_name == std::string("..")) {
+            if (dp->d_name == std::string(".")) {
+                nextLink = newPath;
+            } else {
+                nextLink = newPath.substr(0, newPath.find_last_of('/'));
+                if (nextLink.empty()) {
+                    nextLink = "/";
+                }
+            }
+        } else {
+            nextLink = newPath + "/" + dp->d_name;
+        }
+        return nextLink;
+    }
 
-        std::string h1 = "Index of " + newPath;
-        std::string body = "<html><head><title>" + h1 + "</title></head><body><h1>" + h1 + "</h1><ul>";
-        body += "<hr>";
+    Response StaticFileHandler::directoryListing(const std::string &path) {
         DIR *dir = opendir(path.c_str());
         if (dir == nullptr) {
             LOG_DEBUGF("failed to open directory: %s", path.c_str());
             return ResponseBuilder().status(kStatusInternalServerError).build();
         }
 
-        struct dirent *dp;
-        while ((dp = readdir(dir)) != nullptr) {
-            std::string nextLink;
-            if (dp->d_name == std::string(".") || dp->d_name == std::string("..")) {
-                if (dp->d_name == std::string(".")) {
-                    nextLink = newPath;
-                } else {
-                    nextLink = newPath.substr(0, newPath.find_last_of('/'));
-                    if (nextLink.empty()) {
-                        nextLink = "/";
-                    }
-                }
-            } else {
-                nextLink = newPath + "/" + dp->d_name;
-            }
-            LOG_WARNF("%s -> %s", dp->d_name, nextLink.c_str());
+        std::string newPath = makeAppropriatePath(path);
+        std::string title = "Index of " + newPath;
 
-            body += "<li><a href=\"";
-            body += nextLink;
-            body += "\">";
-            body += dp->d_name;
+        std::string res = "<html><head><title>" + title + "</title></head>";
+        res += "<body><h1>" + title + "</h1><hr>";
+
+        res += "<ul>";
+        struct dirent *dp;
+        while ((dp = readdir(dir)) != NULL) {
+            res += "<li>";
+            res += "<a href=\"" + getNextLink(newPath, dp) + "\">";
+            res += dp->d_name;
             if (dp->d_type == DT_DIR) {
-                body += "/";
+                res += "/";
             }
-            body += "</a>";
+            res += "</a>";
             // TODO: ファイルサイズ、更新日時
-            body += "</li>";
+            res += "</li>";
         }
         closedir(dir);
+        res += "</ul>";
 
-        body += "</ul></body></html>";
-        return ResponseBuilder().html(body).build();
+        res += "</body></html>";
+        return ResponseBuilder().html(res).build();
     }
 
     Response StaticFileHandler::serve(const Request &req) {
@@ -98,9 +103,7 @@ namespace http {
 
         if (S_ISDIR(buf.st_mode)) {
             LOG_DEBUGF("is a directory: %s", path.c_str());
-            // TODO: directory listing
             return directoryListing(path);
-            // return ResponseBuilder().status(kStatusForbidden).build();
         }
 
         if (!S_ISREG(buf.st_mode)) {
