@@ -23,7 +23,6 @@ bool VirtualServer::operator==(const VirtualServer &rhs) const {
 }
 
 void VirtualServer::registerHandlers(const config::LocationContext &location) {
-    // TODO: 設定を渡す
     std::vector<http::HttpMethod> allowedMethods = location.getAllowedMethods();
     for (std::vector<http::HttpMethod>::const_iterator iter = allowedMethods.begin(); iter != allowedMethods.end();
          ++iter) {
