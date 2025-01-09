@@ -4,7 +4,8 @@
 #include "http/handler/static_file_handler.hpp"
 #include "utils/logger.hpp"
 
-VirtualServer::VirtualServer(const config::ServerContext &serverConfig) : serverConfig_(serverConfig) {
+VirtualServer::VirtualServer(const config::ServerContext &serverConfig, const Address &bindAddress)
+    : serverConfig_(serverConfig), bindAddress_(bindAddress) {
     this->setupRouter();
 }
 
@@ -61,6 +62,6 @@ void VirtualServer::setupRouter() {
 }
 
 bool VirtualServer::isMatch(const Address &address) const {
-    return serverConfig_.getPort() == address.getPort() &&
-        (serverConfig_.getHost() == "0.0.0.0" || serverConfig_.getHost() == address.getIp());
+    return bindAddress_.getPort() == address.getPort() &&
+        (bindAddress_.getIp() == "0.0.0.0" || bindAddress_.getIp() == address.getIp());
 }
