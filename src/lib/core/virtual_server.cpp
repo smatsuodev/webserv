@@ -29,13 +29,11 @@ void VirtualServer::registerHandlers(const config::LocationContext &location) {
         config::LocationContext::DocumentRootConfig documentRootConfig = location.getDocumentRootConfig().unwrap();
         switch (*iter) {
             case http::kMethodGet: {
-                LOG_DEBUGF("register GET handler: %s", location.getPath().c_str());
                 http::IHandler *handler = new http::StaticFileHandler(documentRootConfig);
                 router_.onGet(location.getPath(), handler);
                 break;
             }
             case http::kMethodDelete: {
-                LOG_DEBUGF("register DELETE handler: %s", location.getPath().c_str());
                 http::IHandler *handler = new http::DeleteFileHandler(documentRootConfig);
                 router_.onDelete(location.getPath(), handler);
                 break;
