@@ -3,7 +3,6 @@
 #include "core/virtual_server_resolver.hpp"
 #include "transport/connection.hpp"
 #include "utils/logger.hpp"
-
 #include <memory>
 
 using namespace config;
@@ -15,12 +14,12 @@ protected:
     }
 
     static std::unique_ptr<VirtualServer> createVirtualServer(
-        const std::string &host,
+        const std::string &ip,
         const uint16_t port,
         const std::vector<std::string> &serverName = std::vector<std::string>()
     ) {
-        const auto config = ServerContext(host, port, LocationContextList(), serverName);
-        return std::make_unique<VirtualServer>(config);
+        const auto config = ServerContext(ip, port, LocationContextList(), serverName);
+        return std::make_unique<VirtualServer>(config, Address(ip, port));
     }
 
     // Virtual Server のマッチングに必要な情報。localAddr 以外に意味はない
@@ -185,4 +184,19 @@ TEST_F(VirtualServerResolverTest, ResolveWithPortInHostHeader) {
     const auto result2 = resolver.resolve("example.com:80");
     ASSERT_TRUE(result2.isSome());
     EXPECT_EQ(result2.unwrap().get(), *vsList[1]);
+}
+
+// config がホスト名で書かれている場合
+TEST_F(VirtualServerResolverTest, ResolveWithConfigHost) {
+    VirtualServer vs(ServerContext("localhost", 8080, LocationContextList()), Address("127.0.0.1", 8080));
+    // virtual server は解決済みのアドレスを受け取る
+    VirtualServerList vsList = {&vs};
+
+    const Address addr("127.0.0.1", 8080);
+    const auto conn = createTestConnection(addr);
+    const VirtualServerResolver resolver(vsList, conn);
+
+    const auto result = resolver.resolve("localhost");
+    ASSERT_TRUE(result.isSome());
+    EXPECT_EQ(result.unwrap().get(), vs);
 }

@@ -11,8 +11,8 @@ Config loadConfig() {
         "/", LocationContext::DocumentRootConfig("./"), {http::kMethodGet, http::kMethodPost, http::kMethodDelete}
     );
     // src/ は GET だけ許可
-    LocationContext location2("/src", LocationContext::DocumentRootConfig("./src"));
-    ServerContext server1("0.0.0.0", 8080, {location1, location2});
+    LocationContext location2("/src", LocationContext::DocumentRootConfig("./"));
+    ServerContext server1("localhost", 8080, {location1, location2});
 
     // 全部 example.com にリダイレクト
     ServerContext server2("0.0.0.0", 8081, {LocationContext("/", "https://example.com")}, {"redirect.example.com"});

@@ -42,7 +42,7 @@ bool utils::endsWith(const std::string &str, const std::string &suffix) {
     if (str.size() < suffix.size()) {
         return false;
     }
-    return str.rfind(suffix) == (str.size() - suffix.size());
+    return str.rfind(suffix) == str.size() - suffix.size();
 }
 
 utils::StoulResult utils::stoul(const std::string &str) {

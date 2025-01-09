@@ -34,8 +34,6 @@ namespace http {
             return Some(map_.at(bestKey.unwrap()));
         }
     };
-
-
 }
 
 #endif

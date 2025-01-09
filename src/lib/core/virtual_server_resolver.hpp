@@ -5,7 +5,6 @@
 #include "event/event_handler.hpp"
 #include "transport/connection.hpp"
 #include "utils/ref.hpp"
-#include <map>
 
 // 本当は Ref が好ましいが、Server がポインタで持っているので、それに合わせる
 typedef std::vector<VirtualServer *> VirtualServerList;

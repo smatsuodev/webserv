@@ -6,6 +6,7 @@
 #include "server_state.hpp"
 #include "virtual_server.hpp"
 #include "config/config.hpp"
+#include <set>
 
 class Server {
 public:
@@ -26,8 +27,6 @@ private:
     std::vector<Listener *> listeners_;
     std::set<int> listenerFds_;
 
-    void setupListeners();
-    void setupVirtualServers();
     void onHandlerError(const Context &ctx, error::AppError err);
     void onErrorEvent(const Event &event);
     static void executeActions(ActionContext &actionCtx, std::vector<IAction *> actions);

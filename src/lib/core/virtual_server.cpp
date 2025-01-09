@@ -4,7 +4,8 @@
 #include "http/handler/static_file_handler.hpp"
 #include "utils/logger.hpp"
 
-VirtualServer::VirtualServer(const config::ServerContext &serverConfig) : serverConfig_(serverConfig) {
+VirtualServer::VirtualServer(const config::ServerContext &serverConfig, const Address &bindAddress)
+    : serverConfig_(serverConfig), bindAddress_(bindAddress) {
     this->setupRouter();
 }
 
@@ -22,20 +23,17 @@ bool VirtualServer::operator==(const VirtualServer &rhs) const {
 }
 
 void VirtualServer::registerHandlers(const config::LocationContext &location) {
-    // TODO: 設定を渡す
     std::vector<http::HttpMethod> allowedMethods = location.getAllowedMethods();
     for (std::vector<http::HttpMethod>::const_iterator iter = allowedMethods.begin(); iter != allowedMethods.end();
          ++iter) {
         config::LocationContext::DocumentRootConfig documentRootConfig = location.getDocumentRootConfig().unwrap();
         switch (*iter) {
             case http::kMethodGet: {
-                LOG_DEBUGF("register GET handler: %s", location.getPath().c_str());
                 http::IHandler *handler = new http::StaticFileHandler(documentRootConfig);
                 router_.onGet(location.getPath(), handler);
                 break;
             }
             case http::kMethodDelete: {
-                LOG_DEBUGF("register DELETE handler: %s", location.getPath().c_str());
                 http::IHandler *handler = new http::DeleteFileHandler(documentRootConfig);
                 router_.onDelete(location.getPath(), handler);
                 break;
@@ -61,6 +59,6 @@ void VirtualServer::setupRouter() {
 }
 
 bool VirtualServer::isMatch(const Address &address) const {
-    return serverConfig_.getPort() == address.getPort() &&
-        (serverConfig_.getHost() == "0.0.0.0" || serverConfig_.getHost() == address.getIp());
+    return bindAddress_.getPort() == address.getPort() &&
+        (bindAddress_.getIp() == "0.0.0.0" || bindAddress_.getIp() == address.getIp());
 }

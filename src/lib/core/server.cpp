@@ -4,10 +4,36 @@
 #include "./handler/accept_handler.hpp"
 #include "transport/listener.hpp"
 #include "utils/logger.hpp"
+#include <set>
 
 Server::Server(const config::Config &config) : config_(config) {
-    this->setupVirtualServers();
-    this->setupListeners();
+    const config::ServerContextList &servers = config_.getServers();
+    std::set<std::pair<std::string, std::string> > bindPairs; // (host, port) の組
+    listeners_.reserve(servers.size()); // 重複があると必要な要素はこれより少ない
+    virtualServers_.reserve(servers.size());
+    for (config::ServerContextList::const_iterator it = servers.begin(); it != servers.end(); ++it) {
+        const std::pair<std::string, std::string> bindPair =
+            std::make_pair(it->getHost(), utils::toString(it->getPort()));
+        if (bindPairs.count(bindPair) > 0) {
+            // 同じホスト、ポートの組は listen する必要がない
+            continue;
+        }
+        bindPairs.insert(bindPair);
+
+        // Listener の作成
+        Listener *listener = new Listener(bindPair.first, bindPair.second);
+        const int fd = listener->getFd();
+        listeners_.push_back(listener);
+        listenerFds_.insert(fd);
+
+        // Listener の fd に対する read を待ち、AcceptHandler で処理する
+        state_.getEventNotifier().registerEvent(Event(fd, Event::kRead));
+        state_.getEventHandlerRepository().set(fd, new AcceptHandler(*listener));
+
+        // Virtual Server を作成
+        VirtualServer *vs = new VirtualServer(*it, listener->getBindAddress());
+        virtualServers_.push_back(vs);
+    }
 }
 
 Server::~Server() {
@@ -57,31 +83,6 @@ void Server::start() {
             ActionContext actionCtx(state_);
             Server::executeActions(actionCtx, result.unwrap());
         }
-    }
-}
-
-// TODO: ソケットの bind 先が重複する場合に対応
-void Server::setupListeners() {
-    const config::ServerContextList &servers = config_.getServers();
-    listeners_.reserve(servers.size());
-    for (config::ServerContextList::const_iterator it = servers.begin(); it != servers.end(); ++it) {
-        // TODO: host を解決してから渡す or Listener が host を解決するようにする
-        Listener *listener = new Listener(Address(it->getHost(), it->getPort()));
-        listeners_.push_back(listener);
-
-        const int fd = listener->getFd();
-        listenerFds_.insert(fd);
-
-        state_.getEventNotifier().registerEvent(Event(fd, Event::kRead));
-        state_.getEventHandlerRepository().set(fd, new AcceptHandler(*listener));
-    }
-}
-
-void Server::setupVirtualServers() {
-    const config::ServerContextList &servers = config_.getServers();
-    for (config::ServerContextList::const_iterator it = servers.begin(); it != servers.end(); ++it) {
-        VirtualServer *vs = new VirtualServer(*it);
-        virtualServers_.push_back(vs);
     }
 }
 

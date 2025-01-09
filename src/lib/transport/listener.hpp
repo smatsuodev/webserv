@@ -11,18 +11,20 @@
 // サーバーソケットの抽象
 class Listener {
 public:
-    explicit Listener(const Address &listenAddress, int backlog = SOMAXCONN);
+    explicit Listener(const std::string &host, const std::string &port, int backlog = SOMAXCONN);
     ~Listener();
 
     int getFd() const;
+    const Address &getBindAddress() const;
 
     typedef Result<Connection *, std::string> AcceptConnectionResult;
     AcceptConnectionResult acceptConnection() const;
 
 private:
     AutoFd serverFd_;
+    Address bindAddress_;
 
-    static int setupSocket(const Address &listenAddress, int backlog);
+    void setupSocket(const std::string &host, const std::string &port, int backlog);
 };
 
 #endif

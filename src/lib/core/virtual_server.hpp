@@ -7,7 +7,8 @@
 
 class VirtualServer {
 public:
-    explicit VirtualServer(const config::ServerContext &serverConfig);
+    // config はホスト名で書かれる場合があるので、解決済みのアドレスももらう
+    explicit VirtualServer(const config::ServerContext &serverConfig, const Address &bindAddress);
 
     const config::ServerContext &getServerConfig() const;
     http::Router &getRouter();
@@ -17,6 +18,7 @@ public:
 
 private:
     config::ServerContext serverConfig_;
+    Address bindAddress_;
     http::Router router_;
 
     void setupRouter();

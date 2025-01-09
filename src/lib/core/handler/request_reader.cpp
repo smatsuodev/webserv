@@ -138,7 +138,6 @@ Result<Option<size_t>, error::AppError> RequestReader::getContentLength(const Ra
     for (RawHeaders::const_iterator it = headers.begin(); it != headers.end(); ++it) {
         const http::RequestParser::HeaderField &field = TRY(http::RequestParser::parseHeaderFieldLine(*it));
         if (field.first == "Content-Length") {
-            // TODO: client_max_body_size より大きい値の場合はエラー
             return Ok(Some(TRY(utils::stoul(field.second))));
         }
     }
