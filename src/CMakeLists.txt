@@ -84,6 +84,7 @@ add_library(webserv_lib STATIC
         lib/http/handler/static_file_handler.hpp
         lib/http/handler/delete_file_handler.cpp
         lib/http/handler/delete_file_handler.hpp
+        lib/utils/auto_deleter.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
