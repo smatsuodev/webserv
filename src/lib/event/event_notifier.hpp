@@ -5,7 +5,6 @@
 #include "utils/auto_fd.hpp"
 #include "utils/types/error.hpp"
 #include "utils/types/result.hpp"
-#include <set>
 #include <vector>
 #include <map>
 

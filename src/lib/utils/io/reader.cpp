@@ -1,9 +1,7 @@
 #include "reader.hpp"
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
-#include <cerrno>
 #include <unistd.h>
-#include <cstring>
 
 namespace io {
     IReader::~IReader() {}

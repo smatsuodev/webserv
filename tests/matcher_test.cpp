@@ -9,7 +9,7 @@ public:
     std::map<std::string, Value> paths;
     Matcher<Value> matcher;
 
-    MatcherTest() : matcher({}) {};
+    MatcherTest() : matcher({}) {}
 
 protected:
     void SetUp() override {
