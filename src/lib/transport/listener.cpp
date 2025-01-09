@@ -1,4 +1,6 @@
 #include "listener.hpp"
+
+#include "utils/auto_deleter.hpp"
 #include "utils/fd.hpp"
 #include <string>
 #include <stdexcept>
@@ -30,7 +32,7 @@ const Address &Listener::getBindAddress() const {
 Listener::AcceptConnectionResult Listener::acceptConnection() const {
     sockaddr_in sockAddr = {};
     socklen_t sockAddrLen = sizeof(sockAddr);
-    const int fd = accept(serverFd_, reinterpret_cast<sockaddr *>(&sockAddr), &sockAddrLen);
+    AutoFd fd(accept(serverFd_, reinterpret_cast<sockaddr *>(&sockAddr), &sockAddrLen));
     if (fd == -1) {
         LOG_WARNF("failed to accept connection: %s", std::strerror(errno));
         return Err<std::string>("failed to accept connection");
@@ -43,7 +45,7 @@ Listener::AcceptConnectionResult Listener::acceptConnection() const {
         return Err<std::string>("failed to set non-blocking fd");
     }
 
-    LOG_INFOF("connection established from %s (fd: %d)", foreignAddress.toString().c_str(), fd);
+    LOG_INFOF("connection established from %s (fd: %d)", foreignAddress.toString().c_str(), fd.get());
 
     // local address を取得
     sockaddr_in localAddr = {};
@@ -54,7 +56,7 @@ Listener::AcceptConnectionResult Listener::acceptConnection() const {
     }
     const Address localAddress(inet_ntoa(localAddr.sin_addr), ntohs(localAddr.sin_port));
 
-    return Ok(new Connection(fd, localAddress, foreignAddress));
+    return Ok(new Connection(fd.release(), localAddress, foreignAddress));
 }
 
 Result<addrinfo *, std::string> resolveAddress(const std::string &host, const std::string &port) {
@@ -75,11 +77,13 @@ typedef std::pair<int, Address> FdAddressPair;
 
 // fd と bind に成功したアドレスを返す
 Result<FdAddressPair, std::string> tryCreateAndBindSocket(addrinfo *addrList) {
-    for (const addrinfo *listNode = addrList; listNode != NULL; listNode = listNode->ai_next) {
-        int sFd = socket(listNode->ai_family, listNode->ai_socktype, listNode->ai_protocol);
+    // free 漏れを防ぐため、AutoDeleter で wrap
+    const AutoDeleter<addrinfo> list(addrList, freeaddrinfo);
+
+    for (const addrinfo *listNode = list; listNode != NULL; listNode = listNode->ai_next) {
+        AutoFd sFd(socket(listNode->ai_family, listNode->ai_socktype, listNode->ai_protocol));
         if (sFd == -1) {
             // hint で family, socktype, protocol を指定しているので、致命的なエラー
-            freeaddrinfo(addrList);
             return Err(utils::format("failed to create socket: %s", std::strerror(errno)));
         }
 
@@ -87,33 +91,33 @@ Result<FdAddressPair, std::string> tryCreateAndBindSocket(addrinfo *addrList) {
         if (setsockopt(sFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1 ||
             bind(sFd, listNode->ai_addr, listNode->ai_addrlen) == -1) {
             // 他の候補を試す
-            close(sFd);
             continue;
         }
 
         // socket(), bind() に成功
+        // socket が close されないように、release で所有権を渡す
         sockaddr_in *addr = reinterpret_cast<sockaddr_in *>(listNode->ai_addr);
-        const FdAddressPair resultPair = std::make_pair(sFd, Address(inet_ntoa(addr->sin_addr), ntohs(addr->sin_port)));
-        freeaddrinfo(addrList);
-        return Ok(resultPair);
+        return Ok(std::make_pair(sFd.release(), Address(inet_ntoa(addr->sin_addr), ntohs(addr->sin_port))));
     }
 
     // すべての候補で bind に失敗
-    freeaddrinfo(addrList);
     return Err(utils::format("failed to create and bind socket: %s", std::strerror(errno)));
 }
 
 // andThen で繋げるために lint を無効化
 // ReSharper disable once CppPassValueParameterByConstReference
-Result<FdAddressPair, std::string> setNonBlocking(const FdAddressPair socketAndAddress
-) { // NOLINT(*-unnecessary-value-param)
-    const int fd = socketAndAddress.first;
+Result<FdAddressPair, std::string> setNonBlocking(const FdAddressPair fdAddrPair) { // NOLINT(*-unnecessary-value-param)
+    // close 漏れを防ぐため、AutoFd で wrap
+    AutoFd fd(fdAddrPair.first);
+
     const Result<void, error::AppError> result = utils::setNonBlocking(fd);
     if (result.isErr()) {
-        close(fd);
         return Err(utils::format("failed to set non blocking mode: %s", std::strerror(errno)));
     }
-    return Ok(socketAndAddress);
+
+    // 成功したら fd が close されないように、所有権を放棄
+    fd.release();
+    return Ok(fdAddrPair);
 }
 
 void Listener::setupSocket(const std::string &host, const std::string &port, const int backlog) {
