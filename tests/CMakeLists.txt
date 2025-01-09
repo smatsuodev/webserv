@@ -68,3 +68,6 @@ gtest_discover_tests(matcher_test)
 
 add_executable(virtual_server_resolver_test virtual_server_resolver_test.cpp)
 gtest_discover_tests(virtual_server_resolver_test)
+
+add_executable(auto_deleter_test auto_deleter_test.cpp)
+gtest_discover_tests(auto_deleter_test)
