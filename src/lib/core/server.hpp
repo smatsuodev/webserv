@@ -6,6 +6,7 @@
 #include "server_state.hpp"
 #include "virtual_server.hpp"
 #include "config/config.hpp"
+#include <set>
 
 class Server {
 public:
