@@ -17,8 +17,7 @@ Option<Ref<VirtualServer> > VirtualServerResolver::resolve(const std::string &ho
             continue;
         }
 
-        // TODO: getHost() で得られるものは IP アドレスじゃないかもしれない
-        if ((*it)->getServerConfig().getHost() == "0.0.0.0") {
+        if ((*it)->bindAddress_.getIp() == "0.0.0.0") {
             wildcards.push_back(*it);
         } else {
             candidates.push_back(*it);
