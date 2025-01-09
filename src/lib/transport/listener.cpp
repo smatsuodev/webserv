@@ -105,8 +105,8 @@ Result<FdAddressPair, std::string> tryCreateAndBindSocket(addrinfo *addrList) {
 
 // andThen で繋げるために lint を無効化
 // ReSharper disable once CppPassValueParameterByConstReference
-Result<FdAddressPair, std::string>
-setNonBlocking(const FdAddressPair socketAndAddress) { // NOLINT(*-unnecessary-value-param)
+Result<FdAddressPair, std::string> setNonBlocking(const FdAddressPair socketAndAddress
+) { // NOLINT(*-unnecessary-value-param)
     const int fd = socketAndAddress.first;
     const Result<void, error::AppError> result = utils::setNonBlocking(fd);
     if (result.isErr()) {
