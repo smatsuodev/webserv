@@ -6,13 +6,13 @@
 namespace http {
     class ReadingChunkedBodyState : public RequestReader::IState {
     public:
-        ReadingChunkedBodyState(RequestReader &reader, std::size_t clientMaxBodySize);
+        ReadingChunkedBodyState(RequestReader::ReadContext &ctx, std::size_t clientMaxBodySize);
         Result<HandleStatus, error::AppError> handle(ReadBuffer &readBuf);
 
     private:
         enum State { kReadingChunkSize, kReadingChunkData, kReadingTrailer, kDone };
 
-        RequestReader &reader_;
+        RequestReader::ReadContext &ctx_;
         std::size_t clientMaxBodySize_;
         State state_;
         std::size_t chunkSize_;

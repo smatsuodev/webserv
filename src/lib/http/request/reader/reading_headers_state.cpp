@@ -6,7 +6,7 @@
 #include "utils/logger.hpp"
 #include "config/config.hpp"
 
-http::ReadingHeadersState::ReadingHeadersState(RequestReader &reader) : reader_(reader) {}
+http::ReadingHeadersState::ReadingHeadersState(RequestReader::ReadContext &ctx) : ctx_(ctx) {}
 
 Result<http::RequestReader::IState::HandleStatus, error::AppError>
 http::ReadingHeadersState::handle(ReadBuffer &readBuf) {
@@ -28,8 +28,8 @@ http::ReadingHeadersState::handle(ReadBuffer &readBuf) {
         headers_.push_back(header);
     }
 
-    reader_.setHeaders(headers_);
-    reader_.changeState(TRY(this->nextState()));
+    ctx_.setHeaders(headers_);
+    ctx_.changeState(TRY(this->nextState()));
 
     return Ok(HandleStatus::kDone);
 }
@@ -46,7 +46,7 @@ Result<http::RequestReader::IState *, error::AppError> http::ReadingHeadersState
     }
 
     if (isChunked) {
-        return Ok(new ReadingChunkedBodyState(reader_, clientMaxBodySize));
+        return Ok(new ReadingChunkedBodyState(ctx_, clientMaxBodySize));
     }
 
     if (contentLength.isSome() && contentLength.unwrap() > 0) {
@@ -55,7 +55,7 @@ Result<http::RequestReader::IState *, error::AppError> http::ReadingHeadersState
             LOG_WARN("content-length too large");
             return Err(error::kParseUnknown);
         }
-        return Ok(new ReadingBodyState(reader_, len));
+        return Ok(new ReadingBodyState(ctx_, len));
     }
 
     // body がなければ request は読み終わり
@@ -69,7 +69,7 @@ Result<std::size_t, error::AppError> http::ReadingHeadersState::getClientMaxBody
         return Err(error::kParseUnknown);
     }
 
-    const Option<config::ServerContext> config = reader_.getConfigResolver().resolve(host.unwrap());
+    const Option<config::ServerContext> config = ctx_.getConfigResolver().resolve(host.unwrap());
     if (config.isNone()) {
         // accept しているので、通常は見つかるはず
         LOG_WARN("config not found");

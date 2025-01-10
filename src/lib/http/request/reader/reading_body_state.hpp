@@ -6,11 +6,11 @@
 namespace http {
     class ReadingBodyState : public RequestReader::IState {
     public:
-        ReadingBodyState(RequestReader &reader, std::size_t contentLength);
+        ReadingBodyState(RequestReader::ReadContext &ctx, std::size_t contentLength);
         Result<HandleStatus, error::AppError> handle(ReadBuffer &readBuf);
 
     private:
-        RequestReader &reader_;
+        RequestReader::ReadContext &ctx_;
         std::size_t contentLength_;
         std::string body_;
     };

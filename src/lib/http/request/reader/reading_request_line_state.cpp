@@ -3,7 +3,7 @@
 #include "utils.hpp"
 #include "utils/types/try.hpp"
 
-http::ReadingRequestLineState::ReadingRequestLineState(RequestReader &reader) : reader_(reader) {}
+http::ReadingRequestLineState::ReadingRequestLineState(RequestReader::ReadContext &ctx) : ctx_(ctx) {}
 
 Result<http::RequestReader::IState::HandleStatus, error::AppError>
 http::ReadingRequestLineState::handle(ReadBuffer &readBuf) {
@@ -12,8 +12,8 @@ http::ReadingRequestLineState::handle(ReadBuffer &readBuf) {
         return Ok(HandleStatus::kSuspend);
     }
 
-    reader_.setRequestLine(reqLine.unwrap());
-    reader_.changeState(new ReadingHeadersState(reader_));
+    ctx_.setRequestLine(reqLine.unwrap());
+    ctx_.changeState(new ReadingHeadersState(ctx_));
 
     return Ok(HandleStatus::kDone);
 }

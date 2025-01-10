@@ -4,8 +4,10 @@
 #include <sstream>
 
 namespace http {
-    ReadingChunkedBodyState::ReadingChunkedBodyState(RequestReader &reader, const std::size_t clientMaxBodySize)
-        : reader_(reader), clientMaxBodySize_(clientMaxBodySize), state_(kReadingChunkSize), chunkSize_(0) {}
+    ReadingChunkedBodyState::ReadingChunkedBodyState(
+        RequestReader::ReadContext &ctx, const std::size_t clientMaxBodySize
+    )
+        : ctx_(ctx), clientMaxBodySize_(clientMaxBodySize), state_(kReadingChunkSize), chunkSize_(0) {}
 
     /*
         chunked-body = *chunk
@@ -70,8 +72,8 @@ namespace http {
         }
 
         // NOTE: proxy の場合、Transfer-Encoding の chunked を削除するが、この課題では対応しない
-        reader_.setBody(body_);
-        reader_.changeState(NULL);
+        ctx_.setBody(body_);
+        ctx_.changeState(NULL);
 
         return Ok(HandleStatus::kDone);
     }
