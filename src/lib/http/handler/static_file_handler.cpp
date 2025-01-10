@@ -5,6 +5,8 @@
 #include <sys/stat.h>
 #include "static_file_handler.hpp"
 
+#include "http/mime.hpp"
+
 namespace http {
     StaticFileHandler::StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)
         : docRootConfig_(docRootConfig) {}
@@ -40,6 +42,6 @@ namespace http {
         }
         std::stringstream ss;
         ss << ifs.rdbuf();
-        return ResponseBuilder().text(ss.str()).build();
+        return ResponseBuilder().body(ss.str()).header("Content-Type", getMimeType(path)).build();
     }
-} // http
+}
