@@ -3,8 +3,8 @@
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
 
-http::ReadingBodyState::ReadingBodyState(RequestReader &reader, const std::size_t contentLength)
-    : reader_(reader), contentLength_(contentLength) {}
+http::ReadingBodyState::ReadingBodyState(RequestReader::ReadContext &ctx, const std::size_t contentLength)
+    : ctx_(ctx), contentLength_(contentLength) {}
 
 Result<http::RequestReader::IState::HandleStatus, error::AppError> http::ReadingBodyState::handle(ReadBuffer &readBuf) {
     while (body_.size() < contentLength_) {
@@ -16,8 +16,8 @@ Result<http::RequestReader::IState::HandleStatus, error::AppError> http::Reading
         body_ += chunk;
     }
 
-    reader_.setBody(body_);
-    reader_.changeState(NULL);
+    ctx_.setBody(body_);
+    ctx_.changeState(NULL);
 
     return Ok(HandleStatus::kDone);
 }

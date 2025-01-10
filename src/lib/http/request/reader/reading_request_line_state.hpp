@@ -6,11 +6,11 @@
 namespace http {
     class ReadingRequestLineState : public RequestReader::IState {
     public:
-        explicit ReadingRequestLineState(RequestReader &reader);
+        explicit ReadingRequestLineState(RequestReader::ReadContext &ctx);
         Result<HandleStatus, error::AppError> handle(ReadBuffer &readBuf);
 
     private:
-        RequestReader &reader_;
+        RequestReader::ReadContext &ctx_;
     };
 }
 

@@ -2,10 +2,11 @@
 #include "utils/types/try.hpp"
 #include "./utils.hpp"
 #include "reading_body_state.hpp"
+#include "reading_chunked_body_state.hpp"
 #include "utils/logger.hpp"
 #include "config/config.hpp"
 
-http::ReadingHeadersState::ReadingHeadersState(RequestReader &reader) : reader_(reader) {}
+http::ReadingHeadersState::ReadingHeadersState(RequestReader::ReadContext &ctx) : ctx_(ctx) {}
 
 Result<http::RequestReader::IState::HandleStatus, error::AppError> http::ReadingHeadersState::handle(ReadBuffer &readBuf
 ) {
@@ -27,24 +28,38 @@ Result<http::RequestReader::IState::HandleStatus, error::AppError> http::Reading
         headers_.push_back(header);
     }
 
-    reader_.setHeaders(headers_);
+    ctx_.setHeaders(headers_);
+    ctx_.changeState(TRY(this->nextState()));
 
-    // TODO: Transfer-Encoding 対応
+    return Ok(HandleStatus::kDone);
+}
+
+Result<http::RequestReader::IState *, error::AppError> http::ReadingHeadersState::nextState() const {
     const std::size_t clientMaxBodySize = TRY(getClientMaxBodySize(headers_));
     const Option<std::size_t> contentLength = TRY(getContentLength(headers_));
+    const bool isChunked = TRY(ReadingHeadersState::isChunked(headers_));
+
+    if (contentLength.isSome() && isChunked) {
+        // Content-Length と Transfer-Encoding は一方だけ必要
+        LOG_WARN("both Content-Length and Transfer-Encoding are set");
+        return Err(error::kParseUnknown);
+    }
+
+    if (isChunked) {
+        return Ok(new ReadingChunkedBodyState(ctx_, clientMaxBodySize));
+    }
+
     if (contentLength.isSome() && contentLength.unwrap() > 0) {
         const std::size_t len = contentLength.unwrap();
         if (len > clientMaxBodySize) {
             LOG_WARN("content-length too large");
             return Err(error::kParseUnknown);
         }
-        reader_.changeState(new ReadingBodyState(reader_, len));
-    } else {
-        // body がなければ request は読み終わり
-        reader_.changeState(NULL);
+        return Ok(new ReadingBodyState(ctx_, len));
     }
 
-    return Ok(HandleStatus::kDone);
+    // body がなければ request は読み終わり
+    return Ok<IState *>(NULL);
 }
 
 Result<std::size_t, error::AppError> http::ReadingHeadersState::getClientMaxBodySize(const RawHeaders &headers) const {
@@ -54,7 +69,7 @@ Result<std::size_t, error::AppError> http::ReadingHeadersState::getClientMaxBody
         return Err(error::kParseUnknown);
     }
 
-    const Option<config::ServerContext> config = reader_.getConfigResolver().resolve(host.unwrap());
+    const Option<config::ServerContext> config = ctx_.getConfigResolver().resolve(host.unwrap());
     if (config.isNone()) {
         // accept しているので、通常は見つかるはず
         LOG_WARN("config not found");
@@ -70,4 +85,19 @@ Result<Option<std::size_t>, error::AppError> http::ReadingHeadersState::getConte
         return Ok(None);
     }
     return Ok(Some(TRY(utils::stoul(contentLength.unwrap()))));
+}
+
+Result<bool, error::AppError> http::ReadingHeadersState::isChunked(const RawHeaders &headers) {
+    const Option<std::string> transferEncoding = TRY(getHeaderValue(headers, "Transfer-Encoding"));
+    if (transferEncoding.isNone()) {
+        return Ok(false);
+    }
+
+    // chunked 以外は対応しない
+    if (transferEncoding.unwrap() != "chunked") {
+        // TODO: Not Implemented, Bad Request など、適切なレスポンスを返せるようにする
+        LOG_DEBUG("unsupported Transfer-Encoding");
+        return Err(error::kParseUnknown);
+    }
+    return Ok(true);
 }

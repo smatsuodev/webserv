@@ -6,15 +6,18 @@
 namespace http {
     class ReadingHeadersState : public RequestReader::IState {
     public:
-        explicit ReadingHeadersState(RequestReader &reader);
+        explicit ReadingHeadersState(RequestReader::ReadContext &ctx);
         Result<HandleStatus, error::AppError> handle(ReadBuffer &readBuf);
 
     private:
-        RequestReader &reader_;
+        RequestReader::ReadContext &ctx_;
         RawHeaders headers_;
+
+        Result<IState *, error::AppError> nextState() const;
 
         Result<std::size_t, error::AppError> getClientMaxBodySize(const RawHeaders &headers) const;
         static Result<Option<std::size_t>, error::AppError> getContentLength(const RawHeaders &headers);
+        static Result<bool, error::AppError> isChunked(const RawHeaders &headers);
     };
 }
 

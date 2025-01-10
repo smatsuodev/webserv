@@ -93,6 +93,8 @@ add_library(webserv_lib STATIC
         lib/http/request/reader/reading_headers_state.hpp
         lib/http/request/reader/reading_body_state.cpp
         lib/http/request/reader/reading_body_state.hpp
+        lib/http/request/reader/reading_chunked_body_state.cpp
+        lib/http/request/reader/reading_chunked_body_state.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

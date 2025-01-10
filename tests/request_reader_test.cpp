@@ -4,6 +4,8 @@
 #include "../src/lib/http/request/reader/request_reader.hpp"
 #include "utils/logger.hpp"
 #include "config/config.hpp"
+#include "http/request/reader/reading_chunked_body_state.hpp"
+
 #include <utility>
 
 using namespace fakeit;
@@ -26,6 +28,13 @@ protected:
         SET_LOG_LEVEL(Logger::kError);
     }
 };
+
+void loadAll(ReadBuffer &readBuf) {
+    std::size_t bytesLoaded = 0;
+    do {
+        bytesLoaded = readBuf.load().unwrap();
+    } while (bytesLoaded > 0);
+}
 
 TEST_F(RequestReaderTest, GetNormal) {
     const std::string request = "GET / HTTP/1.1\r\n"
@@ -128,4 +137,135 @@ TEST_F(RequestReaderTest, PostWouldBlock) {
         "hello"
     );
     EXPECT_EQ(result.unwrap().unwrap(), expected);
+}
+
+class ChunkedEncodingTest : public testing::Test {
+public:
+    ChunkedEncodingTest() {
+        // IConfigResolver は呼ばれないので、処理を定義しなくて良い
+        ctx_ = std::make_unique<RequestReader::ReadContext>(resolverMock_.get());
+    }
+
+protected:
+    Mock<IConfigResolver> resolverMock_;
+    std::unique_ptr<RequestReader::ReadContext> ctx_;
+    std::unique_ptr<RequestReader::IState> state_;
+
+    void SetUp() {
+        SET_LOG_LEVEL(Logger::kError);
+        state_ = std::make_unique<ReadingChunkedBodyState>(*ctx_, 1024);
+    }
+};
+
+TEST_F(ChunkedEncodingTest, normal) {
+    const std::string chunkedBody = "5\r\n"
+                                    "hello\r\n"
+                                    "6\r\n"
+                                    " world\r\n"
+                                    "0\r\n"
+                                    "\r\n";
+    StringReader reader(chunkedBody);
+    ReadBuffer readBuf(reader);
+    loadAll(readBuf);
+
+    const auto result = state_->handle(readBuf);
+    ASSERT_TRUE(result.isOk());
+
+    EXPECT_EQ(ctx_->getBody(), "hello world");
+}
+
+TEST_F(ChunkedEncodingTest, ignoreTrailers) {
+    const std::string chunkedBody = "5\r\n"
+                                    "hello\r\n"
+                                    "0\r\n"
+                                    "Trailer: value\r\n"
+                                    "Trailer2: value2\r\n"
+                                    "\r\n";
+    StringReader reader(chunkedBody);
+    ReadBuffer readBuf(reader);
+    loadAll(readBuf);
+
+    const auto result = state_->handle(readBuf);
+    ASSERT_TRUE(result.isOk());
+
+    EXPECT_EQ(ctx_->getBody(), "hello");
+}
+
+TEST_F(ChunkedEncodingTest, ignoreChunkExtensions) {
+    const std::string chunkedBody = "5;ext=1\r\n"
+                                    "hello\r\n"
+                                    "0 ; ext = 2\r\n"
+                                    "\r\n";
+    StringReader reader(chunkedBody);
+    ReadBuffer readBuf(reader);
+    loadAll(readBuf);
+
+    const auto result = state_->handle(readBuf);
+    ASSERT_TRUE(result.isOk());
+
+    EXPECT_EQ(ctx_->getBody(), "hello");
+}
+
+TEST_F(ChunkedEncodingTest, inconsistentChunkSize) {
+    const std::string chunkedBody = "ff\r\n"
+                                    "hello\r\n"
+                                    "0\r\n"
+                                    "\r\n";
+    StringReader reader(chunkedBody);
+    ReadBuffer readBuf(reader);
+    loadAll(readBuf);
+
+    const auto result = state_->handle(readBuf);
+    ASSERT_TRUE(result.isErr());
+}
+
+TEST_F(ChunkedEncodingTest, noLastChunk) {
+    const std::string chunkedBody = "5\r\n"
+                                    "hello\r\n";
+    StringReader reader(chunkedBody);
+    ReadBuffer readBuf(reader);
+    loadAll(readBuf);
+
+    const auto result = state_->handle(readBuf);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_EQ(result.unwrap(), RequestReader::IState::kSuspend);
+}
+
+TEST_F(ChunkedEncodingTest, noLastCRLF) {
+    const std::string chunkedBody = "5\r\n"
+                                    "hello\r\n"
+                                    "0\r\n";
+    StringReader reader(chunkedBody);
+    ReadBuffer readBuf(reader);
+    loadAll(readBuf);
+
+    const auto result = state_->handle(readBuf);
+    ASSERT_TRUE(result.isOk());
+    EXPECT_EQ(result.unwrap(), RequestReader::IState::kSuspend);
+}
+
+TEST_F(ChunkedEncodingTest, invalidChunkSize) {
+    const std::string chunkedBody = "xyz\r\n"
+                                    "hello\r\n"
+                                    "0\r\n"
+                                    "\r\n";
+    StringReader reader(chunkedBody);
+    ReadBuffer readBuf(reader);
+    loadAll(readBuf);
+
+    const auto result = state_->handle(readBuf);
+    ASSERT_TRUE(result.isErr());
+}
+
+TEST_F(ChunkedEncodingTest, partiallyInvalidChunkSize) {
+    const std::string chunkedBody = "5xyz\r\n"
+                                    "hello\r\n"
+                                    "0\r\n"
+                                    "\r\n";
+    StringReader reader(chunkedBody);
+    ReadBuffer readBuf(reader);
+    loadAll(readBuf);
+
+    const auto result = state_->handle(readBuf);
+    ASSERT_TRUE(result.isErr());
 }
