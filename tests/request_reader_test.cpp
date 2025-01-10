@@ -129,3 +129,35 @@ TEST_F(RequestReaderTest, PostWouldBlock) {
     );
     EXPECT_EQ(result.unwrap().unwrap(), expected);
 }
+
+TEST_F(RequestReaderTest, PostChunked) {
+    const std::string request = "POST / HTTP/1.1\r\n"
+                                "Transfer-Encoding: chunked\r\n"
+                                "Host: example.com\r\n"
+                                "\r\n"
+                                "5\r\n"
+                                "hello\r\n"
+                                "6\r\n"
+                                " world\r\n"
+                                "0\r\n"
+                                "\r\n";
+    StringReader reader(request);
+    ReadBuffer readBuf(reader);
+
+    const auto result = reqReader_->readRequest(readBuf);
+    ASSERT_TRUE(result.isOk());
+
+    const Request expected = Request(
+        kMethodPost,
+        "/",
+        "HTTP/1.1",
+        {
+            std::make_pair("Transfer-Encoding", "chunked"),
+            std::make_pair("Host", "example.com"),
+        },
+        "hello world"
+    );
+    EXPECT_EQ(result.unwrap().unwrap(), expected);
+}
+
+// TODO: chunked のテストをもっと増やす
