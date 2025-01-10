@@ -7,8 +7,8 @@
 
 http::ReadingHeadersState::ReadingHeadersState(RequestReader &reader) : reader_(reader) {}
 
-Result<http::RequestReader::IState::HandleStatus, error::AppError>
-http::ReadingHeadersState::handle(ReadBuffer &readBuf) {
+Result<http::RequestReader::IState::HandleStatus, error::AppError> http::ReadingHeadersState::handle(ReadBuffer &readBuf
+) {
     while (true) {
         const Option<std::string> line = TRY(getLine(readBuf));
         if (line.isNone()) {

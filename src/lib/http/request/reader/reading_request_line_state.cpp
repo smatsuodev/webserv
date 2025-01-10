@@ -1,5 +1,4 @@
 #include "reading_request_line_state.hpp"
-
 #include "reading_headers_state.hpp"
 #include "utils.hpp"
 #include "utils/types/try.hpp"

@@ -1,7 +1,6 @@
 #include "utils.hpp"
 #include "config/config.hpp"
 #include "http/request/request_parser.hpp"
-#include "utils/logger.hpp"
 #include "utils/string.hpp"
 #include "utils/types/try.hpp"
 #include "./request_reader.hpp"
