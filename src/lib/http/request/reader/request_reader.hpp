@@ -33,7 +33,7 @@ namespace http {
 
         class ReadContext {
         public:
-            ReadContext(IState *initialState, IConfigResolver &resolver);
+            explicit ReadContext(IConfigResolver &resolver, IState *initialState = NULL);
             ~ReadContext();
 
             Result<IState::HandleStatus, error::AppError> handle(ReadBuffer &readBuf) const;

@@ -4,7 +4,7 @@
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
 
-http::RequestReader::RequestReader(IConfigResolver &resolver) : readCtx_(NULL, resolver) {
+http::RequestReader::RequestReader(IConfigResolver &resolver) : readCtx_(resolver) {
     readCtx_.changeState(new ReadingRequestLineState(readCtx_));
 }
 
@@ -41,7 +41,7 @@ http::IConfigResolver::~IConfigResolver() {}
 
 http::RequestReader::IState::~IState() {}
 
-http::RequestReader::ReadContext::ReadContext(IState *initialState, IConfigResolver &resolver)
+http::RequestReader::ReadContext::ReadContext(IConfigResolver &resolver, IState *initialState)
     : state_(initialState), resolver_(resolver) {}
 
 http::RequestReader::ReadContext::~ReadContext() {
