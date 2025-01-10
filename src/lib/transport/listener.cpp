@@ -66,8 +66,9 @@ Result<addrinfo *, std::string> resolveAddress(const std::string &host, const st
     hints.ai_protocol = IPPROTO_TCP;
 
     addrinfo *result;
-    if (getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0) {
-        return Err(utils::format("failed to resolve address: %s", std::strerror(errno)));
+    const int status = getaddrinfo(host.c_str(), port.c_str(), &hints, &result);
+    if (status != 0) {
+        return Err(utils::format("failed to resolve address: %s", gai_strerror(status)));
     }
 
     return Ok(result);
