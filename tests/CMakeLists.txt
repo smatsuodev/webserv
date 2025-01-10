@@ -71,3 +71,6 @@ gtest_discover_tests(virtual_server_resolver_test)
 
 add_executable(auto_deleter_test auto_deleter_test.cpp)
 gtest_discover_tests(auto_deleter_test)
+
+add_executable(mime_test mime_test.cpp)
+gtest_discover_tests(mime_test)
