@@ -6,7 +6,9 @@ namespace http {
         if (lastDot == std::string::npos) {
             return "application/octet-stream";
         }
-        const std::string extension = fileName.substr(lastDot + 1);
+        // 拡張子を取り出して小文字にする
+        std::string extension = fileName.substr(lastDot + 1);
+        std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 
         if (extension == "html" || extension == "htm") {
             return "text/html";
