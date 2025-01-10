@@ -6,7 +6,9 @@
 
 VirtualServer::VirtualServer(const config::ServerContext &serverConfig, const Address &bindAddress)
     : serverConfig_(serverConfig), bindAddress_(bindAddress) {
+    LOG_DEBUGF("<-- setup virtual server for %s", bindAddress.toString().c_str());
     this->setupRouter();
+    LOG_DEBUGF("--> setup complete");
 }
 
 const config::ServerContext &VirtualServer::getServerConfig() const {
