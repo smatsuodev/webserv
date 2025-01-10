@@ -10,8 +10,15 @@ namespace http {
         Result<HandleStatus, error::AppError> handle(ReadBuffer &readBuf);
 
     private:
+        enum State { kReadingChunkSize, kReadingChunkData, kReadingTrailer, kDone };
+
         RequestReader &reader_;
         std::size_t clientMaxBodySize_;
+        State state_;
+        std::size_t chunkSize_;
+        std::string body_;
+
+        static Result<std::size_t, error::AppError> parseChunkSizeLine(const std::string &line);
     };
 }
 
