@@ -243,3 +243,29 @@ TEST_F(ChunkedEncodingTest, noLastCRLF) {
     ASSERT_TRUE(result.isOk());
     EXPECT_EQ(result.unwrap(), RequestReader::IState::kSuspend);
 }
+
+TEST_F(ChunkedEncodingTest, invalidChunkSize) {
+    const std::string chunkedBody = "xyz\r\n"
+                                    "hello\r\n"
+                                    "0\r\n"
+                                    "\r\n";
+    StringReader reader(chunkedBody);
+    ReadBuffer readBuf(reader);
+    loadAll(readBuf);
+
+    const auto result = state_->handle(readBuf);
+    ASSERT_TRUE(result.isErr());
+}
+
+TEST_F(ChunkedEncodingTest, partiallyInvalidChunkSize) {
+    const std::string chunkedBody = "5xyz\r\n"
+                                    "hello\r\n"
+                                    "0\r\n"
+                                    "\r\n";
+    StringReader reader(chunkedBody);
+    ReadBuffer readBuf(reader);
+    loadAll(readBuf);
+
+    const auto result = state_->handle(readBuf);
+    ASSERT_TRUE(result.isErr());
+}

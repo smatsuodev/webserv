@@ -82,18 +82,25 @@ namespace http {
     }
 
     Result<std::size_t, error::AppError> ReadingChunkedBodyState::parseChunkSizeLine(const std::string &line) {
-        std::istringstream iss(line);
+        std::istringstream lineStream(line);
         std::string chunkSizeStr;
         // ";" 以降は chunk-ext なので、それ以前を取り出す
         // NOTE: ちょっと雑な実装
-        if (!std::getline(iss, chunkSizeStr, ';')) {
+        if (!std::getline(lineStream, chunkSizeStr, ';')) {
             return Err(error::kParseUnknown);
         }
 
         // chunk-size = 1*HEXDIG
         // TODO: std::hex で十分か確認
         std::size_t chunkSize;
-        if (!(std::istringstream(chunkSizeStr) >> std::hex >> chunkSize)) {
+        std::istringstream chunkSizeStream(chunkSizeStr);
+        if (!(chunkSizeStream >> std::hex >> chunkSize)) {
+            return Err(error::kParseUnknown);
+        }
+
+        // chunk-size の後に余分な文字 (16 進数として読み込まれなかった) がある場合はエラー
+        char leftover;
+        if (chunkSizeStream >> leftover) {
             return Err(error::kParseUnknown);
         }
 
