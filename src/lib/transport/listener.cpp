@@ -66,8 +66,14 @@ Result<addrinfo *, std::string> resolveAddress(const std::string &host, const st
     hints.ai_protocol = IPPROTO_TCP;
 
     addrinfo *result;
-    if (getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0) {
-        return Err(utils::format("failed to resolve address: %s", std::strerror(errno)));
+    /**
+     * NOTE:
+     * mac だと mDNSResponder との間の unix domain socket が作られる?
+     * このソケットは freeaddrinfo を実行しても残る
+     */
+    const int status = getaddrinfo(host.c_str(), port.c_str(), &hints, &result);
+    if (status != 0) {
+        return Err(utils::format("failed to resolve address: %s", gai_strerror(status)));
     }
 
     return Ok(result);
