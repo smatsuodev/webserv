@@ -50,6 +50,9 @@ namespace http {
                 }
 
                 case kReadingChunkData: {
+                    if (line.size() != chunkSize_) {
+                        return Err(error::kParseUnknown);
+                    }
                     body_ += line;
                     state_ = kReadingChunkSize;
                     break;
@@ -82,6 +85,7 @@ namespace http {
         std::istringstream iss(line);
         std::string chunkSizeStr;
         // ";" 以降は chunk-ext なので、それ以前を取り出す
+        // NOTE: ちょっと雑な実装
         if (!std::getline(iss, chunkSizeStr, ';')) {
             return Err(error::kParseUnknown);
         }
