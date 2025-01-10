@@ -1,14 +1,16 @@
 #include <gtest/gtest.h>
 #include <fakeit.hpp>
 #include "./utils/reader.hpp"
-#include "../src/lib/core/handler/request_reader.hpp"
+#include "../src/lib/http/request/reader/request_reader.hpp"
 #include "utils/logger.hpp"
+#include "config/config.hpp"
 #include <utility>
 
 using namespace fakeit;
 using namespace config;
+using namespace http;
 
-class RequestReaderTest : public ::testing::Test {
+class RequestReaderTest : public testing::Test {
 public:
     RequestReaderTest() {
         const ServerContext config = ServerContext("0.0.0.0", 80, {});
@@ -17,7 +19,7 @@ public:
     }
 
 protected:
-    Mock<RequestReader::IConfigResolver> resolverMock_;
+    Mock<IConfigResolver> resolverMock_;
     std::unique_ptr<RequestReader> reqReader_;
 
     void SetUp() override {
@@ -34,8 +36,8 @@ TEST_F(RequestReaderTest, GetNormal) {
     const auto result = reqReader_->readRequest(readBuf);
     EXPECT_TRUE(result.isOk());
 
-    const http::Request expected = http::Request(
-        http::kMethodGet,
+    const Request expected = Request(
+        kMethodGet,
         "/",
         "HTTP/1.1",
         {
@@ -57,8 +59,8 @@ TEST_F(RequestReaderTest, PostNormal) {
     const auto result = reqReader_->readRequest(readBuf);
     EXPECT_TRUE(result.isOk());
 
-    const http::Request expected = http::Request(
-        http::kMethodPost,
+    const Request expected = Request(
+        kMethodPost,
         "/",
         "HTTP/1.1",
         {
@@ -85,8 +87,8 @@ TEST_F(RequestReaderTest, GetWouldBlock) {
         ASSERT_GE(count--, 0);
     }
 
-    const http::Request expected = http::Request(
-        http::kMethodGet,
+    const Request expected = Request(
+        kMethodGet,
         "/",
         "HTTP/1.1",
         {
@@ -115,8 +117,8 @@ TEST_F(RequestReaderTest, PostWouldBlock) {
         ASSERT_GE(count--, 0);
     }
 
-    const http::Request expected = http::Request(
-        http::kMethodPost,
+    const Request expected = Request(
+        kMethodPost,
         "/",
         "HTTP/1.1",
         {

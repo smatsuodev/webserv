@@ -85,6 +85,16 @@ add_library(webserv_lib STATIC
         lib/http/handler/delete_file_handler.cpp
         lib/http/handler/delete_file_handler.hpp
         lib/utils/auto_deleter.hpp
+        lib/http/request/reader/request_reader.cpp
+        lib/http/request/reader/request_reader.hpp
+        lib/http/request/reader/reading_request_line_state.cpp
+        lib/http/request/reader/reading_request_line_state.hpp
+        lib/http/request/reader/utils.cpp
+        lib/http/request/reader/utils.hpp
+        lib/http/request/reader/reading_headers_state.cpp
+        lib/http/request/reader/reading_headers_state.hpp
+        lib/http/request/reader/reading_body_state.cpp
+        lib/http/request/reader/reading_body_state.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
