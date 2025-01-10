@@ -1,4 +1,5 @@
 #include "./mime.hpp"
+#include <algorithm>
 
 namespace http {
     std::string getMimeType(const std::string &fileName) {
