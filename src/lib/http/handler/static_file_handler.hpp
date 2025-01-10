@@ -12,7 +12,7 @@ namespace http {
 
     private:
         static std::string getNextLink(const std::string &path, const std::string &dName, unsigned char dType);
-        static Result<std::string, HttpStatusCode> makeDirectoryListingResponse(const std::string &path);
+        static Result<std::string, HttpStatusCode> makeDirectoryListingHtml(const std::string &path);
         static Response directoryListing(const std::string &path);
         config::LocationContext::DocumentRootConfig docRootConfig_;
     };
