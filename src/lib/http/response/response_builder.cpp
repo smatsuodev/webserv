@@ -16,7 +16,7 @@ namespace http {
         return *this;
     }
 
-    ResponseBuilder &ResponseBuilder::body(const std::string &body, HttpStatusCode status) {
+    ResponseBuilder &ResponseBuilder::body(const std::string &body, const HttpStatusCode status) {
         body_ = Some(body);
         this->status(status);
         this->header("Content-Length", utils::toString(body.size()));
