@@ -20,7 +20,8 @@ http::RequestReader::ReadRequestResult http::RequestReader::readRequest(ReadBuff
     LOG_DEBUG("start RequestReader::readRequest");
 
     const std::size_t bytesLoaded = TRY(readBuf.load());
-    while (true) {
+    // ReadingBodyState などが state を NULL に遷移させる
+    while (state_ != NULL) {
         const Result<IState::HandleStatus, error::AppError> result = state_->handle(readBuf);
         if (result.isErr()) {
             return Err(result.unwrapErr());
@@ -37,12 +38,9 @@ http::RequestReader::ReadRequestResult http::RequestReader::readRequest(ReadBuff
             // リトライすればバッファにデータが追加される可能性がある
             return Ok(None);
         }
-
-        if (status == IState::kDone && state_ == NULL) {
-            // リクエストを読み終えた
-            return Ok(Some(TRY(RequestParser::parseRequest(requestLine_, headers_, body_))));
-        }
     }
+
+    return Ok(Some(TRY(RequestParser::parseRequest(requestLine_, headers_, body_))));
 }
 
 void http::RequestReader::changeState(IState *state) {
