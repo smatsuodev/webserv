@@ -10,7 +10,7 @@ IEventHandler *writeResponseHandlerFactory(const http::Response &res) {
 }
 
 ReadRequestHandler::ReadRequestHandler(const VirtualServerResolver &vsResolver)
-    : resolver_(new RequestReader::ConfigResolver(vsResolver)), reqReader_(*resolver_) {}
+    : resolver_(new ConfigResolver(vsResolver)), reqReader_(*resolver_) {}
 
 IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start ReadRequestHandler");
@@ -30,4 +30,14 @@ IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     actions.push_back(new ServeHttpAction(ctx, req.unwrap(), writeResponseHandlerFactory));
 
     return Ok(actions);
+}
+
+ConfigResolver::ConfigResolver(const VirtualServerResolver &vsResolver) : resolver_(vsResolver) {}
+
+Option<config::ServerContext> ConfigResolver::resolve(const std::string &host) const {
+    const Option<Ref<VirtualServer> > vs = resolver_.resolve(host);
+    if (vs.isNone()) {
+        return None;
+    }
+    return Some(vs.unwrap().get().getServerConfig());
 }
