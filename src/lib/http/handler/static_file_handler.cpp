@@ -35,15 +35,13 @@ namespace http {
         return result;
     }
 
-    std::string StaticFileHandler::getNextLink(const std::string &newPath, const std::string &dName, const bool dir) {
-        const std::string dirSlash = dir ? "/" : "";
-        if (dName == "." || dName == "..") {
-            if (dName == ".") {
-                return newPath + dirSlash;
-            }
-            return newPath.substr(0, newPath.find_last_of('/')) + dirSlash;
+    std::string
+    StaticFileHandler::getNextLink(const std::string &currentDirPath, const std::string &entryName, const bool isDir) {
+        const std::string dirSlash = isDir ? "/" : "";
+        if (entryName == "..") {
+            return currentDirPath.substr(0, currentDirPath.find_last_of('/')) + dirSlash;
         }
-        return newPath + "/" + dName + dirSlash;
+        return currentDirPath + "/" + entryName + dirSlash;
     }
 
     Result<std::string, HttpStatusCode> StaticFileHandler::makeDirectoryListingHtml(const std::string &path) {
@@ -64,11 +62,11 @@ namespace http {
         const struct dirent *dp;
         while ((dp = readdir(dir)) != NULL) {
             const std::string dName = dp->d_name;
-            const unsigned char dType = dp->d_type;
-            const std::string dNameLink = getNextLink(normalizedPath, dName, dType == DT_DIR);
             if (dName == ".") {
                 continue;
             }
+            const unsigned char dType = dp->d_type;
+            const std::string dNameLink = getNextLink(normalizedPath, dName, dType == DT_DIR);
             res += "<li>";
             res += "<a href=\"" + dNameLink + "\">";
             res += dName;
