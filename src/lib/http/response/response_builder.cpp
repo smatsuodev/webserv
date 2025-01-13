@@ -1,10 +1,22 @@
 #include "response_builder.hpp"
+
+#include "http/mime.hpp"
 #include "utils/string.hpp"
+#include <fstream>
 
 namespace http {
     ResponseBuilder::ResponseBuilder() : status_(kStatusOk), httpVersion_("HTTP/1.1"), body_(None) {}
 
     ResponseBuilder::~ResponseBuilder() {}
+
+    Response ResponseBuilder::build() {
+        if (body_.isNone()) {
+            // 念の為 Content-Length を付ける
+            this->header("Content-Length", "0");
+        }
+
+        return Response(status_, httpVersion_, headers_, body_.unwrapOr(""));
+    }
 
     ResponseBuilder &ResponseBuilder::status(const HttpStatusCode status) {
         status_ = status;
@@ -38,12 +50,24 @@ namespace http {
         return *this;
     }
 
-    Response ResponseBuilder::build() {
-        if (body_.isNone()) {
-            // 念の為 Content-Length を付ける
-            this->header("Content-Length", "0");
+    ResponseBuilder &ResponseBuilder::file(const std::string &path, HttpStatusCode status) {
+        std::ifstream ifs(path);
+        if (!ifs.is_open()) {
+            return this->status(kStatusNotFound);
         }
 
-        return Response(status_, httpVersion_, headers_, body_.unwrapOr(""));
+        std::stringstream ss;
+        ss << ifs.rdbuf();
+        const std::string body = ss.str();
+
+        const std::string mime = getMimeType(path);
+        return this->body(body, status)
+            .header("Content-Type", utils::format("%s; charset=UTF-8", mime.c_str()))
+            .header("Content-Length", utils::toString(body.size()));
+    }
+
+    ResponseBuilder &ResponseBuilder::body(const std::string &body, const HttpStatusCode status) {
+        body_ = Some(body);
+        return this->status(status);
     }
 }
