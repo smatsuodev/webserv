@@ -2,6 +2,7 @@
 #include "http/handler/delete_file_handler.hpp"
 #include "http/handler/redirect_handler.hpp"
 #include "http/handler/static_file_handler.hpp"
+#include "http/handler/middleware/logger.hpp"
 #include "utils/logger.hpp"
 
 VirtualServer::VirtualServer(const config::ServerContext &serverConfig, const Address &bindAddress)
@@ -58,6 +59,9 @@ void VirtualServer::setupRouter() {
             this->registerHandlers(location);
         }
     }
+
+    // middleware
+    router_.use(new http::Logger());
 }
 
 bool VirtualServer::isMatch(const Address &address) const {
