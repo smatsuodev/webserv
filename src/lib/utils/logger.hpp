@@ -5,17 +5,17 @@
 #include <sstream>
 #include "utils/string.hpp" // LOG_*F で必要
 
-#define SET_LOG_LEVEL(level) Logger::instance().setLevel(level)
+#define SET_LOG_LEVEL(level) ::Logger::instance().setLevel(level)
 
-#define LOG_DEBUG(msg) Logger::instance().log(Logger::kDebug, msg)
-#define LOG_INFO(msg) Logger::instance().log(Logger::kInfo, msg)
-#define LOG_WARN(msg) Logger::instance().log(Logger::kWarn, msg)
-#define LOG_ERROR(msg) Logger::instance().log(Logger::kError, msg)
+#define LOG_DEBUG(msg) ::Logger::instance().log(::Logger::kDebug, msg)
+#define LOG_INFO(msg) ::Logger::instance().log(::Logger::kInfo, msg)
+#define LOG_WARN(msg) ::Logger::instance().log(::Logger::kWarn, msg)
+#define LOG_ERROR(msg) ::Logger::instance().log(::Logger::kError, msg)
 
-#define LOG_DEBUGF(...) Logger::instance().log(Logger::kDebug, utils::format(__VA_ARGS__))
-#define LOG_INFOF(...) Logger::instance().log(Logger::kInfo, utils::format(__VA_ARGS__))
-#define LOG_WARNF(...) Logger::instance().log(Logger::kWarn, utils::format(__VA_ARGS__))
-#define LOG_ERRORF(...) Logger::instance().log(Logger::kError, utils::format(__VA_ARGS__))
+#define LOG_DEBUGF(...) ::Logger::instance().log(::Logger::kDebug, utils::format(__VA_ARGS__))
+#define LOG_INFOF(...) ::Logger::instance().log(::Logger::kInfo, utils::format(__VA_ARGS__))
+#define LOG_WARNF(...) ::Logger::instance().log(::Logger::kWarn, utils::format(__VA_ARGS__))
+#define LOG_ERRORF(...) ::Logger::instance().log(::Logger::kError, utils::format(__VA_ARGS__))
 
 class Logger {
 public:
