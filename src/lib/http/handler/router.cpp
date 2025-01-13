@@ -30,50 +30,19 @@ namespace http {
         }
     }
 
-    void Router::onGet(const std::string &path, IHandler *handler) {
-        LOG_DEBUGF("register GET handler for path: %s", path.c_str());
-        if (handlers_[path][kMethodGet]) {
-            LOG_DEBUGF("handler for GET %s is overwritten", path.c_str());
-            delete handlers_[path][kMethodGet];
+    void Router::on(const HttpMethod method, const std::string &path, IHandler *handler) {
+        const std::string methodStr = httpMethodToString(method);
+        LOG_DEBUGF("register %s handler for path: %s", methodStr.c_str(), path.c_str());
+        if (handlers_[path][method]) {
+            LOG_DEBUGF("handler for %s %s is overwritten", methodStr.c_str(), path.c_str());
+            delete handlers_[path][method];
         }
-        handlers_[path][kMethodGet] = handler;
+        handlers_[path][method] = handler;
     }
 
-    void Router::onPost(const std::string &path, IHandler *handler) {
-        LOG_DEBUGF("register POST handler for path: %s", path.c_str());
-        if (handlers_[path][kMethodPost]) {
-            LOG_DEBUGF("handler for POST %s is overwritten", path.c_str());
-            delete handlers_[path][kMethodPost];
-        }
-        handlers_[path][kMethodPost] = handler;
-    }
-
-    void Router::onDelete(const std::string &path, IHandler *handler) {
-        LOG_DEBUGF("register DELETE handler for path: %s", path.c_str());
-        if (handlers_[path][kMethodDelete]) {
-            LOG_DEBUGF("handler for DELETE %s is overwritten", path.c_str());
-            delete handlers_[path][kMethodDelete];
-        }
-        handlers_[path][kMethodDelete] = handler;
-    }
-
-    // NOTE: 現在は GET, POST, DELETE のみ対応
     void Router::on(const std::vector<HttpMethod> &methods, const std::string &path, IHandler *handler) {
         for (std::vector<HttpMethod>::const_iterator it = methods.begin(); it != methods.end(); ++it) {
-            switch (*it) {
-                case kMethodGet:
-                    this->onGet(path, handler);
-                    break;
-                case kMethodPost:
-                    this->onPost(path, handler);
-                    break;
-                case kMethodDelete:
-                    this->onDelete(path, handler);
-                    break;
-                default:
-                    // do nothing
-                    break;
-            }
+            this->on(*it, path, handler);
         }
     }
 

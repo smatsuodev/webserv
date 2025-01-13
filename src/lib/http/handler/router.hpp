@@ -18,12 +18,9 @@ namespace http {
         Response serve(const Request &req);
 
         // 登録された handler は Router が delete する
-        void onGet(const std::string &path, IHandler *handler);
-        void onPost(const std::string &path, IHandler *handler);
-        void onDelete(const std::string &path, IHandler *handler);
+        void on(HttpMethod method, const std::string &path, IHandler *handler);
         void on(const std::vector<HttpMethod> &methods, const std::string &path, IHandler *handler);
-
-        // middleware の登録
+        // 登録された middleware は Router が delete する
         void use(IMiddleware *middleware);
 
     private:

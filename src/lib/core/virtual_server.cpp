@@ -33,12 +33,12 @@ void VirtualServer::registerHandlers(const config::LocationContext &location) {
         switch (*iter) {
             case http::kMethodGet: {
                 http::IHandler *handler = new http::StaticFileHandler(documentRootConfig);
-                router_.onGet(location.getPath(), handler);
+                router_.on(http::kMethodGet, location.getPath(), handler);
                 break;
             }
             case http::kMethodDelete: {
                 http::IHandler *handler = new http::DeleteFileHandler(documentRootConfig);
-                router_.onDelete(location.getPath(), handler);
+                router_.on(http::kMethodDelete, location.getPath(), handler);
                 break;
             }
             default:
