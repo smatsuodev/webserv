@@ -59,7 +59,6 @@ add_library(webserv_lib STATIC
         lib/http/response/response_builder.cpp
         lib/http/response/response_builder.hpp
         lib/utils/ref.hpp
-        lib/http/handler/handler.cpp
         lib/http/handler/handler.hpp
         lib/utils/io/read_buffer.cpp
         lib/utils/io/read_buffer.hpp
@@ -97,6 +96,7 @@ add_library(webserv_lib STATIC
         lib/http/request/reader/reading_chunked_body_state.hpp
         lib/http/mime.cpp
         lib/http/mime.hpp
+        lib/http/handler/middleware/middleware.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
