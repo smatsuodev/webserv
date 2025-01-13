@@ -15,11 +15,9 @@ namespace http {
 
         Response build();
 
-        // 原子的なもの
         ResponseBuilder &status(HttpStatusCode status);
         ResponseBuilder &header(const std::string &name, const std::string &value);
 
-        // utility
         // Content-Type, Content-Length などの必要な header を自動で付与
         ResponseBuilder &text(const std::string &body, HttpStatusCode status = kStatusOk);
         ResponseBuilder &html(const std::string &body, HttpStatusCode status = kStatusOk);
