@@ -35,13 +35,6 @@ namespace http {
             return ResponseBuilder().status(kStatusForbidden).build();
         }
 
-        std::ifstream ifs(path);
-        if (!ifs.is_open()) {
-            LOG_DEBUGF("failed to open file: %s", path.c_str());
-            return ResponseBuilder().status(kStatusNotFound).build();
-        }
-        std::stringstream ss;
-        ss << ifs.rdbuf();
-        return ResponseBuilder().body(ss.str()).header("Content-Type", getMimeType(path)).build();
+        return ResponseBuilder().file(path).build();
     }
 }
