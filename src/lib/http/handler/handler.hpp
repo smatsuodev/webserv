@@ -7,7 +7,7 @@
 namespace http {
     class IHandler {
     public:
-        virtual ~IHandler();
+        virtual ~IHandler() {}
         virtual Response serve(const Request &req) = 0;
     };
 }
