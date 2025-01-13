@@ -5,7 +5,9 @@
 #include <set>
 
 namespace http {
-    Router::Router() {}
+    Router::Router() {
+        handlersChain_.push_back(new InternalRouter(handlers_));
+    }
 
     Router::~Router() {
         // メソッドに同じ handler が登録されていると double free になるので、重複を排除する
@@ -15,8 +17,15 @@ namespace http {
                 handlerSet.insert(jt->second);
             }
         }
-
         for (std::set<IHandler *>::iterator it = handlerSet.begin(); it != handlerSet.end(); ++it) {
+            delete *it;
+        }
+
+        for (MiddlewareList::const_iterator it = middlewares_.begin(); it != middlewares_.end(); ++it) {
+            delete *it;
+        }
+
+        for (std::vector<IHandler *>::iterator it = handlersChain_.begin(); it != handlersChain_.end(); ++it) {
             delete *it;
         }
     }
@@ -68,7 +77,18 @@ namespace http {
         }
     }
 
+    void Router::use(IMiddleware *middleware) {
+        middlewares_.push_back(middleware);
+        handlersChain_.push_back(new ChainHandler(*middleware, *handlersChain_.back()));
+    }
+
     Response Router::serve(const Request &req) {
+        return handlersChain_.back()->serve(req);
+    }
+
+    Router::InternalRouter::InternalRouter(HandlerMap &handlers) : handlers_(handlers) {}
+
+    Response Router::InternalRouter::serve(const Request &req) {
         // 適切な handler を探す
         // TODO: Matcher を毎回生成し直すのをやめたい
         const Matcher<Path> matcher = this->createMatcher();
@@ -94,11 +114,18 @@ namespace http {
         return it->second->serve(req);
     }
 
-    Matcher<Router::Path> Router::createMatcher() const {
+    Matcher<Router::Path> Router::InternalRouter::createMatcher() const {
         std::map<Path, Path> paths;
         for (HandlerMap::const_iterator it = handlers_.begin(); it != handlers_.end(); ++it) {
             paths[it->first] = it->first;
         }
         return Matcher<Path>(paths);
+    }
+
+    Router::ChainHandler::ChainHandler(IMiddleware &middleware, IHandler &next)
+        : middleware_(middleware), next_(next) {}
+
+    Response Router::ChainHandler::serve(const Request &req) {
+        return middleware_.intercept(req, next_);
     }
 }
