@@ -14,7 +14,6 @@ namespace http {
             // 念の為 Content-Length を付ける
             this->header("Content-Length", "0");
         }
-
         return Response(status_, httpVersion_, headers_, body_.unwrapOr(""));
     }
 
@@ -30,24 +29,20 @@ namespace http {
 
     ResponseBuilder &ResponseBuilder::text(const std::string &body, const HttpStatusCode status) {
         body_ = Some(body);
-        this->status(status);
-        this->header("Content-Type", "text/plain; charset=UTF-8");
-        this->header("Content-Length", utils::toString(body.size()));
-        return *this;
+        return this->status(status)
+            .header("Content-Type", "text/plain; charset=UTF-8")
+            .header("Content-Length", utils::toString(body.size()));
     }
 
     ResponseBuilder &ResponseBuilder::html(const std::string &body, const HttpStatusCode status) {
         body_ = Some(body);
-        this->status(status);
-        this->header("Content-Type", "text/html; charset=UTF-8");
-        this->header("Content-Length", utils::toString(body.size()));
-        return *this;
+        return this->status(status)
+            .header("Content-Type", "text/html; charset=UTF-8")
+            .header("Content-Length", utils::toString(body.size()));
     }
 
     ResponseBuilder &ResponseBuilder::redirect(const std::string &location, const HttpStatusCode status) {
-        this->status(status);
-        this->header("Location", location);
-        return *this;
+        return this->status(status).header("Location", location);
     }
 
     ResponseBuilder &ResponseBuilder::file(const std::string &path, HttpStatusCode status) {
