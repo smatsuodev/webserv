@@ -13,23 +13,21 @@ namespace http {
         ResponseBuilder();
         ~ResponseBuilder();
 
-        // HTTP version は今のところ固定
+        Response build();
 
+        // 原子的なもの
         ResponseBuilder &status(HttpStatusCode status);
         ResponseBuilder &header(const std::string &name, const std::string &value);
 
-        ResponseBuilder &body(const std::string &body, HttpStatusCode status = kStatusOk);
-
+        // utility
         // Content-Type, Content-Length などの必要な header を自動で付与
         ResponseBuilder &text(const std::string &body, HttpStatusCode status = kStatusOk);
         ResponseBuilder &html(const std::string &body, HttpStatusCode status = kStatusOk);
         ResponseBuilder &redirect(const std::string &location, HttpStatusCode status = kStatusFound);
 
-        Response build();
-
     private:
         HttpStatusCode status_;
-        std::string httpVersion_;
+        std::string httpVersion_; // HTTP version は今のところ固定
         Headers headers_;
         Option<std::string> body_;
     };

@@ -16,13 +16,6 @@ namespace http {
         return *this;
     }
 
-    ResponseBuilder &ResponseBuilder::body(const std::string &body, const HttpStatusCode status) {
-        body_ = Some(body);
-        this->status(status);
-        this->header("Content-Length", utils::toString(body.size()));
-        return *this;
-    }
-
     ResponseBuilder &ResponseBuilder::text(const std::string &body, const HttpStatusCode status) {
         body_ = Some(body);
         this->status(status);
@@ -47,8 +40,10 @@ namespace http {
 
     Response ResponseBuilder::build() {
         if (body_.isNone()) {
-            this->text("", status_);
+            // 念の為 Content-Length を付ける
+            this->header("Content-Length", "0");
         }
-        return Response(status_, httpVersion_, headers_, body_.unwrap());
+
+        return Response(status_, httpVersion_, headers_, body_.unwrapOr(""));
     }
 }
