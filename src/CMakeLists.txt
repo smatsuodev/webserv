@@ -99,6 +99,8 @@ add_library(webserv_lib STATIC
         lib/http/handler/middleware/middleware.hpp
         lib/http/handler/middleware/logger.cpp
         lib/http/handler/middleware/logger.hpp
+        lib/http/handler/middleware/error_page.cpp
+        lib/http/handler/middleware/error_page.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

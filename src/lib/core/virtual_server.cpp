@@ -2,6 +2,7 @@
 #include "http/handler/delete_file_handler.hpp"
 #include "http/handler/redirect_handler.hpp"
 #include "http/handler/static_file_handler.hpp"
+#include "http/handler/middleware/error_page.hpp"
 #include "http/handler/middleware/logger.hpp"
 #include "utils/logger.hpp"
 
@@ -62,6 +63,7 @@ void VirtualServer::setupRouter() {
 
     // middleware
     router_.use(new http::Logger());
+    router_.use(new http::ErrorPage());
 }
 
 bool VirtualServer::isMatch(const Address &address) const {
