@@ -8,6 +8,7 @@
 #include "middleware/middleware.hpp"
 
 namespace http {
+    // TODO: 責務過多なのでリファクタしたい
     // IHandler * を持っているので、double free を避けるために NonCopyable にしている
     class Router : NonCopyable, public IHandler {
     public:
