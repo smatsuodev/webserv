@@ -10,15 +10,15 @@ namespace http {
     }
 
     Router::~Router() {
-        // メソッドに同じ handler が登録されていると double free になるので、重複を排除する
-        std::set<IHandler *> handlerSet;
+        // メソッドに同じ handler が登録されていると double free になることに注意
+        std::set<IHandler *> deleted;
         for (HandlerMap::const_iterator it = handlers_.begin(); it != handlers_.end(); ++it) {
             for (MethodHandlerMap::const_iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
-                handlerSet.insert(jt->second);
+                if (deleted.count(jt->second) == 0) {
+                    delete jt->second;
+                    deleted.insert(jt->second);
+                }
             }
-        }
-        for (std::set<IHandler *>::iterator it = handlerSet.begin(); it != handlerSet.end(); ++it) {
-            delete *it;
         }
 
         for (MiddlewareList::const_iterator it = middlewares_.begin(); it != middlewares_.end(); ++it) {
@@ -67,7 +67,7 @@ namespace http {
             return ResponseBuilder().status(kStatusNotFound).build();
         }
 
-        // onGet, onPost, onDelete で登録された method のみ許可する
+        // on で登録された method のみ許可する
         const MethodHandlerMap &methodHandlers = handlers_[matchResult.unwrap()];
         const MethodHandlerMap::const_iterator it = methodHandlers.find(req.getMethod());
         if (it == methodHandlers.end()) {
