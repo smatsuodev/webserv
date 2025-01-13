@@ -9,16 +9,17 @@ namespace http {
         handlersChain_.push_back(new InternalRouter(handlers_));
     }
 
+    // TODO: リソース管理が煩雑なのでリファクタしたい
     Router::~Router() {
-        // メソッドに同じ handler が登録されていると double free になるので、重複を排除する
-        std::set<IHandler *> handlerSet;
+        // メソッドに同じ handler が登録されていると double free になることに注意
+        std::set<IHandler *> deleted;
         for (HandlerMap::const_iterator it = handlers_.begin(); it != handlers_.end(); ++it) {
             for (MethodHandlerMap::const_iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
-                handlerSet.insert(jt->second);
+                if (deleted.count(jt->second) == 0) {
+                    delete jt->second;
+                    deleted.insert(jt->second);
+                }
             }
-        }
-        for (std::set<IHandler *>::iterator it = handlerSet.begin(); it != handlerSet.end(); ++it) {
-            delete *it;
         }
 
         for (MiddlewareList::const_iterator it = middlewares_.begin(); it != middlewares_.end(); ++it) {
@@ -30,50 +31,19 @@ namespace http {
         }
     }
 
-    void Router::onGet(const std::string &path, IHandler *handler) {
-        LOG_DEBUGF("register GET handler for path: %s", path.c_str());
-        if (handlers_[path][kMethodGet]) {
-            LOG_DEBUGF("handler for GET %s is overwritten", path.c_str());
-            delete handlers_[path][kMethodGet];
+    void Router::on(const HttpMethod method, const std::string &path, IHandler *handler) {
+        const std::string methodStr = httpMethodToString(method);
+        LOG_DEBUGF("register %s handler for path: %s", methodStr.c_str(), path.c_str());
+        if (handlers_[path][method]) {
+            LOG_DEBUGF("handler for %s %s is overwritten", methodStr.c_str(), path.c_str());
+            delete handlers_[path][method];
         }
-        handlers_[path][kMethodGet] = handler;
+        handlers_[path][method] = handler;
     }
 
-    void Router::onPost(const std::string &path, IHandler *handler) {
-        LOG_DEBUGF("register POST handler for path: %s", path.c_str());
-        if (handlers_[path][kMethodPost]) {
-            LOG_DEBUGF("handler for POST %s is overwritten", path.c_str());
-            delete handlers_[path][kMethodPost];
-        }
-        handlers_[path][kMethodPost] = handler;
-    }
-
-    void Router::onDelete(const std::string &path, IHandler *handler) {
-        LOG_DEBUGF("register DELETE handler for path: %s", path.c_str());
-        if (handlers_[path][kMethodDelete]) {
-            LOG_DEBUGF("handler for DELETE %s is overwritten", path.c_str());
-            delete handlers_[path][kMethodDelete];
-        }
-        handlers_[path][kMethodDelete] = handler;
-    }
-
-    // NOTE: 現在は GET, POST, DELETE のみ対応
     void Router::on(const std::vector<HttpMethod> &methods, const std::string &path, IHandler *handler) {
         for (std::vector<HttpMethod>::const_iterator it = methods.begin(); it != methods.end(); ++it) {
-            switch (*it) {
-                case kMethodGet:
-                    this->onGet(path, handler);
-                    break;
-                case kMethodPost:
-                    this->onPost(path, handler);
-                    break;
-                case kMethodDelete:
-                    this->onDelete(path, handler);
-                    break;
-                default:
-                    // do nothing
-                    break;
-            }
+            this->on(*it, path, handler);
         }
     }
 
@@ -85,6 +55,8 @@ namespace http {
     Response Router::serve(const Request &req) {
         return handlersChain_.back()->serve(req);
     }
+
+    /* internal */
 
     Router::InternalRouter::InternalRouter(HandlerMap &handlers) : handlers_(handlers) {}
 
@@ -98,7 +70,7 @@ namespace http {
             return ResponseBuilder().status(kStatusNotFound).build();
         }
 
-        // onGet, onPost, onDelete で登録された method のみ許可する
+        // on で登録された method のみ許可する
         const MethodHandlerMap &methodHandlers = handlers_[matchResult.unwrap()];
         const MethodHandlerMap::const_iterator it = methodHandlers.find(req.getMethod());
         if (it == methodHandlers.end()) {

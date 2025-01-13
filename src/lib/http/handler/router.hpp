@@ -18,15 +18,15 @@ namespace http {
         Response serve(const Request &req);
 
         // 登録された handler は Router が delete する
-        void onGet(const std::string &path, IHandler *handler);
-        void onPost(const std::string &path, IHandler *handler);
-        void onDelete(const std::string &path, IHandler *handler);
+        void on(HttpMethod method, const std::string &path, IHandler *handler);
         void on(const std::vector<HttpMethod> &methods, const std::string &path, IHandler *handler);
-
-        // middleware の登録
+        // 登録された middleware は Router が delete する
         void use(IMiddleware *middleware);
 
     private:
+        class InternalRouter;
+        class ChainHandler;
+
         // (HttpMethod, Path) -> IHandler とするのが自然だが、Method Not Allowed を返すために必要なデータ構造にしている
         typedef std::string Path;
         typedef std::map<HttpMethod, IHandler *> MethodHandlerMap;
@@ -46,26 +46,26 @@ namespace http {
          * middlewares[0] <┘ middlewares[1]  <┘
          */
         std::vector<IHandler *> handlersChain_;
+    };
 
-        class InternalRouter : public IHandler {
-        public:
-            explicit InternalRouter(HandlerMap &handlers);
-            Response serve(const Request &req);
+    class Router::InternalRouter : public IHandler {
+    public:
+        explicit InternalRouter(HandlerMap &handlers);
+        Response serve(const Request &req);
 
-        private:
-            HandlerMap &handlers_;
-            Matcher<Path> createMatcher() const;
-        };
+    private:
+        HandlerMap &handlers_;
+        Matcher<Path> createMatcher() const;
+    };
 
-        class ChainHandler : public IHandler {
-        public:
-            ChainHandler(IMiddleware &middleware, IHandler &next);
-            Response serve(const Request &req);
+    class Router::ChainHandler : public IHandler {
+    public:
+        ChainHandler(IMiddleware &middleware, IHandler &next);
+        Response serve(const Request &req);
 
-        private:
-            IMiddleware &middleware_;
-            IHandler &next_;
-        };
+    private:
+        IMiddleware &middleware_;
+        IHandler &next_;
     };
 }
 
