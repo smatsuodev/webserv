@@ -10,6 +10,7 @@ http::Response http::ErrorPage::intercept(const Request &req, IHandler &next) {
         return res;
     }
 
+    // NOTE: handler のエラーレスポンスは上書きされる
     const std::string statusStr = utils::format("%d %s", status, getHttpStatusText(status).c_str());
     const std::string body = utils::format(
         "<!DOCTYPE html>\n"
