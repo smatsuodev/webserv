@@ -9,6 +9,7 @@ namespace http {
         handlersChain_.push_back(new InternalRouter(handlers_));
     }
 
+    // TODO: リソース管理が煩雑なのでリファクタしたい
     Router::~Router() {
         // メソッドに同じ handler が登録されていると double free になることに注意
         std::set<IHandler *> deleted;
@@ -54,6 +55,8 @@ namespace http {
     Response Router::serve(const Request &req) {
         return handlersChain_.back()->serve(req);
     }
+
+    /* internal */
 
     Router::InternalRouter::InternalRouter(HandlerMap &handlers) : handlers_(handlers) {}
 
