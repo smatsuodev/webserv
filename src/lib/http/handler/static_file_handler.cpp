@@ -59,7 +59,7 @@ namespace http {
         res += "<h1>" + title + "</h1>";
         res += "<hr>";
         res += "<ul>";
-        const struct dirent *dp;
+        const dirent *dp;
         while ((dp = readdir(dir)) != NULL) {
             const std::string dName = dp->d_name;
             if (dName == ".") {
@@ -85,18 +85,17 @@ namespace http {
     }
 
 
-    Response StaticFileHandler::directoryListing(const std::string &path) {
-        const Result<std::string, HttpStatusCode> result = makeDirectoryListingHtml(path);
+    Response StaticFileHandler::directoryListing(const std::string &requestTarget) {
+        const Result<std::string, HttpStatusCode> result = makeDirectoryListingHtml(requestTarget);
         if (result.isErr()) {
             return ResponseBuilder().status(result.unwrapErr()).build();
         }
-
         const std::string res = result.unwrap();
         return ResponseBuilder().html(res).build();
     }
 
     Response StaticFileHandler::serve(const Request &req) {
-        const std::string path = docRootConfig_.getRoot() + '/' + req.getRequestTarget();
+        const std::string path = docRootConfig_.getRoot() + req.getRequestTarget();
         LOG_DEBUGF("request target: %s", req.getRequestTarget().c_str());
 
         struct stat buf = {};
