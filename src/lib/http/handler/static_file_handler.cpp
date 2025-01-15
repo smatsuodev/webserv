@@ -12,46 +12,14 @@ namespace http {
     StaticFileHandler::StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)
         : docRootConfig_(docRootConfig) {}
 
-    static std::string removeUnneededPaths(const std::string &path) {
-        std::string result;
-        bool lastWasSlash = false;
-
-        for (std::size_t i = 0; i < path.size(); i++) {
-            const char c = path[i];
-            if (c != '/') {
-                result += c;
-                lastWasSlash = false;
-            } else if (!lastWasSlash) {
-                result += c;
-                lastWasSlash = true;
-            }
-        }
-        if (!result.empty() && result[result.size() - 1] == '/') {
-            result.pop_back();
-        }
-        if (result.front() == '.') {
-            result = result.substr(1);
-        }
-        return result;
-    }
-
-    std::string
-    StaticFileHandler::getNextLink(const std::string &currentDirPath, const std::string &entryName, const bool isDir) {
-        const std::string dirSlash = isDir ? "/" : "";
-        if (entryName == "..") {
-            return currentDirPath.substr(0, currentDirPath.find_last_of('/')) + dirSlash;
-        }
-        return currentDirPath + "/" + entryName + dirSlash;
-    }
-
-    Result<std::string, HttpStatusCode> StaticFileHandler::makeDirectoryListingHtml(const std::string &path) {
-        DIR *dir = opendir(path.c_str());
+    Result<std::string, HttpStatusCode>
+    StaticFileHandler::makeDirectoryListingHtml(const std::string &root, const std::string &target) {
+        DIR *dir = opendir((root + target).c_str());
         if (dir == NULL) {
-            LOG_DEBUGF("failed to open directory: %s", path.c_str());
+            LOG_DEBUGF("failed to open directory: %s", (root + target).c_str());
             return Err(kStatusInternalServerError);
         }
-        const std::string normalizedPath = removeUnneededPaths(path);
-        const std::string title = "Index of " + normalizedPath + "/";
+        const std::string title = "Index of " + target;
         std::string res = "<!DOCTYPE html>";
         res += "<html>";
         res += "<head><title>" + title + "</title></head>";
@@ -65,8 +33,7 @@ namespace http {
             if (dName == ".") {
                 continue;
             }
-            const unsigned char dType = dp->d_type;
-            const std::string dNameLink = getNextLink(normalizedPath, dName, dType == DT_DIR);
+            const std::string dNameLink = dName + (dp->d_type == DT_DIR ? "/" : "");
             res += "<li>";
             res += "<a href=\"" + dNameLink + "\">";
             res += dName;
@@ -84,9 +51,8 @@ namespace http {
         return Ok(res);
     }
 
-
-    Response StaticFileHandler::directoryListing(const std::string &requestTarget) {
-        const Result<std::string, HttpStatusCode> result = makeDirectoryListingHtml(requestTarget);
+    Response StaticFileHandler::directoryListing(const std::string &root, const std::string &target) {
+        const Result<std::string, HttpStatusCode> result = makeDirectoryListingHtml(root, target);
         if (result.isErr()) {
             return ResponseBuilder().status(result.unwrapErr()).build();
         }
@@ -95,6 +61,7 @@ namespace http {
     }
 
     Response StaticFileHandler::serve(const Request &req) {
+        // root が '/' で終わると、log で '//' が発生する。
         const std::string path = docRootConfig_.getRoot() + req.getRequestTarget();
         LOG_DEBUGF("request target: %s", req.getRequestTarget().c_str());
 
@@ -110,7 +77,7 @@ namespace http {
 
         if (S_ISDIR(buf.st_mode)) {
             LOG_DEBUGF("is a directory: %s", path.c_str());
-            return directoryListing(path);
+            return directoryListing(docRootConfig_.getRoot(), req.getRequestTarget());
         }
 
         if (!S_ISREG(buf.st_mode)) {

@@ -11,9 +11,8 @@ namespace http {
         virtual Response serve(const Request &req);
 
     private:
-        static std::string getNextLink(const std::string &currentDirPath, const std::string &entryName, bool isDir);
-        static Result<std::string, HttpStatusCode> makeDirectoryListingHtml(const std::string &path);
-        static Response directoryListing(const std::string &path);
+        static Result<std::string, HttpStatusCode> makeDirectoryListingHtml(const std::string &root, const std::string &target);
+        static Response directoryListing(const std::string &root, const std::string &target);
         config::LocationContext::DocumentRootConfig docRootConfig_;
     };
 } // http
