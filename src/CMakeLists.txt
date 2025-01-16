@@ -103,6 +103,8 @@ add_library(webserv_lib STATIC
         lib/http/handler/middleware/error_page.hpp
         lib/cgi/meta_variable.cpp
         lib/cgi/meta_variable.hpp
+        lib/cgi/request.cpp
+        lib/cgi/request.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
