@@ -105,6 +105,8 @@ add_library(webserv_lib STATIC
         lib/cgi/meta_variable.hpp
         lib/cgi/request.cpp
         lib/cgi/request.hpp
+        lib/cgi/factory.cpp
+        lib/cgi/factory.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される
