@@ -5,14 +5,8 @@
 #include "utils/auto_fd.hpp"
 #include "utils/types/error.hpp"
 #include "utils/types/result.hpp"
-#include <set>
 #include <vector>
 #include <map>
-
-/**
- * TODO: subject では read/write 両方を監視するよう指定されている
- * インターフェースは変えずに、waitEvents の結果を filter することで対応したい
- */
 
 class IEventNotifier {
 public:

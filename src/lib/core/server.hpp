@@ -4,25 +4,32 @@
 #include "event/event_handler.hpp"
 #include "transport/listener.hpp"
 #include "server_state.hpp"
+#include "virtual_server.hpp"
+#include "config/config.hpp"
+#include <set>
 
 class Server {
 public:
-    Server(const std::string &ip, unsigned short port);
+    explicit Server(const config::Config &config);
     ~Server();
 
     void start();
 
 private:
-    std::string ip_;
-    unsigned short port_;
+    // VirtualServer は http::Router を持っていて、コピー不可なのでポインタで持つ
+    typedef std::vector<VirtualServer *> VirtualServerList;
 
-    // NOTE: Server の作成と同時に初期化されるがよいか?
-    Listener listener_;
+    config::Config config_;
+    VirtualServerList virtualServers_;
+
     ServerState state_;
+    // Listener がコピー不可なのでポインタで持つ
+    std::vector<Listener *> listeners_;
+    std::set<int> listenerFds_;
 
     void onHandlerError(const Context &ctx, error::AppError err);
     void onErrorEvent(const Event &event);
-    void executeActions(std::vector<IAction *> actions);
+    static void executeActions(ActionContext &actionCtx, std::vector<IAction *> actions);
 };
 
 #endif

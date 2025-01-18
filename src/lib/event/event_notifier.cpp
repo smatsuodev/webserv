@@ -67,8 +67,8 @@ EpollEventNotifier::WaitEventsResult EpollEventNotifier::waitEvents() {
     for (int i = 0; i < numEvents; i++) {
         LOG_DEBUGF("epoll events: fd=%d, events=%d", evs[i].data.fd, evs[i].events);
         const uint32_t flags = EpollEventNotifier::toEventTypeFlags(evs[i].events);
-        // イベント登録時のフラグと一致するイベントのみ返す
-        if (flags & registeredEvents_[evs[i].data.fd].getTypeFlags()) {
+        // エラー or イベント登録時のフラグと一致するイベントのみ返す
+        if (flags & (registeredEvents_[evs[i].data.fd].getTypeFlags() | EPOLLERR | EPOLLHUP)) {
             events.push_back(Event(evs[i].data.fd, flags));
         }
     }
@@ -87,6 +87,9 @@ uint32_t EpollEventNotifier::toEventTypeFlags(const uint32_t epollEvents) {
     if (epollEvents & EPOLLERR) {
         flags |= Event::kError;
     }
+    if (epollEvents & EPOLLHUP) {
+        flags |= Event::kHangUp;
+    }
     return flags;
 }
 
@@ -101,6 +104,9 @@ uint32_t EpollEventNotifier::toEpollEvents(const Event &event) {
     }
     if (flags & Event::kError) {
         events |= EPOLLERR;
+    }
+    if (flags & Event::kHangUp) {
+        events |= EPOLLHUP;
     }
     return events;
 }
@@ -149,8 +155,8 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
             continue;
         }
 
-        // イベント登録時のフラグと一致するイベントのみ返す
-        if (flags & registeredEvents_[pfd.fd].getTypeFlags()) {
+        // エラー or イベント登録時のフラグと一致するイベントのみ返す
+        if (flags & (registeredEvents_[pfd.fd].getTypeFlags() | POLLERR | POLLHUP)) {
             events.push_back(Event(pfd.fd, flags));
         }
     }
@@ -170,6 +176,9 @@ short PollEventNotifier::toPollEvents(const Event &event) {
     if (flags & Event::kError) {
         events |= POLLERR;
     }
+    if (flags & Event::kHangUp) {
+        events |= POLLHUP;
+    }
     return events;
 }
 
@@ -183,6 +192,9 @@ uint32_t PollEventNotifier::toEventTypeFlags(const short pollEvents) {
     }
     if (pollEvents & POLLERR) {
         flags |= Event::kError;
+    }
+    if (pollEvents & POLLHUP) {
+        flags |= Event::kHangUp;
     }
     return flags;
 }

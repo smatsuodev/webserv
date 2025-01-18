@@ -8,13 +8,13 @@ root = 'example/html'
 
 [[server.location]]
 path = '/other'
-root = 'example/html/other'
+root = 'example/html'
 index = 'top.html'
 
 # upload したファイルの取得
 [[server.location]]
-path = '/files'
-root = 'example/html/uploads'
+path = '/uploads'
+root = 'example/html'
 autoindex = 'on'
 
 # --

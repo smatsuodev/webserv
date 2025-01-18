@@ -11,6 +11,7 @@ public:
         kRead = 1,
         kWrite = 1 << 1,
         kError = 1 << 2, // register しなくても発生する. EPOLLERR に相当
+        kHangUp = 1 << 3, // register しなくても発生する. EPOLLHUP に相当
     };
 
     Event();
@@ -26,6 +27,7 @@ public:
 
     int getFd() const;
     uint32_t getTypeFlags() const;
+    bool isError() const;
 
 private:
     int fd_;

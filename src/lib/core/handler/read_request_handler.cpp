@@ -1,21 +1,22 @@
 #include "read_request_handler.hpp"
 #include "write_response_handler.hpp"
 #include "core/action.hpp"
-#include "http/handler/handler.hpp"
-#include "http/response/response.hpp"
-#include "http/response/response_builder.hpp"
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
 
-ReadRequestHandler::ReadRequestHandler(ReadBuffer &readBuf) : reqReader_(readBuf) {}
+// http::Response は ServeHttpAction で生成されるので、event handler を生成する関数を渡す
+IEventHandler *writeResponseHandlerFactory(const http::Response &res) {
+    return new WriteResponseHandler(res);
+}
+
+ReadRequestHandler::ReadRequestHandler(const VirtualServerResolver &vsResolver)
+    : resolver_(new ConfigResolver(vsResolver)), reqReader_(*resolver_) {}
 
 IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start ReadRequestHandler");
 
-    const Option<http::Request> req = TRY(reqReader_.readRequest());
+    ReadBuffer &readBuf = ctx.getConnection().unwrap().get().getReadBuffer();
+    const Option<http::Request> req = TRY(reqReader_.readRequest(readBuf));
     if (req.isNone()) {
         // read は高々 1 回なので、パースまで完了しなかった
         LOG_DEBUG("request is not fully read");
@@ -23,11 +24,20 @@ IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     }
 
     LOG_DEBUGF("HTTP request parsed");
-    const http::Response res = http::Handler().serve(req.unwrap());
 
     std::vector<IAction *> actions;
     actions.push_back(new RegisterEventAction(Event(ctx.getEvent().getFd(), Event::kWrite)));
-    actions.push_back(new RegisterEventHandlerAction(ctx.getConnection().unwrap(), new WriteResponseHandler(res)));
+    actions.push_back(new ServeHttpAction(ctx, req.unwrap(), writeResponseHandlerFactory));
 
     return Ok(actions);
+}
+
+ConfigResolver::ConfigResolver(const VirtualServerResolver &vsResolver) : resolver_(vsResolver) {}
+
+Option<config::ServerContext> ConfigResolver::resolve(const std::string &host) const {
+    const Option<Ref<VirtualServer> > vs = resolver_.resolve(host);
+    if (vs.isNone()) {
+        return None;
+    }
+    return Some(vs.unwrap().get().getServerConfig());
 }

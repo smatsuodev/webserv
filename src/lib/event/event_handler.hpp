@@ -7,31 +7,50 @@
 #include "event.hpp"
 #include "transport/connection.hpp"
 #include "utils/ref.hpp"
-
 #include <vector>
 
-class Server;
-class ServerState;
+// core のクラスの前方宣言
+class ActionContext;
+class VirtualServerResolver;
+
+class IVirtualServerResolverFactory {
+public:
+    virtual ~IVirtualServerResolverFactory();
+    virtual VirtualServerResolver create(const Ref<Connection> &conn) = 0;
+};
 
 // イベントハンドラーに呼び出された文脈を提供する
 class Context {
 public:
-    Context(const Option<Ref<Connection> > &conn, const Event &event);
+    /**
+     * NOTE: Server は HTTP レイヤーの情報を知らないため、VirtualServer を解決するためのオブジェクトを渡す
+     * 構築が面倒なので、VirtualServerResolver は Ref にしてない
+     */
+    explicit Context(
+        const Event &event, const Option<Ref<Connection> > &conn, IVirtualServerResolverFactory &resolverFactory
+    );
 
     Option<Ref<Connection> > getConnection() const;
     const Event &getEvent() const;
+    // accept 前は Connection がないので None になる
+    Option<VirtualServerResolver> getResolver() const;
+
+    // Event, Connection を差し替えた新しい Context を返す
+    Context withNewValues(const Event &event, const Option<Ref<Connection> > &conn) const;
 
 private:
+    Event event_;
     // accept 前は connection は存在しない
     Option<Ref<Connection> > conn_;
-    Event event_;
+    IVirtualServerResolverFactory &resolverFactory_;
 };
 
 // IEventHandler が返す Command オブジェクト
 class IAction {
 public:
     virtual ~IAction();
-    virtual void execute(ServerState &state) = 0;
+    // NOTE: core の ActionContext に依存していて、設計的に微妙?
+    virtual void execute(ActionContext &ctx) = 0;
 };
 
 // IEventHandler は Context を受けとり、IAction を返す

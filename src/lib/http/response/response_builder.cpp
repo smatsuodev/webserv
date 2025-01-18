@@ -1,10 +1,21 @@
 #include "response_builder.hpp"
+
+#include "http/mime.hpp"
 #include "utils/string.hpp"
+#include <fstream>
 
 namespace http {
     ResponseBuilder::ResponseBuilder() : status_(kStatusOk), httpVersion_("HTTP/1.1"), body_(None) {}
 
     ResponseBuilder::~ResponseBuilder() {}
+
+    Response ResponseBuilder::build() {
+        if (body_.isNone()) {
+            // 念の為 Content-Length を付ける
+            this->header("Content-Length", "0");
+        }
+        return Response(status_, httpVersion_, headers_, body_.unwrapOr(""));
+    }
 
     ResponseBuilder &ResponseBuilder::status(const HttpStatusCode status) {
         status_ = status;
@@ -18,30 +29,40 @@ namespace http {
 
     ResponseBuilder &ResponseBuilder::text(const std::string &body, const HttpStatusCode status) {
         body_ = Some(body);
-        this->status(status);
-        this->header("Content-Type", "text/plain; charset=UTF-8");
-        this->header("Content-Length", utils::toString(body.size()));
-        return *this;
+        return this->status(status)
+            .header("Content-Type", "text/plain; charset=UTF-8")
+            .header("Content-Length", utils::toString(body.size()));
     }
 
     ResponseBuilder &ResponseBuilder::html(const std::string &body, const HttpStatusCode status) {
         body_ = Some(body);
-        this->status(status);
-        this->header("Content-Type", "text/html; charset=UTF-8");
-        this->header("Content-Length", utils::toString(body.size()));
-        return *this;
+        return this->status(status)
+            .header("Content-Type", "text/html; charset=UTF-8")
+            .header("Content-Length", utils::toString(body.size()));
     }
 
     ResponseBuilder &ResponseBuilder::redirect(const std::string &location, const HttpStatusCode status) {
-        this->status(status);
-        this->header("Location", location);
-        return *this;
+        return this->status(status).header("Location", location);
     }
 
-    Response ResponseBuilder::build() {
-        if (body_.isNone()) {
-            this->text("", status_);
+    ResponseBuilder &ResponseBuilder::file(const std::string &path, HttpStatusCode status) {
+        std::ifstream ifs(path);
+        if (!ifs.is_open()) {
+            return this->status(kStatusNotFound);
         }
-        return Response(status_, httpVersion_, headers_, body_.unwrap());
+
+        std::stringstream ss;
+        ss << ifs.rdbuf();
+        const std::string body = ss.str();
+
+        const std::string mime = getMimeType(path);
+        return this->body(body, status)
+            .header("Content-Type", utils::format("%s; charset=UTF-8", mime.c_str()))
+            .header("Content-Length", utils::toString(body.size()));
+    }
+
+    ResponseBuilder &ResponseBuilder::body(const std::string &body, const HttpStatusCode status) {
+        body_ = Some(body);
+        return this->status(status);
     }
 }

@@ -49,8 +49,6 @@ add_library(webserv_lib STATIC
         lib/http/request/request_parser.hpp
         lib/core/handler/read_request_handler.cpp
         lib/core/handler/read_request_handler.hpp
-        lib/http/request/request_reader.cpp
-        lib/http/request/request_reader.hpp
         lib/core/server_state.cpp
         lib/core/server_state.hpp
         lib/http/header.hpp
@@ -61,7 +59,6 @@ add_library(webserv_lib STATIC
         lib/http/response/response_builder.cpp
         lib/http/response/response_builder.hpp
         lib/utils/ref.hpp
-        lib/http/handler/handler.cpp
         lib/http/handler/handler.hpp
         lib/utils/io/read_buffer.cpp
         lib/utils/io/read_buffer.hpp
@@ -73,6 +70,41 @@ add_library(webserv_lib STATIC
         lib/config/toml/parser.hpp
         lib/config/toml/tokenizer.cpp
         lib/config/toml/tokenizer.hpp
+        lib/http/handler/redirect_handler.cpp
+        lib/http/handler/redirect_handler.hpp
+        lib/http/handler/router.cpp
+        lib/http/handler/router.hpp
+        lib/http/handler/matcher.hpp
+        lib/transport/address.cpp
+        lib/transport/address.hpp
+        lib/core/virtual_server_resolver.cpp
+        lib/core/virtual_server_resolver.hpp
+        lib/core/virtual_server.cpp
+        lib/core/virtual_server.hpp
+        lib/http/handler/static_file_handler.cpp
+        lib/http/handler/static_file_handler.hpp
+        lib/http/handler/delete_file_handler.cpp
+        lib/http/handler/delete_file_handler.hpp
+        lib/utils/auto_deleter.hpp
+        lib/http/request/reader/request_reader.cpp
+        lib/http/request/reader/request_reader.hpp
+        lib/http/request/reader/reading_request_line_state.cpp
+        lib/http/request/reader/reading_request_line_state.hpp
+        lib/http/request/reader/utils.cpp
+        lib/http/request/reader/utils.hpp
+        lib/http/request/reader/reading_headers_state.cpp
+        lib/http/request/reader/reading_headers_state.hpp
+        lib/http/request/reader/reading_body_state.cpp
+        lib/http/request/reader/reading_body_state.hpp
+        lib/http/request/reader/reading_chunked_body_state.cpp
+        lib/http/request/reader/reading_chunked_body_state.hpp
+        lib/http/mime.cpp
+        lib/http/mime.hpp
+        lib/http/handler/middleware/middleware.hpp
+        lib/http/handler/middleware/logger.cpp
+        lib/http/handler/middleware/logger.hpp
+        lib/http/handler/middleware/error_page.cpp
+        lib/http/handler/middleware/error_page.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

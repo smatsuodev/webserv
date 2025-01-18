@@ -63,6 +63,18 @@ gtest_discover_tests(ref_test)
 add_executable(read_buffer_test read_buffer_test.cpp)
 gtest_discover_tests(read_buffer_test)
 
+add_executable(matcher_test matcher_test.cpp)
+gtest_discover_tests(matcher_test)
+
+add_executable(virtual_server_resolver_test virtual_server_resolver_test.cpp)
+gtest_discover_tests(virtual_server_resolver_test)
+
+add_executable(auto_deleter_test auto_deleter_test.cpp)
+gtest_discover_tests(auto_deleter_test)
+
+add_executable(mime_test mime_test.cpp)
+gtest_discover_tests(mime_test)
+
 add_executable(toml_tokenizer_test toml_tokenizer_test.cpp)
 gtest_discover_tests(toml_tokenizer_test)
 
