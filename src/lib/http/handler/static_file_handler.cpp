@@ -77,7 +77,18 @@ namespace http {
 
         if (S_ISDIR(buf.st_mode)) {
             LOG_DEBUGF("is a directory: %s", path.c_str());
-            return directoryListing(docRootConfig_.getRoot(), req.getRequestTarget());
+            const std::string indexPath = path + '/' + docRootConfig_.getIndex();
+            struct stat indexBuf = {};
+            if (stat(indexPath.c_str(), &indexBuf)) {
+                LOG_ERRORF("failed to stat file: %s", strerror(errno));
+                return ResponseBuilder().status(kStatusInternalServerError).build();
+            }
+            if (S_ISREG(indexBuf.st_mode)) {
+                return ResponseBuilder().file(indexPath).build();
+            }
+            if (docRootConfig_.isAutoindexEnabled()) {
+                return directoryListing(docRootConfig_.getRoot(), req.getRequestTarget());
+            }
         }
 
         if (!S_ISREG(buf.st_mode)) {
