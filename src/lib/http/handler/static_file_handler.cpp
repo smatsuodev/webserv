@@ -90,6 +90,7 @@ namespace http {
             if (docRootConfig_.isAutoindexEnabled()) {
                 return directoryListing(docRootConfig_.getRoot(), req.getRequestTarget());
             }
+            return ResponseBuilder().status(kStatusForbidden).build();
         }
 
         if (!S_ISREG(buf.st_mode)) {
