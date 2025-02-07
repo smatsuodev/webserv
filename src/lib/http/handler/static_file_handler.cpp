@@ -80,7 +80,7 @@ namespace http {
             LOG_DEBUGF("is a directory: %s", path.c_str());
             const std::string indexPath = path + '/' + docRootConfig_.getIndex();
             struct stat indexBuf = {};
-            if (stat(indexPath.c_str(), &indexBuf)) {
+            if (stat(indexPath.c_str(), &indexBuf) == -1) {
                 LOG_ERRORF("failed to stat file: %s", std::strerror(errno));
                 return ResponseBuilder().status(kStatusInternalServerError).build();
             }
