@@ -3,6 +3,7 @@
 #include "http/response/response_builder.hpp"
 #include <fstream>
 #include <dirent.h>
+#include <cstring>
 #include <sys/stat.h>
 #include "static_file_handler.hpp"
 
