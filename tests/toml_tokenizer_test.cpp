@@ -49,23 +49,41 @@ TEST(TokenizerOk, symbolWithUnderscore) {
     testOk(text, {Token(kSymbol, "_key_42_"), Token(kEof, "")});
 }
 
-// TEST(TokenizerOk, commentAfterValue) {
-//     const auto text = R"(key = "value" # comment)";
-//     testOk(
-//         text,
-//         {
-//             Token(kSymbol, "key"),
-//             Token(kAssignment, "="),
-//             Token(kSymbol, "value"),
-//             Token(kEof, ""),
-//         }
-//     );
-// }
+TEST(TokenizerOk, singleQuotedSymbol) {
+    const auto text = R"('ke"y')";
+    testOk(text, {Token(kQuotedSymbol, "ke\"y"), Token(kEof, "")});
+}
 
-// TEST(TokenizerOk, notComment) {
-//     const auto text = R"(key = "# this is not comment")";
-//     testOk(text, {});
-// }
+TEST(TokenizerOk, doubleQuotedSymbol) {
+    const auto text = R"("ke'y")";
+    testOk(text, {Token(kQuotedSymbol, "ke'y"), Token(kEof, "")});
+}
+
+TEST(TokenizerOk, commentAfterValue) {
+    const auto text = R"(key = "value" # comment)";
+    testOk(
+        text,
+        {
+            Token(kSymbol, "key"),
+            Token(kAssignment, "="),
+            Token(kQuotedSymbol, "value"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, notComment) {
+    const auto text = R"(key = "# this is not comment")";
+    testOk(
+        text,
+        {
+            Token(kSymbol, "key"),
+            Token(kAssignment, "="),
+            Token(kQuotedSymbol, "# this is not comment"),
+            Token(kEof, ""),
+        }
+    );
+}
 
 TEST(TokenizerOk, keyValue) {
     const auto text = R"(key = 0)";
@@ -79,49 +97,112 @@ TEST(TokenizerOk, keyValue) {
         }
     );
 }
+
+TEST(TokenizerOk, intKey) {
+    const auto text = R"(123 = 0)";
+    testOk(
+        text,
+        {
+            Token(kSymbol, "123"),
+            Token(kAssignment, "="),
+            Token(kSymbol, "0"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, quotedKey) {
+    const auto text = R"("127.0.0.1" = 0)";
+    testOk(
+        text,
+        {
+            Token(kQuotedSymbol, "127.0.0.1"),
+            Token(kAssignment, "="),
+            Token(kSymbol, "0"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, keyContainsEq) {
+    const auto text = R"("a=b" = 0)";
+    testOk(
+        text,
+        {
+            Token(kQuotedSymbol, "a=b"),
+            Token(kAssignment, "="),
+            Token(kSymbol, "0"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, unicodeKey) {
+    const auto text = R"("ʎǝʞ" = 0)";
+    testOk(
+        text,
+        {
+            Token(kQuotedSymbol, "ʎǝʞ"),
+            Token(kAssignment, "="),
+            Token(kSymbol, "0"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, singleQuotedKey) {
+    const auto text = R"('key' = 0)";
+    testOk(
+        text,
+        {
+            Token(kQuotedSymbol, "key"),
+            Token(kAssignment, "="),
+            Token(kSymbol, "0"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, quotedQuoteKey) {
+    const auto text = R"('"quoted key"' = 0)";
+    testOk(
+        text,
+        {
+            Token(kQuotedSymbol, R"("quoted key")"),
+            Token(kAssignment, "="),
+            Token(kSymbol, "0"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+// 有効だが非推奨
+TEST(TokenizerOkDiscouraged, emptyKey) {
+    const auto text = R"("" = 0)";
+    testOk(
+        text,
+        {
+            Token(kQuotedSymbol, ""),
+            Token(kAssignment, "="),
+            Token(kSymbol, "0"),
+            Token(kEof, ""),
+        }
+    );
+}
 //
-// TEST(TokenizerOk, intKey) {
-//     const auto text = R"(123 = 0)";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, quotedKey) {
-//     const auto text = R"("127.0.0.1" = 0)";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, keyContainsEq) {
-//     const auto text = R"("a=b" = 0)";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, unicodeKey) {
-//     const auto text = R"("ʎǝʞ" = 0)";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, singleQuotedKey) {
-//     const auto text = R"('key' = 0)";
-//     testOk(text, {});
-// }
-//
-//
-// TEST(TokenizerOk, quotedQuoteKey) {
-//     const auto text = R"('"quoted key"' = 0)";
-//     testOk(text, {});
-// }
-//
-// // 有効だが非推奨
-// TEST(TokenizerOkDiscouraged, emptyKey) {
-//     const auto text = R"("" = 0)";
-//     testOk(text, {});
-// }
-//
-// // 有効だが非推奨
-// TEST(TokenizerOkDiscouraged, emptyKeySingle) {
-//     const auto text = R"('' = 0)";
-//     testOk(text, {});
-// }
+// 有効だが非推奨
+TEST(TokenizerOkDiscouraged, emptyKeySingle) {
+    const auto text = R"('' = 0)";
+    testOk(
+        text,
+        {
+            Token(kQuotedSymbol, ""),
+            Token(kAssignment, "="),
+            Token(kSymbol, "0"),
+            Token(kEof, ""),
+        }
+    );
+}
 //
 // TEST(TokenizerOk, dottedKey) {
 //     const auto text = R"(k1.k2 = 0)";

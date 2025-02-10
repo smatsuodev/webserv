@@ -22,6 +22,7 @@ namespace toml {
         kUnknown,
         kEof,
         kSymbol,
+        kQuotedSymbol,
         kAssignment,
     };
 
@@ -61,7 +62,9 @@ namespace toml {
         void nextChar();
         void skipWhitespaces();
         bool isSymbolicChar() const;
+        bool isQuote() const;
         std::string readSymbol();
+        std::string readQuotedSymbol();
 
         static Result<Tokens, std::string> tokenizeArray(const std::string &rawArray);
         static Result<Tokens, std::string> tokenizeInlineTable(const std::string &rawInlineTable);

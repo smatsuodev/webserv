@@ -45,6 +45,10 @@ namespace toml {
         return std::isalnum(ch_) || ch_ == '_';
     }
 
+    bool Tokenizer::isQuote() const {
+        return ch_ == '"' || ch_ == '\'';
+    }
+
     // in C++98
     Tokenizer::TokenizeResult Tokenizer::tokenize() {
         Tokens tokens;
@@ -56,6 +60,12 @@ namespace toml {
                 while (ch_ != '\0' && ch_ != '\n') {
                     nextChar();
                 }
+                continue;
+            }
+
+            if (isQuote()) {
+                std::string literal = readQuotedSymbol();
+                tokens.push_back(Token(kQuotedSymbol, literal));
                 continue;
             }
 
@@ -94,6 +104,20 @@ namespace toml {
             literal += ch_;
             nextChar();
         }
+        return literal;
+    }
+
+    std::string Tokenizer::readQuotedSymbol() {
+        const char quote = ch_;
+        nextChar();
+
+        std::string literal;
+        while (isSymbolicChar() || ch_ != quote) {
+            literal += ch_;
+            nextChar();
+        }
+
+        if (ch_ == quote) nextChar();
         return literal;
     }
 }
