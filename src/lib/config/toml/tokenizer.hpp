@@ -24,6 +24,8 @@ namespace toml {
         kComma,
         kLBracket,
         kRBracket,
+        kLBrace,
+        kRBrace,
     };
 
     class Token {

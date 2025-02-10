@@ -460,16 +460,42 @@ TEST(TokenizerOk, dottedSpaceTable3) {
         }
     );
 }
-//
-// TEST(TokenizerOk, inlineTable) {
-//     const auto text = R"(k = {x=0, y=1})";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, dottedKeyInInlineTable) {
-//     const auto text = R"(k = { a.b = 0 })";
-//     testOk(text, {});
-// }
+
+TEST(TokenizerOk, inlineTable) {
+    const auto text = R"({x=0, y=1})";
+    testOk(
+        text,
+        {
+            Token(kLBrace, "{"),
+            Token(kKey, "x"),
+            Token(kAssignment, "="),
+            Token(kNum, "0"),
+            Token(kComma, ","),
+            Token(kKey, "y"),
+            Token(kAssignment, "="),
+            Token(kNum, "1"),
+            Token(kRBrace, "}"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, dottedKeyInInlineTable) {
+    const auto text = R"({ a.b = 0 })";
+    testOk(
+        text,
+        {
+            Token(kLBrace, "{"),
+            Token(kKey, "a"),
+            Token(kDot, "."),
+            Token(kKey, "b"),
+            Token(kAssignment, "="),
+            Token(kNum, "0"),
+            Token(kRBrace, "}"),
+            Token(kEof, ""),
+        }
+    );
+}
 
 TEST(TokenizerOk, arrayOfTable) {
     const auto text = R"([[array]])";

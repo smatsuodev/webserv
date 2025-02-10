@@ -105,6 +105,12 @@ namespace toml {
                 case ']':
                     type = kRBracket;
                     break;
+                case '{':
+                    type = kLBrace;
+                    break;
+                case '}':
+                    type = kRBrace;
+                    break;
                 default:
                     return Err(utils::format("unknown token: %c", ch_));
             }
