@@ -24,37 +24,37 @@ TEST(TokenizerOk, comment) {
     testOk(text, {Token(kEof, "")});
 }
 
-TEST(TokenizerOk, numericSymbol) {
+TEST(TokenizerOk, integer) {
     const auto text = R"(42)";
     testOk(text, {Token(kNum, "42"), Token(kEof, "")});
 }
 
-TEST(TokenizerOk, alphabeticSymbol) {
+TEST(TokenizerOk, key) {
     const auto text = R"(key)";
     testOk(text, {Token(kKey, "key"), Token(kEof, "")});
 }
 
-TEST(TokenizerOk, symbolStartWithNumberEndWithAlphabet) {
+TEST(TokenizerOk, keyStartWithNumberEndWithAlphabet) {
     const auto text = R"(42key)";
     testOk(text, {Token(kKey, "42key"), Token(kEof, "")});
 }
 
-TEST(TokenizerOk, symbolStartWithAlphabetEndWithNumber) {
+TEST(TokenizerOk, keyStartWithAlphabetEndWithNumber) {
     const auto text = R"(key42)";
     testOk(text, {Token(kKey, "key42"), Token(kEof, "")});
 }
 
-TEST(TokenizerOk, symbolWithUnderscore) {
+TEST(TokenizerOk, keyWithUnderscore) {
     const auto text = R"(_key_42_)";
     testOk(text, {Token(kKey, "_key_42_"), Token(kEof, "")});
 }
 
-TEST(TokenizerOk, singleQuotedSymbol) {
+TEST(TokenizerOk, singleQuotedString) {
     const auto text = R"('ke"y')";
     testOk(text, {Token(kString, "ke\"y"), Token(kEof, "")});
 }
 
-TEST(TokenizerOk, doubleQuotedSymbol) {
+TEST(TokenizerOk, doubleQuotedString) {
     const auto text = R"("ke'y")";
     testOk(text, {Token(kString, "ke'y"), Token(kEof, "")});
 }
@@ -203,39 +203,69 @@ TEST(TokenizerOkDiscouraged, emptyKeySingle) {
         }
     );
 }
-//
-// TEST(TokenizerOk, dottedKey) {
-//     const auto text = R"(k1.k2 = 0)";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, dottedQuotedKey) {
-//     const auto text = R"(k1."k2.k3".k4 = 0)";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, spaceAroudDot) {
-//     const auto text = R"(k1 . k2 = 0)";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, notFloat) {
-//     const auto text = R"(3 . 14 = "pi")";
-//     testOk(text, {});
-// }
-//
+
+TEST(TokenizerOk, dottedKey) {
+    const auto text = R"(k1.k2 = 0)";
+    testOk(
+        text,
+        {
+            Token(kKey, "k1"),
+            Token(kDot, "."),
+            Token(kKey, "k2"),
+            Token(kAssignment, "="),
+            Token(kNum, "0"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, dottedQuotedKey) {
+    const auto text = R"(k1."k2.k3".k4 = 0)";
+    testOk(
+        text,
+        {Token(kKey, "k1"),
+         Token(kDot, "."),
+         Token(kString, "k2.k3"),
+         Token(kDot, "."),
+         Token(kKey, "k4"),
+         Token(kAssignment, "="),
+         Token(kNum, "0"),
+         Token(kEof, "")}
+    );
+}
+
+TEST(TokenizerOk, spaceAroudDot) {
+    const auto text = R"(k1 . k2 = 0)";
+    testOk(
+        text,
+        {
+            Token(kKey, "k1"),
+            Token(kDot, "."),
+            Token(kKey, "k2"),
+            Token(kAssignment, "="),
+            Token(kNum, "0"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, notFloat) {
+    const auto text = R"(3 . 14 = "pi")";
+    testOk(
+        text,
+        {
+            Token(kNum, "3"),
+            Token(kDot, "."),
+            Token(kNum, "14"),
+            Token(kAssignment, "="),
+            Token(kString, "pi"),
+            Token(kEof, ""),
+        }
+    );
+}
+
 // TEST(TokenizerOk, plusInteger) {
 //     const auto text = R"(k = +99)";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, Integer) {
-//     const auto text = R"(k = 42)";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, integerZero) {
-//     const auto text = R"()";
 //     testOk(text, {});
 // }
 //
@@ -243,7 +273,7 @@ TEST(TokenizerOkDiscouraged, emptyKeySingle) {
 //     const auto text = R"(k = -17)";
 //     testOk(text, {});
 // }
-//
+
 // TEST(TokenizerOk, emptyArray) {
 //     const auto text = R"(k = [])";
 //     testOk(text, {});

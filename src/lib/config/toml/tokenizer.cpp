@@ -93,6 +93,9 @@ namespace toml {
                 case '=':
                     type = kAssignment;
                     break;
+                case '.':
+                    type = kDot;
+                    break;
                 default:
                     return Err(utils::format("unknown token: %c", ch_));
             }

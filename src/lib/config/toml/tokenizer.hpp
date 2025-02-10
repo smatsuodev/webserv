@@ -8,9 +8,7 @@
 
 namespace toml {
     enum TokenType {
-        kDot,
         kComma,
-        kValue,
         kTableHeaderOpen,
         kTableHeaderClose,
         kInlineTableOpen,
@@ -25,6 +23,7 @@ namespace toml {
         kKey,
         kString,
         kAssignment,
+        kDot,
     };
 
     class Token {
