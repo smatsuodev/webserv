@@ -9,16 +9,16 @@ namespace http {
     public:
         explicit Response(
             HttpStatusCode status,
-            const std::string &httpVersion = "HTTP/1.1",
             const Headers &headers = Headers(),
-            const std::string &body = ""
+            const Option<std::string> &body = None,
+            const std::string &httpVersion = "HTTP/1.1"
         );
         bool operator==(const Response &other) const;
 
         HttpStatusCode getStatusCode() const;
         const std::string &getHttpVersion() const;
         const Headers &getHeaders() const;
-        const std::string &getBody() const;
+        const Option<std::string> &getBody() const;
 
         std::string toString() const;
 
@@ -26,7 +26,7 @@ namespace http {
         HttpStatusCode status_;
         std::string httpVersion_;
         Headers headers_;
-        std::string body_;
+        Option<std::string> body_;
     };
 }
 
