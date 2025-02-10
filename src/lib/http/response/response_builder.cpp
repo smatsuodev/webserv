@@ -14,7 +14,7 @@ namespace http {
             // 念の為 Content-Length を付ける
             this->header("Content-Length", "0");
         }
-        return Response(status_, httpVersion_, headers_, body_.unwrapOr(""));
+        return Response(status_, headers_, body_, httpVersion_);
     }
 
     ResponseBuilder &ResponseBuilder::status(const HttpStatusCode status) {

@@ -2,7 +2,7 @@
 #include "utils/string.hpp"
 
 http::Response::Response(
-    const HttpStatusCode status, const std::string &httpVersion, const Headers &headers, const std::string &body
+    const HttpStatusCode status, const Headers &headers, const Option<std::string> &body, const std::string &httpVersion
 )
     : status_(status), httpVersion_(httpVersion), headers_(headers), body_(body) {}
 
@@ -23,7 +23,7 @@ const http::Headers &http::Response::getHeaders() const {
     return headers_;
 }
 
-const std::string &http::Response::getBody() const {
+const Option<std::string> &http::Response::getBody() const {
     return body_;
 }
 
@@ -43,7 +43,7 @@ std::string http::Response::toString() const {
     lines.push_back("");
 
     // message body
-    lines.push_back(body_);
+    lines.push_back(body_.unwrapOr(""));
 
     const std::string responseMessage = utils::join(lines, "\r\n");
     return responseMessage;

@@ -2,11 +2,10 @@
 #define SRC_LIB_HTTP_STATUS_HPP
 
 #include <string>
+#include "utils/types/option.hpp"
 
 namespace http {
     enum HttpStatusCode {
-        kStatusUnknown = 0,
-
         /* 1xx Informational */
         kStatusContinue = 100,
         kStatusSwitchingProtocols = 101,
@@ -80,7 +79,8 @@ namespace http {
         kStatusNetworkAuthenticationRequired = 511,
     };
 
-    HttpStatusCode httpStatusCodeFromInt(int code);
+    Option<HttpStatusCode> httpStatusCodeFromInt(int code);
+    // 入力を型で制約しているので、Option にはしない
     std::string getHttpStatusText(HttpStatusCode code);
 }
 

@@ -4,7 +4,11 @@
 using namespace http;
 
 TEST(HttpStatusCodeFromIntTest, OK) {
-    EXPECT_EQ(httpStatusCodeFromInt(200), kStatusOk);
+    EXPECT_EQ(httpStatusCodeFromInt(200), Some(kStatusOk));
+}
+
+TEST(HttpStatusCodeFromIntTest, Invalid) {
+    EXPECT_EQ(httpStatusCodeFromInt(999), None);
 }
 
 TEST(GetHttpStatusTextTest, OK) {
