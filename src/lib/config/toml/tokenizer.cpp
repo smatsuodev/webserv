@@ -96,6 +96,15 @@ namespace toml {
                 case '.':
                     type = kDot;
                     break;
+                case ',':
+                    type = kComma;
+                    break;
+                case '[':
+                    type = kLBracket;
+                    break;
+                case ']':
+                    type = kRBracket;
+                    break;
                 default:
                     return Err(utils::format("unknown token: %c", ch_));
             }

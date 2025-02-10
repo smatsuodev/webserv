@@ -274,66 +274,192 @@ TEST(TokenizerOk, notFloat) {
 //     testOk(text, {});
 // }
 
-// TEST(TokenizerOk, emptyArray) {
-//     const auto text = R"(k = [])";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, intArray) {
-//     const auto text = R"(k = [1, 2])";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, stringArray) {
-//     const auto text = R"(k = ["foo", 'bar'])";
-//     testOk(text, {});
-// }
-//
-//
-// TEST(TokenizerOk, nestedArray) {
-//     const auto text = R"(k = [[1, 2], [3, 4]])";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, nestedMixedArray) {
-//     const auto text = R"(k = [[1, 2], ["a", "b"]])";
-//     testOk(text, {});
-// }
-//
+TEST(TokenizerOk, emptyArray) {
+    const auto text = R"([])";
+    testOk(text, {Token(kLBracket, "["), Token(kRBracket, "]"), Token(kEof, "")});
+}
+
+TEST(TokenizerOk, intArray) {
+    const auto text = R"([1, 2])";
+    testOk(
+        text,
+        {
+            Token(kLBracket, "["),
+            Token(kNum, "1"),
+            Token(kComma, ","),
+            Token(kNum, "2"),
+            Token(kRBracket, "]"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, stringArray) {
+    const auto text = R"(["foo", 'bar'])";
+    testOk(
+        text,
+        {
+            Token(kLBracket, "["),
+            Token(kString, "foo"),
+            Token(kComma, ","),
+            Token(kString, "bar"),
+            Token(kRBracket, "]"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+
+TEST(TokenizerOk, nestedArray) {
+    const auto text = R"([[1, 2], [3, 4]])";
+    testOk(
+        text,
+        {
+            Token(kLBracket, "["),
+            Token(kLBracket, "["),
+            Token(kNum, "1"),
+            Token(kComma, ","),
+            Token(kNum, "2"),
+            Token(kRBracket, "]"),
+            Token(kComma, ","),
+            Token(kLBracket, "["),
+            Token(kNum, "3"),
+            Token(kComma, ","),
+            Token(kNum, "4"),
+            Token(kRBracket, "]"),
+            Token(kRBracket, "]"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, nestedMixedArray) {
+    const auto text = R"([[1, 2], ["a", "b"]])";
+    testOk(
+        text,
+        {
+            Token(kLBracket, "["),
+            Token(kLBracket, "["),
+            Token(kNum, "1"),
+            Token(kComma, ","),
+            Token(kNum, "2"),
+            Token(kRBracket, "]"),
+            Token(kComma, ","),
+            Token(kLBracket, "["),
+            Token(kString, "a"),
+            Token(kComma, ","),
+            Token(kString, "b"),
+            Token(kRBracket, "]"),
+            Token(kRBracket, "]"),
+            Token(kEof, ""),
+        }
+    );
+}
+
 // TEST(TokenizerOk, mixedArray) {
 //     const auto text = R"(k = [1, "value", [1], { key = "value" }, ])";
 //     testOk(text, {});
 // }
+
+TEST(TokenizerOk, justStringArray) {
+    const auto text = R"(k1.k2 = ["[1]", "{a.b=0}"])";
+    testOk(
+        text,
+        {
+            Token(kKey, "k1"),
+            Token(kDot, "."),
+            Token(kKey, "k2"),
+            Token(kAssignment, "="),
+            Token(kLBracket, "["),
+            Token(kString, "[1]"),
+            Token(kComma, ","),
+            Token(kString, "{a.b=0}"),
+            Token(kRBracket, "]"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, table) {
+    const auto text = R"([table])";
+    testOk(
+        text,
+        {
+            Token(kLBracket, "["),
+            Token(kKey, "table"),
+            Token(kRBracket, "]"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, dottedTable) {
+    const auto text = R"([a.b.c])";
+    testOk(
+        text,
+        {
+            Token(kLBracket, "["),
+            Token(kKey, "a"),
+            Token(kDot, "."),
+            Token(kKey, "b"),
+            Token(kDot, "."),
+            Token(kKey, "c"),
+            Token(kRBracket, "]"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, dottedSpaceTable) {
+    const auto text = R"([ a.b.c ])";
+    testOk(
+        text,
+        {
+            Token(kLBracket, "["),
+            Token(kKey, "a"),
+            Token(kDot, "."),
+            Token(kKey, "b"),
+            Token(kDot, "."),
+            Token(kKey, "c"),
+            Token(kRBracket, "]"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, dottedSpaceTable2) {
+    const auto text = R"([ a . b . c ])";
+    testOk(
+        text,
+        {
+            Token(kLBracket, "["),
+            Token(kKey, "a"),
+            Token(kDot, "."),
+            Token(kKey, "b"),
+            Token(kDot, "."),
+            Token(kKey, "c"),
+            Token(kRBracket, "]"),
+            Token(kEof, ""),
+        }
+    );
+}
 //
-// TEST(TokenizerOk, justStringArray) {
-//     const auto text = R"(k1.k2 = ["[1]", "{a.b=0}"])";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, table) {
-//     const auto text = R"([table])";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, dottedTable) {
-//     const auto text = R"([a.b.c])";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, dottedSpaceTable) {
-//     const auto text = R"([ a.b.c ])";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, dottedSpaceTable2) {
-//     const auto text = R"([ a . b . c ])";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, dottedSpaceTable3) {
-//     const auto text = R"([ j . "ʞ" . 'l' ])";
-//     testOk(text, {});
-// }
+TEST(TokenizerOk, dottedSpaceTable3) {
+    const auto text = R"([ j . "ʞ" . 'l' ])";
+    testOk(
+        text,
+        {
+            Token(kLBracket, "["),
+            Token(kKey, "j"),
+            Token(kDot, "."),
+            Token(kString, "ʞ"),
+            Token(kDot, "."),
+            Token(kString, "l"),
+            Token(kRBracket, "]"),
+            Token(kEof, ""),
+        }
+    );
+}
 //
 // TEST(TokenizerOk, inlineTable) {
 //     const auto text = R"(k = {x=0, y=1})";
@@ -344,17 +470,39 @@ TEST(TokenizerOk, notFloat) {
 //     const auto text = R"(k = { a.b = 0 })";
 //     testOk(text, {});
 // }
-//
-// TEST(TokenizerOk, arrayOfTable) {
-//     const auto text = R"([[array]])";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, dottedArrayOfTable) {
-//     const auto text = R"([[a.b]])";
-//     testOk(text, {});
-// }
-//
+
+TEST(TokenizerOk, arrayOfTable) {
+    const auto text = R"([[array]])";
+    testOk(
+        text,
+        {
+            Token(kLBracket, "["),
+            Token(kLBracket, "["),
+            Token(kKey, "array"),
+            Token(kRBracket, "]"),
+            Token(kRBracket, "]"),
+            Token(kEof, ""),
+        }
+    );
+}
+
+TEST(TokenizerOk, dottedArrayOfTable) {
+    const auto text = R"([[a.b]])";
+    testOk(
+        text,
+        {
+            Token(kLBracket, "["),
+            Token(kLBracket, "["),
+            Token(kKey, "a"),
+            Token(kDot, "."),
+            Token(kKey, "b"),
+            Token(kRBracket, "]"),
+            Token(kRBracket, "]"),
+            Token(kEof, ""),
+        }
+    );
+}
+
 
 TEST(TokenizerErr, invalidChar) {
     const auto text = R"(%)";
