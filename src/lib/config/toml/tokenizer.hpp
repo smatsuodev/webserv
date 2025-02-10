@@ -8,10 +8,8 @@
 
 namespace toml {
     enum TokenType {
-        kKey,
         kDot,
         kComma,
-        kAssignment,
         kValue,
         kTableHeaderOpen,
         kTableHeaderClose,
@@ -21,8 +19,10 @@ namespace toml {
         kArrayClose,
         kNewLine,
 
+        kUnknown,
         kEof,
-        kNum,
+        kSymbol,
+        kAssignment,
     };
 
     class Token {
@@ -60,7 +60,8 @@ namespace toml {
 
         void nextChar();
         void skipWhitespaces();
-        std::string readNumber();
+        bool isSymbolicChar() const;
+        std::string readSymbol();
 
         static Result<Tokens, std::string> tokenizeArray(const std::string &rawArray);
         static Result<Tokens, std::string> tokenizeInlineTable(const std::string &rawInlineTable);

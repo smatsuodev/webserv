@@ -24,25 +24,61 @@ TEST(TokenizerOk, comment) {
     testOk(text, {Token(kEof, "")});
 }
 
-TEST(TokenizerOk, number) {
+TEST(TokenizerOk, numericSymbol) {
     const auto text = R"(42)";
-    testOk(text, {Token(kNum, "42"), Token(kEof, "")});
+    testOk(text, {Token(kSymbol, "42"), Token(kEof, "")});
+}
+
+TEST(TokenizerOk, alphabeticSymbol) {
+    const auto text = R"(key)";
+    testOk(text, {Token(kSymbol, "key"), Token(kEof, "")});
+}
+
+TEST(TokenizerOk, symbolStartWithNumberEndWithAlphabet) {
+    const auto text = R"(42key)";
+    testOk(text, {Token(kSymbol, "42key"), Token(kEof, "")});
+}
+
+TEST(TokenizerOk, symbolStartWithAlphabetEndWithNumber) {
+    const auto text = R"(key42)";
+    testOk(text, {Token(kSymbol, "key42"), Token(kEof, "")});
+}
+
+TEST(TokenizerOk, symbolWithUnderscore) {
+    const auto text = R"(_key_42_)";
+    testOk(text, {Token(kSymbol, "_key_42_"), Token(kEof, "")});
 }
 
 // TEST(TokenizerOk, commentAfterValue) {
 //     const auto text = R"(key = "value" # comment)";
-//     testOk(text, {});
+//     testOk(
+//         text,
+//         {
+//             Token(kSymbol, "key"),
+//             Token(kAssignment, "="),
+//             Token(kSymbol, "value"),
+//             Token(kEof, ""),
+//         }
+//     );
 // }
-//
+
 // TEST(TokenizerOk, notComment) {
 //     const auto text = R"(key = "# this is not comment")";
 //     testOk(text, {});
 // }
-//
-// TEST(TokenizerOk, keyValue) {
-//     const auto text = R"(key = 0)";
-//     testOk(text, {});
-// }
+
+TEST(TokenizerOk, keyValue) {
+    const auto text = R"(key = 0)";
+    testOk(
+        text,
+        {
+            Token(kSymbol, "key"),
+            Token(kAssignment, "="),
+            Token(kSymbol, "0"),
+            Token(kEof, ""),
+        }
+    );
+}
 //
 // TEST(TokenizerOk, intKey) {
 //     const auto text = R"(123 = 0)";
@@ -208,6 +244,12 @@ TEST(TokenizerOk, number) {
 //     testOk(text, {});
 // }
 //
+
+TEST(TokenizerErr, invalidChar) {
+    const auto text = R"(%)";
+    testErr(text);
+}
+
 // TEST(TokenizerErr, noValue) {
 //     const auto text = R"(k = )";
 //     testErr(text);

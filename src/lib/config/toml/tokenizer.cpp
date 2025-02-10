@@ -1,6 +1,8 @@
 #include "tokenizer.hpp"
 
 #include "value.hpp"
+#include "utils/fd.hpp"
+#include "utils/string.hpp"
 #include "utils/types/option.hpp"
 #include "utils/types/try.hpp"
 
@@ -25,7 +27,6 @@ namespace toml {
         return value_;
     }
 
-
     Tokenizer::Tokenizer(const std::string &input) : input_(input), pos_(0), nextPos_(0), ch_('\0') {
         nextChar();
     }
@@ -40,6 +41,10 @@ namespace toml {
         }
     }
 
+    bool Tokenizer::isSymbolicChar() const {
+        return std::isalnum(ch_) || ch_ == '_';
+    }
+
     // in C++98
     Tokenizer::TokenizeResult Tokenizer::tokenize() {
         Tokens tokens;
@@ -47,20 +52,29 @@ namespace toml {
         while (ch_ != '\0') {
             skipWhitespaces();
 
-            if (std::isdigit(ch_)) {
-                std::string literal = readNumber();
-                tokens.push_back(Token(kNum, literal));
+            if (ch_ == '#') {
+                while (ch_ != '\0' && ch_ != '\n') {
+                    nextChar();
+                }
                 continue;
             }
 
-            switch (ch_) {
-                case '#':
-                    while (ch_ != '\0' && ch_ != '\n') {
-                        nextChar();
-                    }
-                    break;
-                default:;
+            if (isSymbolicChar()) {
+                std::string literal = readSymbol();
+                tokens.push_back(Token(kSymbol, literal));
+                continue;
             }
+
+            TokenType type;
+            switch (ch_) {
+                case '=':
+                    type = kAssignment;
+                    break;
+                default:
+                    return Err(utils::format("unknown token: %c", ch_));
+            }
+
+            tokens.push_back(Token(type, utils::toString(ch_)));
             nextChar();
         }
 
@@ -74,9 +88,9 @@ namespace toml {
         }
     }
 
-    std::string Tokenizer::readNumber() {
+    std::string Tokenizer::readSymbol() {
         std::string literal;
-        while (std::isdigit(ch_)) {
+        while (isSymbolicChar()) {
             literal += ch_;
             nextChar();
         }
