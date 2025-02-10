@@ -1,7 +1,7 @@
 #include "status.hpp"
 
 namespace http {
-    HttpStatusCode httpStatusCodeFromInt(int code) {
+    Option<HttpStatusCode> httpStatusCodeFromInt(int code) {
         switch (code) {
             case kStatusContinue:
             case kStatusSwitchingProtocols:
@@ -65,9 +65,9 @@ namespace http {
             case kStatusLoopDetected:
             case kStatusNotExtended:
             case kStatusNetworkAuthenticationRequired:
-                return static_cast<HttpStatusCode>(code);
+                return Some(static_cast<HttpStatusCode>(code));
             default:
-                return kStatusUnknown;
+                return None;
         }
     }
 
