@@ -20,6 +20,9 @@ namespace toml {
         kArrayOpen,
         kArrayClose,
         kNewLine,
+
+        kEof,
+        kNum,
     };
 
     class Token {
@@ -45,9 +48,20 @@ namespace toml {
          * 改行トークンで区切っても良さそう
          */
         typedef Result<Tokens, std::string> TokenizeResult;
-        static TokenizeResult tokenize(const std::string &input);
+
+        explicit Tokenizer(const std::string &input);
+        TokenizeResult tokenize();
 
     private:
+        const std::string &input_;
+        std::string::size_type pos_;
+        std::string::size_type nextPos_;
+        char ch_;
+
+        void nextChar();
+        void skipWhitespaces();
+        std::string readNumber();
+
         static Result<Tokens, std::string> tokenizeArray(const std::string &rawArray);
         static Result<Tokens, std::string> tokenizeInlineTable(const std::string &rawInlineTable);
         static Result<Tokens, std::string> tokenizeTableHeader(const std::string &rawTableHeader);
