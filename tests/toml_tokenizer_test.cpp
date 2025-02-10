@@ -26,37 +26,37 @@ TEST(TokenizerOk, comment) {
 
 TEST(TokenizerOk, numericSymbol) {
     const auto text = R"(42)";
-    testOk(text, {Token(kSymbol, "42"), Token(kEof, "")});
+    testOk(text, {Token(kNum, "42"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, alphabeticSymbol) {
     const auto text = R"(key)";
-    testOk(text, {Token(kSymbol, "key"), Token(kEof, "")});
+    testOk(text, {Token(kKey, "key"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, symbolStartWithNumberEndWithAlphabet) {
     const auto text = R"(42key)";
-    testOk(text, {Token(kSymbol, "42key"), Token(kEof, "")});
+    testOk(text, {Token(kKey, "42key"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, symbolStartWithAlphabetEndWithNumber) {
     const auto text = R"(key42)";
-    testOk(text, {Token(kSymbol, "key42"), Token(kEof, "")});
+    testOk(text, {Token(kKey, "key42"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, symbolWithUnderscore) {
     const auto text = R"(_key_42_)";
-    testOk(text, {Token(kSymbol, "_key_42_"), Token(kEof, "")});
+    testOk(text, {Token(kKey, "_key_42_"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, singleQuotedSymbol) {
     const auto text = R"('ke"y')";
-    testOk(text, {Token(kQuotedSymbol, "ke\"y"), Token(kEof, "")});
+    testOk(text, {Token(kString, "ke\"y"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, doubleQuotedSymbol) {
     const auto text = R"("ke'y")";
-    testOk(text, {Token(kQuotedSymbol, "ke'y"), Token(kEof, "")});
+    testOk(text, {Token(kString, "ke'y"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, commentAfterValue) {
@@ -64,9 +64,9 @@ TEST(TokenizerOk, commentAfterValue) {
     testOk(
         text,
         {
-            Token(kSymbol, "key"),
+            Token(kKey, "key"),
             Token(kAssignment, "="),
-            Token(kQuotedSymbol, "value"),
+            Token(kString, "value"),
             Token(kEof, ""),
         }
     );
@@ -77,9 +77,9 @@ TEST(TokenizerOk, notComment) {
     testOk(
         text,
         {
-            Token(kSymbol, "key"),
+            Token(kKey, "key"),
             Token(kAssignment, "="),
-            Token(kQuotedSymbol, "# this is not comment"),
+            Token(kString, "# this is not comment"),
             Token(kEof, ""),
         }
     );
@@ -90,9 +90,9 @@ TEST(TokenizerOk, keyValue) {
     testOk(
         text,
         {
-            Token(kSymbol, "key"),
+            Token(kKey, "key"),
             Token(kAssignment, "="),
-            Token(kSymbol, "0"),
+            Token(kNum, "0"),
             Token(kEof, ""),
         }
     );
@@ -103,9 +103,9 @@ TEST(TokenizerOk, intKey) {
     testOk(
         text,
         {
-            Token(kSymbol, "123"),
+            Token(kNum, "123"),
             Token(kAssignment, "="),
-            Token(kSymbol, "0"),
+            Token(kNum, "0"),
             Token(kEof, ""),
         }
     );
@@ -116,9 +116,9 @@ TEST(TokenizerOk, quotedKey) {
     testOk(
         text,
         {
-            Token(kQuotedSymbol, "127.0.0.1"),
+            Token(kString, "127.0.0.1"),
             Token(kAssignment, "="),
-            Token(kSymbol, "0"),
+            Token(kNum, "0"),
             Token(kEof, ""),
         }
     );
@@ -129,9 +129,9 @@ TEST(TokenizerOk, keyContainsEq) {
     testOk(
         text,
         {
-            Token(kQuotedSymbol, "a=b"),
+            Token(kString, "a=b"),
             Token(kAssignment, "="),
-            Token(kSymbol, "0"),
+            Token(kNum, "0"),
             Token(kEof, ""),
         }
     );
@@ -142,9 +142,9 @@ TEST(TokenizerOk, unicodeKey) {
     testOk(
         text,
         {
-            Token(kQuotedSymbol, "ʎǝʞ"),
+            Token(kString, "ʎǝʞ"),
             Token(kAssignment, "="),
-            Token(kSymbol, "0"),
+            Token(kNum, "0"),
             Token(kEof, ""),
         }
     );
@@ -155,9 +155,9 @@ TEST(TokenizerOk, singleQuotedKey) {
     testOk(
         text,
         {
-            Token(kQuotedSymbol, "key"),
+            Token(kString, "key"),
             Token(kAssignment, "="),
-            Token(kSymbol, "0"),
+            Token(kNum, "0"),
             Token(kEof, ""),
         }
     );
@@ -168,9 +168,9 @@ TEST(TokenizerOk, quotedQuoteKey) {
     testOk(
         text,
         {
-            Token(kQuotedSymbol, R"("quoted key")"),
+            Token(kString, R"("quoted key")"),
             Token(kAssignment, "="),
-            Token(kSymbol, "0"),
+            Token(kNum, "0"),
             Token(kEof, ""),
         }
     );
@@ -182,9 +182,9 @@ TEST(TokenizerOkDiscouraged, emptyKey) {
     testOk(
         text,
         {
-            Token(kQuotedSymbol, ""),
+            Token(kString, ""),
             Token(kAssignment, "="),
-            Token(kSymbol, "0"),
+            Token(kNum, "0"),
             Token(kEof, ""),
         }
     );
@@ -196,9 +196,9 @@ TEST(TokenizerOkDiscouraged, emptyKeySingle) {
     testOk(
         text,
         {
-            Token(kQuotedSymbol, ""),
+            Token(kString, ""),
             Token(kAssignment, "="),
-            Token(kSymbol, "0"),
+            Token(kNum, "0"),
             Token(kEof, ""),
         }
     );

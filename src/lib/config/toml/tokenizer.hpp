@@ -21,8 +21,9 @@ namespace toml {
 
         kUnknown,
         kEof,
-        kSymbol,
-        kQuotedSymbol,
+        kNum,
+        kKey,
+        kString,
         kAssignment,
     };
 
@@ -63,6 +64,7 @@ namespace toml {
         void skipWhitespaces();
         bool isSymbolicChar() const;
         bool isQuote() const;
+        static bool isNumber(const std::string &literal);
         std::string readSymbol();
         std::string readQuotedSymbol();
 

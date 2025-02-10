@@ -49,6 +49,15 @@ namespace toml {
         return ch_ == '"' || ch_ == '\'';
     }
 
+    bool Tokenizer::isNumber(const std::string &literal) {
+        for (std::string::size_type i = 0; i < literal.size(); i++) {
+            if (!std::isdigit(literal[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // in C++98
     Tokenizer::TokenizeResult Tokenizer::tokenize() {
         Tokens tokens;
@@ -65,13 +74,17 @@ namespace toml {
 
             if (isQuote()) {
                 std::string literal = readQuotedSymbol();
-                tokens.push_back(Token(kQuotedSymbol, literal));
+                tokens.push_back(Token(kString, literal));
                 continue;
             }
 
             if (isSymbolicChar()) {
                 std::string literal = readSymbol();
-                tokens.push_back(Token(kSymbol, literal));
+                if (isNumber(literal)) {
+                    tokens.push_back(Token(kNum, literal));
+                    continue;
+                }
+                tokens.push_back(Token(kKey, literal));
                 continue;
             }
 
