@@ -2,7 +2,9 @@
 #define SRC_LIB_CGI_CONVERTER_HPP
 
 #include "./request.hpp"
+#include "./response.hpp"
 #include "http/request/request.hpp"
+#include "http/response/response.hpp"
 #include "transport/address.hpp"
 
 namespace cgi {
@@ -19,6 +21,15 @@ namespace cgi {
             const std::string &pathInfo;
         };
         static Result<cgi::Request, error::AppError> create(const Parameter &param);
+    };
+
+    class HttpResponseFactory {
+    public:
+        static Result<http::Response, error::AppError> create(const cgi::Response &res);
+
+    private:
+        // Status ヘッダーの値 std::string から HttpStatusCode に変換
+        static Result<Option<http::HttpStatusCode>, error::AppError> statusFromHeader(const std::string &headerValue);
     };
 }
 

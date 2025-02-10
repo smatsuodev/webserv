@@ -1,6 +1,8 @@
 #include "factory.hpp"
 #include "utils/string.hpp"
 #include "utils/types/result.hpp"
+#include <sstream>
+#include <utils/types/try.hpp>
 
 namespace cgi {
     /**
@@ -17,8 +19,15 @@ namespace cgi {
         variables.push_back(MetaVariable("SERVER_PROTOCOL", req.getHttpVersion()));
         variables.push_back(MetaVariable("SERVER_SOFTWARE", "webserv"));
 
-        // body 関連
-        const Option<std::string> body = req.getBody().empty() ? None : Some(req.getBody());
+        /**
+         * 三項演算子で書くと
+         * incompatible operand types ('const types::None' and 'types::Some<string>')
+         * というエラーが出たので、if で書いてる
+         */
+        Option<std::string> body = None;
+        if (!req.getBody().empty()) {
+            body = Some(req.getBody());
+        }
         if (body.isSome()) {
             // Transfer-Encoding: chunked の場合は Content-Length がないので、body の size を直接渡す
             variables.push_back(MetaVariable("CONTENT_LENGTH", utils::toString(body.unwrap().size())));
@@ -39,5 +48,37 @@ namespace cgi {
         variables.push_back(MetaVariable("SERVER_PORT", param.serverPort));
 
         return cgi::Request::create(variables, body);
+    }
+
+    /*
+     * document-response = Content-Type [ Status ] *other-field NL response-body
+     * Status = "Status:" status-code SP reason-phrase NL
+     * status-code = "200" | "302" | "400" | "501" | extension-code
+     */
+    Result<http::Response, error::AppError> HttpResponseFactory::create(const cgi::Response &res) {
+        http::Headers headers(res.getHeaders());
+
+        // 200 がデフォルト、Status ヘッダーがあればそれを使う
+        const http::Headers::const_iterator statusHeader = headers.find("Status");
+        http::HttpStatusCode status = http::kStatusOk;
+        if (statusHeader != headers.end()) {
+            status = TRY(HttpResponseFactory::statusFromHeader(statusHeader->second)).unwrapOr(http::kStatusOk);
+            // http response header として Status は無効なので、削除する
+            headers.erase(statusHeader);
+        }
+
+        return Ok(http::Response(status, headers, res.getBody()));
+    }
+
+    Result<Option<http::HttpStatusCode>, error::AppError>
+    HttpResponseFactory::statusFromHeader(const std::string &headerValue) {
+        // "200 OK" の形式。最初の数値を status として取り出す
+        std::stringstream ss(headerValue);
+        int statusNum;
+        ss >> statusNum;
+        if (ss.fail()) {
+            return Err(error::kUnknown);
+        }
+        return Ok(http::httpStatusCodeFromInt(statusNum));
     }
 }
