@@ -9,16 +9,6 @@
 
 #include "http/mime.hpp"
 
-namespace {
-    http::Response buildFileResponse(const struct stat &st, const std::string &filePath) {
-        if (S_ISREG(st.st_mode)) {
-            return http::ResponseBuilder().file(filePath).build();
-        }
-        LOG_DEBUGF("not a regular file: %s", filePath.c_str());
-        return http::ResponseBuilder().status(http::kStatusForbidden).build();
-    }
-}
-
 namespace http {
     StaticFileHandler::StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)
         : docRootConfig_(docRootConfig) {}
@@ -62,6 +52,14 @@ namespace http {
         return Ok(res);
     }
 
+    Response buildFileResponse(const struct stat &st, const std::string &filePath) {
+        if (S_ISREG(st.st_mode)) {
+            return ResponseBuilder().file(filePath).build();
+        }
+        LOG_DEBUGF("not a regular file: %s", filePath.c_str());
+        return ResponseBuilder().status(kStatusForbidden).build();
+    }
+
     Response StaticFileHandler::directoryListing(const std::string &root, const std::string &target) {
         const Result<std::string, HttpStatusCode> result = makeDirectoryListingHtml(root, target);
         if (result.isErr()) {
@@ -86,11 +84,8 @@ namespace http {
             return directoryListing(docRootConfig_.getRoot(), req.getRequestTarget());
         }
 
-        if (errno == ENOENT) {
-            return ResponseBuilder().status(kStatusForbidden).build();
-        }
-        if (errno == EACCES) {
-            LOG_DEBUGF("permission denied: %s", std::strerror(errno));
+        if (errno == ENOENT || errno == EACCES) {
+            LOG_DEBUGF("Forbidden file: %s", path.c_str());
             return ResponseBuilder().status(kStatusForbidden).build();
         }
         LOG_ERRORF("failed to stat file: %s", std::strerror(errno));
