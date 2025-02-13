@@ -9,6 +9,16 @@
 
 #include "http/mime.hpp"
 
+namespace {
+    http::Response buildFileResponse(const struct stat &st, const std::string &filePath) {
+        if (S_ISREG(st.st_mode)) {
+            return http::ResponseBuilder().file(filePath).build();
+        }
+        LOG_DEBUGF("not a regular file: %s", filePath.c_str());
+        return http::ResponseBuilder().status(http::kStatusForbidden).build();
+    }
+}
+
 namespace http {
     StaticFileHandler::StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)
         : docRootConfig_(docRootConfig) {}
@@ -70,16 +80,13 @@ namespace http {
         const std::string indexPath = path + docRootConfig_.getIndex();
         struct stat indexBuf = {};
         if (stat(indexPath.c_str(), &indexBuf) != -1) {
-            if (S_ISREG(indexBuf.st_mode)) {
-                return ResponseBuilder().file(indexPath).build();
-            }
-            return ResponseBuilder().status(kStatusForbidden).build();
+            return buildFileResponse(indexBuf, indexPath);
         }
+        if (errno == ENOENT && docRootConfig_.isAutoindexEnabled()) {
+            return directoryListing(docRootConfig_.getRoot(), req.getRequestTarget());
+        }
+
         if (errno == ENOENT) {
-            if (docRootConfig_.isAutoindexEnabled()) {
-                return directoryListing(docRootConfig_.getRoot(), req.getRequestTarget());
-            }
-            LOG_DEBUGF("file does not exist: %s", indexPath.c_str());
             return ResponseBuilder().status(kStatusForbidden).build();
         }
         if (errno == EACCES) {
@@ -112,11 +119,6 @@ namespace http {
             return handleDirectory(req, path);
         }
 
-        if (!S_ISREG(buf.st_mode)) {
-            LOG_DEBUGF("is not a regular file: %s", path.c_str());
-            return ResponseBuilder().status(kStatusForbidden).build();
-        }
-
-        return ResponseBuilder().file(path).build();
+        return buildFileResponse(buf, path);
     }
 }
