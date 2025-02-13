@@ -12,68 +12,44 @@ ServerState &ActionContext::getState() const {
 AddConnectionAction::AddConnectionAction(Connection *conn) : conn_(conn) {}
 
 void AddConnectionAction::execute(ActionContext &ctx) {
-    if (conn_) {
-        ctx.getState().getConnectionRepository().set(conn_->getFd(), conn_);
-        // 2回以上実行できないようにする
-        conn_ = NULL;
-    }
+    ctx.getState().getConnectionRepository().set(conn_->getFd(), conn_);
 }
 
-RemoveConnectionAction::RemoveConnectionAction(Connection &conn) : conn_(conn), executed_(false) {}
+RemoveConnectionAction::RemoveConnectionAction(Connection &conn) : conn_(conn) {}
 
 void RemoveConnectionAction::execute(ActionContext &ctx) {
-    if (!executed_) {
-        ctx.getState().getConnectionRepository().remove(conn_.getFd());
-        executed_ = true;
-    }
+    ctx.getState().getConnectionRepository().remove(conn_.getFd());
 }
 
 RegisterEventHandlerAction::RegisterEventHandlerAction(Connection &conn, IEventHandler *handler)
-    : conn_(conn), handler_(handler), executed_(false) {}
+    : conn_(conn), handler_(handler) {}
 
 void RegisterEventHandlerAction::execute(ActionContext &ctx) {
-    if (!executed_) {
-        ctx.getState().getEventHandlerRepository().set(conn_.getFd(), handler_);
-        executed_ = true;
-    }
+    ctx.getState().getEventHandlerRepository().set(conn_.getFd(), handler_);
 }
 
-UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection &conn) : conn_(conn), executed_(false) {}
+UnregisterEventHandlerAction::UnregisterEventHandlerAction(Connection &conn) : conn_(conn) {}
 
 void UnregisterEventHandlerAction::execute(ActionContext &ctx) {
-    if (!executed_) {
-        ctx.getState().getEventHandlerRepository().remove(conn_.getFd());
-        executed_ = true;
-    }
+    ctx.getState().getEventHandlerRepository().remove(conn_.getFd());
 }
 
-RegisterEventAction::RegisterEventAction(const Event &event) : event_(event), executed_(false) {}
+RegisterEventAction::RegisterEventAction(const Event &event) : event_(event) {}
 
 void RegisterEventAction::execute(ActionContext &ctx) {
-    if (!executed_) {
-        ctx.getState().getEventNotifier().registerEvent(event_);
-        executed_ = true;
-    }
+    ctx.getState().getEventNotifier().registerEvent(event_);
 }
 
-UnregisterEventAction::UnregisterEventAction(const Event &event) : event_(event), executed_(false) {}
+UnregisterEventAction::UnregisterEventAction(const Event &event) : event_(event) {}
 
 void UnregisterEventAction::execute(ActionContext &ctx) {
-    if (!executed_) {
-        ctx.getState().getEventNotifier().unregisterEvent(event_);
-        executed_ = true;
-    }
+    ctx.getState().getEventNotifier().unregisterEvent(event_);
 }
 
 ServeHttpAction::ServeHttpAction(const Context &eventCtx, const http::Request &req, EventHandlerFactory *factory)
-    : eventCtx_(eventCtx), req_(req), factory_(factory), executed_(false) {}
+    : eventCtx_(eventCtx), req_(req), factory_(factory) {}
 
 void ServeHttpAction::execute(ActionContext &actionCtx) {
-    if (executed_) {
-        return;
-    }
-    executed_ = true;
-
     const Connection &conn = eventCtx_.getConnection().unwrap();
     // Host ヘッダーは必須なので存在するはず
     const std::string hostHeader = req_.getHeader("Host").unwrap();
