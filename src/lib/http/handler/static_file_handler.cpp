@@ -61,8 +61,36 @@ namespace http {
         return ResponseBuilder().html(res).build();
     }
 
+    Response StaticFileHandler::handleDirectory(const Request &req, const std::string &path) {
+        LOG_DEBUGF("is a directory: %s", path.c_str());
+        // 末尾に / がない場合はリダイレクト
+        if (!utils::endsWith(req.getRequestTarget(), "/")) {
+            return ResponseBuilder().redirect(req.getRequestTarget() + '/').build();
+        }
+        const std::string indexPath = path + docRootConfig_.getIndex();
+        struct stat indexBuf = {};
+        if (stat(indexPath.c_str(), &indexBuf) != -1) {
+            if (S_ISREG(indexBuf.st_mode)) {
+                return ResponseBuilder().file(indexPath).build();
+            }
+            return ResponseBuilder().status(kStatusForbidden).build();
+        }
+        if (errno == ENOENT) {
+            if (docRootConfig_.isAutoindexEnabled()) {
+                return directoryListing(docRootConfig_.getRoot(), req.getRequestTarget());
+            }
+            LOG_DEBUGF("file does not exist: %s", indexPath.c_str());
+            return ResponseBuilder().status(kStatusForbidden).build();
+        }
+        if (errno == EACCES) {
+            LOG_DEBUGF("permission denied: %s", std::strerror(errno));
+            return ResponseBuilder().status(kStatusForbidden).build();
+        }
+        LOG_ERRORF("failed to stat file: %s", std::strerror(errno));
+        return ResponseBuilder().status(kStatusInternalServerError).build();
+    }
+
     Response StaticFileHandler::serve(const Request &req) {
-        // root が '/' で終わると、log で '//' が発生する。
         const std::string path = docRootConfig_.getRoot() + req.getRequestTarget();
         LOG_DEBUGF("request target: %s", req.getRequestTarget().c_str());
 
@@ -81,33 +109,7 @@ namespace http {
         }
 
         if (S_ISDIR(buf.st_mode)) {
-            LOG_DEBUGF("is a directory: %s", path.c_str());
-            // 末尾に / がない場合はリダイレクト
-            if (!utils::endsWith(req.getRequestTarget(), "/")) {
-                return ResponseBuilder().redirect(req.getRequestTarget() + '/').build();
-            }
-            // path は request target を suffix に持つので、path は / で終わる
-            const std::string indexPath = path + docRootConfig_.getIndex();
-            struct stat indexBuf = {};
-            if (stat(indexPath.c_str(), &indexBuf) != -1) {
-                if (S_ISREG(indexBuf.st_mode)) {
-                    return ResponseBuilder().file(indexPath).build();
-                }
-                return ResponseBuilder().status(kStatusForbidden).build();
-            }
-            if (errno == ENOENT) {
-                if (docRootConfig_.isAutoindexEnabled()) {
-                    return directoryListing(docRootConfig_.getRoot(), req.getRequestTarget());
-                }
-                LOG_DEBUGF("file does not exist: %s", indexPath.c_str());
-                return ResponseBuilder().status(kStatusForbidden).build();
-            }
-            if (errno == EACCES) {
-                LOG_DEBUGF("permission denied: %s", std::strerror(errno));
-                return ResponseBuilder().status(kStatusForbidden).build();
-            }
-            LOG_ERRORF("failed to stat file: %s", std::strerror(errno));
-            return ResponseBuilder().status(kStatusInternalServerError).build();
+            return handleDirectory(req, path);
         }
 
         if (!S_ISREG(buf.st_mode)) {

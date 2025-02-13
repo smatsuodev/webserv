@@ -14,6 +14,8 @@ namespace http {
         static Result<std::string, HttpStatusCode>
         makeDirectoryListingHtml(const std::string &root, const std::string &target);
         static Response directoryListing(const std::string &root, const std::string &target);
+        Response handleDirectory(const Request &req, const std::string &path);
+
         config::LocationContext::DocumentRootConfig docRootConfig_;
     };
 } // http
