@@ -552,6 +552,8 @@ TEST(TokenizerOk, dottedArrayOfTable) {
 
 TEST(TokenizerOk, multilineKeyValue) {
     const auto text = R"(key = 0
+key = 0
+
 key = 0)";
     testOk(
         text,
@@ -563,11 +565,27 @@ key = 0)";
             Token(kKey, "key"),
             Token(kAssignment, "="),
             Token(kNum, "0"),
+            Token(kNewLine, "\n"),
+            Token(kNewLine, "\n"),
+            Token(kKey, "key"),
+            Token(kAssignment, "="),
+            Token(kNum, "0"),
             Token(kEof, ""),
         }
     );
 }
 
+TEST(TokenizerOk, boolean) {
+    const auto text = R"(true false)";
+    testOk(
+        text,
+        {
+            Token(kTrue, "true"),
+            Token(kFalse, "false"),
+            Token(kEof, ""),
+        }
+    );
+}
 
 TEST(TokenizerErr, invalidChar) {
     const auto text = R"(%)";

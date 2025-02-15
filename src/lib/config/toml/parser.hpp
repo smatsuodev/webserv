@@ -20,19 +20,17 @@ namespace toml {
         const Tokenizer::Tokens &tokens_;
         int pos_;
         int nextPos_;
-        Option<Token> token_;
+        Token token_;
 
-        /**
-         * 次のトークンを読み込む
-         * @return まだトークンが残っているなら先頭のトークンを返す。<br>
-         * トークンが無いならNoneを返す。
-         */
-        Option<Token> nextToken();
-        bool consume(TokenType expected);
+        Token nextToken();
+        bool consume(int expected);
+        Result<Token, error::AppError> expect(int expected);
+        void consumeNewlines();
+        Result<types::Unit, error::AppError> expectNewlines();
+        bool peek(int expected) const;
 
-        Result<Table, error::AppError> parseExpression(Table table);
         Result<Table, error::AppError> parseKeyVal(Table table);
-        Result<Table, error::AppError> parseTable(Table table);
+        Result<Value, error::AppError> parseVal();
     };
 }
 

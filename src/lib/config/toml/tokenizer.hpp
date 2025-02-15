@@ -8,19 +8,21 @@
 
 namespace toml {
     enum TokenType {
-        kUnknown,
-        kEof,
-        kNewLine,
-        kNum,
-        kKey,
-        kString,
-        kAssignment,
-        kDot,
-        kComma,
-        kLBracket,
-        kRBracket,
-        kLBrace,
-        kRBrace,
+        kUnknown = 0,
+        kEof = 1 << 0,
+        kNewLine = 1 << 1,
+        kNum = 1 << 2,
+        kKey = 1 << 3,
+        kString = 1 << 4,
+        kAssignment = 1 << 5,
+        kDot = 1 << 6,
+        kComma = 1 << 7,
+        kLBracket = 1 << 8,
+        kRBracket = 1 << 9,
+        kLBrace = 1 << 10,
+        kRBrace = 1 << 11,
+        kTrue = 1 << 12,
+        kFalse = 1 << 13,
     };
 
     class Token {
@@ -57,12 +59,13 @@ namespace toml {
         char ch_;
 
         void nextChar();
-        void skipWhitespaces();
         bool isSymbolicChar() const;
         bool isQuote() const;
         static bool isNumber(const std::string &literal);
         static bool isSymbol(const std::string &literal);
         bool isWhitespace() const;
+        void skipWhitespaces();
+        std::string readNewlines();
         std::string readSymbol();
         Result<std::string, std::string> readQuotedSymbol();
     };

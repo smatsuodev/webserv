@@ -101,6 +101,14 @@ namespace toml {
 
             if (isSymbolicChar() || ch_ == '+' || ch_ == '-') {
                 std::string literal = readSymbol();
+                if (literal == "true") {
+                    tokens.push_back(Token(kTrue, literal));
+                    continue;
+                }
+                if (literal == "false") {
+                    tokens.push_back(Token(kFalse, literal));
+                    continue;
+                }
                 if (isNumber(literal)) {
                     tokens.push_back(Token(kNum, literal));
                     continue;
@@ -154,6 +162,15 @@ namespace toml {
         while (isWhitespace()) {
             nextChar();
         }
+    }
+
+    std::string Tokenizer::readNewlines() {
+        std::string newlines;
+        while (ch_ == '\n') {
+            newlines += ch_;
+            nextChar();
+        }
+        return newlines;
     }
 
     std::string Tokenizer::readSymbol() {
