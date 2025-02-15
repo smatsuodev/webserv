@@ -8,14 +8,9 @@
 
 namespace toml {
     enum TokenType {
-        kTableHeaderOpen,
-        kTableHeaderClose,
-        kInlineTableOpen,
-        kInlineTableClose,
-        kNewLine,
-
         kUnknown,
         kEof,
+        kNewLine,
         kNum,
         kKey,
         kString,
@@ -66,6 +61,7 @@ namespace toml {
         bool isSymbolicChar() const;
         bool isQuote() const;
         static bool isNumber(const std::string &literal);
+        bool isWhitespace() const;
         std::string readSymbol();
         std::string readQuotedSymbol();
 

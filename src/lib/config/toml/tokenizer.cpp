@@ -57,13 +57,19 @@ namespace toml {
         }
         return true;
     }
+    bool Tokenizer::isWhitespace() const {
+        return ch_ == ' ' || ch_ == '\t';
+    }
 
     // in C++98
     Tokenizer::TokenizeResult Tokenizer::tokenize() {
         Tokens tokens;
 
         while (ch_ != '\0') {
-            skipWhitespaces();
+            if (isWhitespace()) {
+                skipWhitespaces();
+                continue;
+            }
 
             if (ch_ == '#') {
                 while (ch_ != '\0' && ch_ != '\n') {
@@ -90,6 +96,9 @@ namespace toml {
 
             TokenType type;
             switch (ch_) {
+                case '\n':
+                    type = kNewLine;
+                    break;
                 case '=':
                     type = kAssignment;
                     break;
@@ -124,7 +133,7 @@ namespace toml {
     }
 
     void Tokenizer::skipWhitespaces() {
-        while (ch_ == ' ' || ch_ == '\t') {
+        while (isWhitespace()) {
             nextChar();
         }
     }
