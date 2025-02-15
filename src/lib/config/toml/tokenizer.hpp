@@ -61,19 +61,10 @@ namespace toml {
         bool isSymbolicChar() const;
         bool isQuote() const;
         static bool isNumber(const std::string &literal);
+        static bool isSymbol(const std::string &literal);
         bool isWhitespace() const;
         std::string readSymbol();
-        std::string readQuotedSymbol();
-
-        static Result<Tokens, std::string> tokenizeArray(const std::string &rawArray);
-        static Result<Tokens, std::string> tokenizeInlineTable(const std::string &rawInlineTable);
-        static Result<Tokens, std::string> tokenizeTableHeader(const std::string &rawTableHeader);
-        static Result<Tokens, std::string> tokenizeKeyValue(const std::string &rawKeyValue);
-        static Result<Tokens, std::string> tokenizeKey(const std::string &rawKey);
-        static Result<Tokens, std::string> tokenizeValue(const std::string &rawValue);
-
-        static Option<std::size_t> findAssignment(const std::string &line);
-        static Result<std::vector<std::string>, std::string> splitElements(const std::string &);
+        Result<std::string, std::string> readQuotedSymbol();
     };
 }
 

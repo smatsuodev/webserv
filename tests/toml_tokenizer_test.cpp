@@ -264,15 +264,15 @@ TEST(TokenizerOk, notFloat) {
     );
 }
 
-// TEST(TokenizerOk, plusInteger) {
-//     const auto text = R"(k = +99)";
-//     testOk(text, {});
-// }
-//
-// TEST(TokenizerOk, minusInteger) {
-//     const auto text = R"(k = -17)";
-//     testOk(text, {});
-// }
+TEST(TokenizerOk, plusInteger) {
+    const auto text = R"(+99)";
+    testOk(text, {Token(kNum, "+99"), Token(kEof, "")});
+}
+
+TEST(TokenizerOk, minusInteger) {
+    const auto text = R"(-17)";
+    testOk(text, {Token(kNum, "-17"), Token(kEof, "")});
+}
 
 TEST(TokenizerOk, emptyArray) {
     const auto text = R"([])";
@@ -356,10 +356,31 @@ TEST(TokenizerOk, nestedMixedArray) {
     );
 }
 
-// TEST(TokenizerOk, mixedArray) {
-//     const auto text = R"(k = [1, "value", [1], { key = "value" }, ])";
-//     testOk(text, {});
-// }
+TEST(TokenizerOk, mixedArray) {
+    const auto text = R"(k = [1, "value", [1], { key = "value" }, ])";
+    testOk(
+        text,
+        {Token(kKey, "k"),
+         Token(kAssignment, "="),
+         Token(kLBracket, "["),
+         Token(kNum, "1"),
+         Token(kComma, ","),
+         Token(kString, "value"),
+         Token(kComma, ","),
+         Token(kLBracket, "["),
+         Token(kNum, "1"),
+         Token(kRBracket, "]"),
+         Token(kComma, ","),
+         Token(kLBrace, "{"),
+         Token(kKey, "key"),
+         Token(kAssignment, "="),
+         Token(kString, "value"),
+         Token(kRBrace, "}"),
+         Token(kComma, ","),
+         Token(kRBracket, "]"),
+         Token(kEof, "")}
+    );
+}
 
 TEST(TokenizerOk, justStringArray) {
     const auto text = R"(k1.k2 = ["[1]", "{a.b=0}"])";
@@ -443,7 +464,7 @@ TEST(TokenizerOk, dottedSpaceTable2) {
         }
     );
 }
-//
+
 TEST(TokenizerOk, dottedSpaceTable3) {
     const auto text = R"([ j . "ʞ" . 'l' ])";
     testOk(
@@ -550,6 +571,11 @@ key = 0)";
 
 TEST(TokenizerErr, invalidChar) {
     const auto text = R"(%)";
+    testErr(text);
+}
+
+TEST(TokenizerErr, unclosedString) {
+    const auto text = R"("string)";
     testErr(text);
 }
 

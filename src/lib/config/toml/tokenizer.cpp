@@ -42,7 +42,7 @@ namespace toml {
     }
 
     bool Tokenizer::isSymbolicChar() const {
-        return std::isalnum(ch_) || ch_ == '_';
+        return std::isalnum(ch_) || ch_ == '_' || ch_ == '-';
     }
 
     bool Tokenizer::isQuote() const {
@@ -51,12 +51,27 @@ namespace toml {
 
     bool Tokenizer::isNumber(const std::string &literal) {
         for (std::string::size_type i = 0; i < literal.size(); i++) {
-            if (!std::isdigit(literal[i])) {
+            const char c = literal[i];
+            if (i == 0 && (c == '+' || c == '-')) {
+                continue;
+            }
+            if (!std::isdigit(c)) {
                 return false;
             }
         }
         return true;
     }
+
+    bool Tokenizer::isSymbol(const std::string &literal) {
+        for (std::string::size_type i = 0; i < literal.size(); i++) {
+            const char c = literal[i];
+            if (!std::isalnum(c) && c != '_' && c != '-') {
+                return false;
+            }
+        }
+        return true;
+    }
+
     bool Tokenizer::isWhitespace() const {
         return ch_ == ' ' || ch_ == '\t';
     }
@@ -79,19 +94,22 @@ namespace toml {
             }
 
             if (isQuote()) {
-                std::string literal = readQuotedSymbol();
+                std::string literal = TRY(readQuotedSymbol());
                 tokens.push_back(Token(kString, literal));
                 continue;
             }
 
-            if (isSymbolicChar()) {
+            if (isSymbolicChar() || ch_ == '+' || ch_ == '-') {
                 std::string literal = readSymbol();
                 if (isNumber(literal)) {
                     tokens.push_back(Token(kNum, literal));
                     continue;
                 }
-                tokens.push_back(Token(kKey, literal));
-                continue;
+                if (isSymbol(literal)) {
+                    tokens.push_back(Token(kKey, literal));
+                    continue;
+                }
+                return Err(utils::format("unknown token: %s", literal.c_str()));
             }
 
             TokenType type;
@@ -140,6 +158,10 @@ namespace toml {
 
     std::string Tokenizer::readSymbol() {
         std::string literal;
+        if (ch_ == '+' || ch_ == '-') {
+            literal += ch_;
+            nextChar();
+        }
         while (isSymbolicChar()) {
             literal += ch_;
             nextChar();
@@ -147,17 +169,20 @@ namespace toml {
         return literal;
     }
 
-    std::string Tokenizer::readQuotedSymbol() {
+    Result<std::string, std::string> Tokenizer::readQuotedSymbol() {
         const char quote = ch_;
         nextChar();
 
         std::string literal;
-        while (isSymbolicChar() || ch_ != quote) {
+        while (ch_ != quote && ch_ != '\n' && ch_ != '\0') {
             literal += ch_;
             nextChar();
         }
 
-        if (ch_ == quote) nextChar();
-        return literal;
+        if (ch_ != quote) {
+            return Err(utils::format("expected quote: %c", quote));
+        }
+        nextChar();
+        return Ok(literal);
     }
 }
