@@ -50,6 +50,7 @@ namespace toml {
         Value();
         explicit Value(ValueType type);
         explicit Value(const std::string &value);
+        explicit Value(const char *value);
         explicit Value(long value);
         explicit Value(bool value);
         explicit Value(const Array &value);

@@ -48,20 +48,20 @@ TEST(ParserOk, boolKeyValues) {
     testOk(text, expected);
 }
 
-// TEST(ParserOk, stringKeyValues) {
-//     const auto text = R"(
-//     s1 = "string"
-//     s2 = "string with space"
-//     s3 = "ゆにこーど"
-//     )";
-//     const auto expected = Table({
-//         std::make_pair("s1", Value("string")),
-//         std::make_pair("s2", Value("string with space")),
-//         std::make_pair("s3", Value("ゆにこーど")),
-//     });
-//
-//     testOk(text, expected);
-// }
+TEST(ParserOk, stringKeyValues) {
+    const auto text = R"(
+    s1 = "string"
+    s2 = "string with space"
+    s3 = "ゆにこーど"
+    )";
+    const auto expected = Table({
+        std::make_pair("s1", Value("string")),
+        std::make_pair("s2", Value("string with space")),
+        std::make_pair("s3", Value("ゆにこーど")),
+    });
+
+    testOk(text, expected);
+}
 
 TEST(ParserOk, keyValues) {
     const auto text = R"(

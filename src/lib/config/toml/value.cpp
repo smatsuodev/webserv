@@ -6,6 +6,7 @@ namespace toml {
     Value::Value(const ValueType type) : type_(type), integerValue_(0), booleanValue_(false) {}
     Value::Value(const std::string &value)
         : type_(kString), stringValue_(value), integerValue_(0), booleanValue_(false) {}
+    Value::Value(const char *value) : type_(kString), stringValue_(value), integerValue_(0), booleanValue_(false) {}
     Value::Value(const long value) : type_(kInteger), integerValue_(value), booleanValue_(false) {}
     Value::Value(const bool value) : type_(kBoolean), integerValue_(0), booleanValue_(value) {}
     Value::Value(const Array &value) : type_(kArray), integerValue_(0), booleanValue_(false), arrayValue_(value) {}
