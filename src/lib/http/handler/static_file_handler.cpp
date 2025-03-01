@@ -69,7 +69,7 @@ namespace http {
         return ResponseBuilder().html(res).build();
     }
 
-    Response StaticFileHandler::handleDirectory(const Request &req, const std::string &path) {
+    Response StaticFileHandler::handleDirectory(const Request &req, const std::string &path) const {
         LOG_DEBUGF("is a directory: %s", path.c_str());
         // 末尾に / がない場合はリダイレクト
         if (!utils::endsWith(req.getRequestTarget(), "/")) {
