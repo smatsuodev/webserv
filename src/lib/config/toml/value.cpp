@@ -182,17 +182,21 @@ namespace toml {
     }
 
     /* Table */
-    Table::Table() {}
+    Table::Table() : isEditable_(true) {}
 
-    Table::Table(const std::map<std::string, Value> &values) : values_(values) {}
+    Table::Table(const std::map<std::string, Value> &values) : values_(values), isEditable_(true) {}
 
-    Table::Table(const Table &other) : values_(other.values_) {}
+    Table::Table(const std::map<std::string, Value> &values, bool isEditable)
+        : values_(values), isEditable_(isEditable) {}
+
+    Table::Table(const Table &other) : values_(other.values_), isEditable_(other.isEditable_) {}
 
     Table::~Table() {}
 
     Table &Table::operator=(const Table &other) {
         if (this != &other) {
             values_ = other.values_;
+            isEditable_ = other.isEditable_;
         }
         return *this;
     }
@@ -201,8 +205,12 @@ namespace toml {
         return values_ == other.values_;
     }
 
+    Table Table::readOnly() const {
+        return Table(values_, false);
+    }
+
     Option<Value> Table::setValue(const std::string &key, const Value &value) {
-        if (values_.find(key) != values_.end()) {
+        if (!isEditable_ || values_.find(key) != values_.end()) {
             return None;
         }
         values_[key] = value;

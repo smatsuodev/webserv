@@ -29,11 +29,14 @@ namespace toml {
     public:
         Table();
         explicit Table(const std::map<std::string, Value> &values);
+        Table(const std::map<std::string, Value> &values, bool isEditable);
         Table(const Table &other);
         ~Table();
 
         Table &operator=(const Table &other);
         bool operator==(const Table &other) const;
+
+        Table readOnly() const;
 
         Option<Value> setValue(const std::string &key, const Value &value);
 
@@ -43,6 +46,7 @@ namespace toml {
 
     private:
         std::map<std::string, Value> values_;
+        bool isEditable_;
     };
 
     class Value {

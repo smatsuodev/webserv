@@ -133,88 +133,91 @@ TEST(ParserOkDiscouraged, messyDottedKey) {
     testOk(text, expected);
 }
 
-// TEST(ParserOk, array) {
-//     const auto text = R"(
-//     array = [1,2,]
-//     nested = [[1, ], [2, ]]
-//     deep = [[[1]]]
-//     mix = [1, true, "string", [1], { x = 1 }]
-//     )";
-//
-//     const auto array = Array({Value(1l), Value(2l)});
-//     const auto nested = Array({Value(Array({Value(1l)})), Value(Array({Value(2l)}))});
-//     const auto deep = Array({Value(Array({Value(Array({Value(1l)}))}))});
-//     const auto mix = Array(
-//         {Value(1l),
-//          Value(true),
-//          Value("string"),
-//          Value(Array({Value(1l)})),
-//          Value(Table({std::make_pair("x", Value(1l))}))}
-//     );
-//     const auto expected = Table({
-//         std::make_pair("array", Value(array)),
-//         std::make_pair("nested", Value(nested)),
-//         std::make_pair("deep", Value(deep)),
-//         std::make_pair("mix", Value(mix)),
-//     });
-//
-//     testOk(text, expected);
-// }
-//
-// TEST(ParserOk, table) {
-//     const auto text = R"(
-//     [table]
-//     x = 1
-//     [table.sub]
-//     y = 1
-//     [other]
-//     z = 1
-//     )";
-//     const auto table = Table({
-//         std::make_pair("x", Value(1l)),
-//         std::make_pair("sub", Value(Table({std::make_pair("y", Value(1l))}))),
-//     });
-//     const auto expected = Table({
-//         std::make_pair("table", Value(table)),
-//         std::make_pair("other", Value(Table({std::make_pair("z", Value(1l))}))),
-//     });
-//
-//     testOk(text, expected);
-// }
-//
-// TEST(ParserOk, addSubTable) {
-//     const auto text = R"(
-//     foo.bar = 1
-//     [foo.baz] # foo.baz は定義されていないのでOK
-//     x = 1
-//     )";
-//     const auto fooTable = Table({
-//         std::make_pair("bar", Value(1l)),
-//         std::make_pair("baz", Value(Table({std::make_pair("x", Value(1l))}))),
-//     });
-//     const auto expected = Table({
-//         std::make_pair("foo", Value(fooTable)),
-//     });
-//
-//     testOk(text, expected);
-// }
-//
-// TEST(ParserOkDiscouraged, messyTable) {
-//     const auto text = R"(
-//     [foo.bar]
-//     [x]
-//     [foo.baz]
-//     )";
-//     const auto expected = Table({
-//         std::make_pair(
-//             "foo", Value(Table({std::make_pair("bar", Value(Table())), std::make_pair("baz", Value(Table()))}))
-//         ),
-//         std::make_pair("x", Value(Table())),
-//     });
-//
-//     testOk(text, expected);
-// }
-//
+TEST(ParserOk, array) {
+    const auto text = R"(
+    array = [1,2,]
+    nested = [[1, ], [2, ]]
+    deep = [[[1]]]
+    mix = [
+        1, true, "string",
+        [1], { x = 1 }
+    ]
+    )";
+
+    const auto array = Array({Value(1l), Value(2l)});
+    const auto nested = Array({Value(Array({Value(1l)})), Value(Array({Value(2l)}))});
+    const auto deep = Array({Value(Array({Value(Array({Value(1l)}))}))});
+    const auto mix = Array(
+        {Value(1l),
+         Value(true),
+         Value("string"),
+         Value(Array({Value(1l)})),
+         Value(Table({std::make_pair("x", Value(1l))}))}
+    );
+    const auto expected = Table({
+        std::make_pair("array", Value(array)),
+        std::make_pair("nested", Value(nested)),
+        std::make_pair("deep", Value(deep)),
+        std::make_pair("mix", Value(mix)),
+    });
+
+    testOk(text, expected);
+}
+
+TEST(ParserOk, table) {
+    const auto text = R"(
+    [table]
+    x = 1
+    [table.sub]
+    y = 1
+    [other]
+    z = 1
+    )";
+    const auto table = Table({
+        std::make_pair("x", Value(1l)),
+        std::make_pair("sub", Value(Table({std::make_pair("y", Value(1l))}))),
+    });
+    const auto expected = Table({
+        std::make_pair("table", Value(table)),
+        std::make_pair("other", Value(Table({std::make_pair("z", Value(1l))}))),
+    });
+
+    testOk(text, expected);
+}
+
+TEST(ParserOk, addSubTable) {
+    const auto text = R"(
+    foo.bar = 1
+    [foo.baz] # foo.baz は定義されていないのでOK
+    x = 1
+    )";
+    const auto fooTable = Table({
+        std::make_pair("bar", Value(1l)),
+        std::make_pair("baz", Value(Table({std::make_pair("x", Value(1l))}))),
+    });
+    const auto expected = Table({
+        std::make_pair("foo", Value(fooTable)),
+    });
+
+    testOk(text, expected);
+}
+
+TEST(ParserOkDiscouraged, messyTable) {
+    const auto text = R"(
+    [foo.bar]
+    [x]
+    [foo.baz]
+    )";
+    const auto expected = Table({
+        std::make_pair(
+            "foo", Value(Table({std::make_pair("bar", Value(Table())), std::make_pair("baz", Value(Table()))}))
+        ),
+        std::make_pair("x", Value(Table())),
+    });
+
+    testOk(text, expected);
+}
+
 // TEST(ParserOk, arrayOfTable) {
 //     const auto text = R"(
 //     [[server]]
@@ -281,69 +284,69 @@ TEST(ParserErr, duplicateKeyQuoted) {
     testErr(text);
 }
 
-// TEST(ParserErr, editInlineTable) {
-//     const auto text = R"(
-//     key = { x = 1 }
-//     key.y = 2 # key は inline table なので、上書き不可
-//     )";
-//
-//     testErr(text);
-// }
-//
-// TEST(ParserErr, editTableByInlineTable) {
-//     const auto text = R"(
-//     [key]
-//     foo.bar = 1
-//     foo = { baz = 2 } # 既存の table は inline table で上書き不可
-//     )";
-//
-//     testErr(text);
-// }
-//
-// TEST(ParserErr, sameTable) {
-//     const auto text = R"(
-//     [table]
-//     x = 1
-//     [table] # 同じテーブル
-//     y = 1
-//     )";
-//
-//
-//     testErr(text);
-// }
-//
-// TEST(ParserErr, addByTable) {
-//     const auto text = R"(
-//     [foo]
-//     bar.x = 1
-//     [foo.bar] # 既存の foo.bar に table を再定義不可
-//     y = 1
-//     )";
-//     testErr(text);
-// }
-//
-// TEST(ParserErr, overwriteByTable) {
-//     const auto text = R"(
-//     [table]
-//     x = 1
-//     [table.x]   # x は既に決まってる
-//     y = 1
-//     )";
-//
-//     testErr(text);
-// }
-//
-// TEST(ParserErr, overwriteTableByArrayOfTable) {
-//     const auto text = R"(
-//     [foo]
-//     x = 1
-//     [[foo]] # 既に foo は table なので不可
-//     y = 1
-//     )";
-//
-//     testErr(text);
-// }
-//
+TEST(ParserErr, editInlineTable) {
+    const auto text = R"(
+    key = { x = 1 }
+    key.y = 2 # key は inline table なので、上書き不可
+    )";
+
+    testErr(text);
+}
+
+TEST(ParserErr, editTableByInlineTable) {
+    const auto text = R"(
+    [key]
+    foo.bar = 1
+    foo = { baz = 2 } # 既存の table は inline table で上書き不可
+    )";
+
+    testErr(text);
+}
+
+TEST(ParserErr, sameTable) {
+    const auto text = R"(
+    [table]
+    x = 1
+    [table] # 同じテーブル
+    y = 1
+    )";
+
+
+    testErr(text);
+}
+
+TEST(ParserErr, addByTable) {
+    const auto text = R"(
+    [foo]
+    bar.x = 1
+    [foo.bar] # 既存の foo.bar に table を再定義不可
+    y = 1
+    )";
+    testErr(text);
+}
+
+TEST(ParserErr, overwriteByTable) {
+    const auto text = R"(
+    [table]
+    x = 1
+    [table.x]   # x は既に決まってる
+    y = 1
+    )";
+
+    testErr(text);
+}
+
+TEST(ParserErr, overwriteTableByArrayOfTable) {
+    const auto text = R"(
+    [foo]
+    x = 1
+    [[foo]] # 既に foo は table なので不可
+    y = 1
+    )";
+
+    testErr(text);
+}
+
 // TEST(ParserErr, overwriteArrayByArrayOfTable) {
 //     const auto text = R"(
 //     a = []

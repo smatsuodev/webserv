@@ -29,6 +29,7 @@ namespace toml {
         Result<types::Unit, error::AppError> expectNewlines();
         bool peek(int expected) const;
 
+        Result<Table, error::AppError> parseTableHeader(Table table);
         Result<Table, error::AppError> parseKeyVal(Table table);
         Result<std::vector<std::string>, error::AppError> parseKey();
         Result<Value, error::AppError> parseVal();
