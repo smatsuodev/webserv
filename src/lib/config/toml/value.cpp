@@ -145,6 +145,18 @@ namespace toml {
         return None;
     }
 
+    Value &Table::getValueRef(const std::string &key) {
+        return values_[key];
+    }
+
+    const std::map<std::string, Value> &Table::getValues() const {
+        return values_;
+    }
+
+    Table &Value::getTableRef() {
+        return tableValue_;
+    }
+
     /* Array */
     Array::Array() {}
 
@@ -189,8 +201,12 @@ namespace toml {
         return values_ == other.values_;
     }
 
-    void Table::setValue(const std::string &key, const Value &value) {
+    Option<Value> Table::setValue(const std::string &key, const Value &value) {
+        if (values_.find(key) != values_.end()) {
+            return None;
+        }
         values_[key] = value;
+        return Some(value);
     }
 
     Option<Value> Table::getValue(const std::string &key) const {

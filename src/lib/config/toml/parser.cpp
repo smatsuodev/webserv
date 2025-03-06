@@ -68,12 +68,59 @@ namespace toml {
     }
 
     Result<Table, error::AppError> TomlParser::parseKeyVal(Table table) {
-        const std::string key = TRY(expect(kKey | kString)).getValue();
-
+        std::vector<std::string> keys = TRY(parseKey());
         TRY(expect(kAssignment));
+        Value val = TRY(parseVal());
 
-        table.setValue(key, TRY(parseVal()));
+        if (keys.empty()) {
+            return Err(error::AppError::kParseUnknown);
+        }
+
+        if (keys.size() == 1) {
+            TRY(table.setValue(keys[0], val).okOr(error::kParseUnknown));
+            return Ok(table);
+        }
+
+        Table *currentTable = &table;
+
+        for (size_t i = 0; i < keys.size() - 1; ++i) {
+            const std::string &key = keys[i];
+            Option<Value> nextValue = currentTable->getValue(key);
+
+            if (nextValue.isSome() && nextValue.unwrap().getType() == Value::kTable) {
+                Value tableValue = nextValue.unwrap();
+                Table subTable = tableValue.getTable().unwrap();
+                currentTable->setValue(key, Value(subTable));
+                currentTable = &currentTable->getValueRef(key).getTableRef();
+            } else {
+                Table newTable;
+                currentTable->setValue(key, Value(newTable));
+                currentTable = &currentTable->getValueRef(key).getTableRef();
+            }
+        }
+
+        TRY(currentTable->setValue(keys.back(), val).okOr(error::kParseUnknown));
+
         return Ok(table);
+    }
+
+    // dot で区切られた key をパースする
+    // 例: a.b.c -> ["a", "b", "c"]
+    Result<std::vector<std::string>, error::AppError> TomlParser::parseKey() {
+        std::vector<std::string> keys;
+
+        if (peek(kString)) {
+            keys.push_back(token_.getValue());
+            nextToken();
+            return Ok(keys);
+        }
+
+        keys.push_back(TRY(expect(kKey)).getValue());
+        while (consume(kDot)) {
+            keys.push_back(TRY(expect(kKey)).getValue());
+        }
+
+        return Ok(keys);
     }
 
     Result<Value, error::AppError> TomlParser::parseVal() {

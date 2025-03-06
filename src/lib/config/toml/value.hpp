@@ -35,9 +35,11 @@ namespace toml {
         Table &operator=(const Table &other);
         bool operator==(const Table &other) const;
 
-        void setValue(const std::string &key, const Value &value);
+        Option<Value> setValue(const std::string &key, const Value &value);
 
         Option<Value> getValue(const std::string &key) const;
+        Value &getValueRef(const std::string &key);
+        const std::map<std::string, Value> &getValues() const;
 
     private:
         std::map<std::string, Value> values_;
@@ -73,6 +75,7 @@ namespace toml {
         Option<bool> getBoolean() const;
         Option<Array> getArray() const;
         Option<Table> getTable() const;
+        Table &getTableRef();
 
     private:
         ValueType type_;

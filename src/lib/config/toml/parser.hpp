@@ -18,8 +18,8 @@ namespace toml {
 
     private:
         const Tokenizer::Tokens &tokens_;
-        int pos_;
-        int nextPos_;
+        std::vector<Token>::size_type pos_;
+        std::vector<Token>::size_type nextPos_;
         Token token_;
 
         Token nextToken();
@@ -30,6 +30,7 @@ namespace toml {
         bool peek(int expected) const;
 
         Result<Table, error::AppError> parseKeyVal(Table table);
+        Result<std::vector<std::string>, error::AppError> parseKey();
         Result<Value, error::AppError> parseVal();
     };
 }

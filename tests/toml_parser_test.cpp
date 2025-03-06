@@ -53,11 +53,15 @@ TEST(ParserOk, stringKeyValues) {
     s1 = "string"
     s2 = "string with space"
     s3 = "ゆにこーど"
+    's4' = "single quoted key"
+    "s5" = "double quoted key"
     )";
     const auto expected = Table({
         std::make_pair("s1", Value("string")),
         std::make_pair("s2", Value("string with space")),
         std::make_pair("s3", Value("ゆにこーど")),
+        std::make_pair("s4", Value("single quoted key")),
+        std::make_pair("s5", Value("double quoted key")),
     });
 
     testOk(text, expected);
@@ -77,58 +81,58 @@ TEST(ParserOk, keyValues) {
     testOk(text, expected);
 }
 
-// TEST(ParserOk, dottedKey) {
-//     const auto text = R"(
-//     fruit.count = 2
-//
-//     fruit.apple.color = "red"
-//     fruit.apple.price = 100
-//
-//     fruit.orange.color = "orange"
-//     fruit.orange.price = 200
-//     )";
-//
-//     const auto appleTable = Table({std::make_pair("color", Value("red")), std::make_pair("price", Value(100l))});
-//     const auto orangeTable = Table({std::make_pair("color", Value("orange")), std::make_pair("price", Value(200l))});
-//     const auto expected = Table({std::make_pair(
-//         "fruit",
-//         Value(Table({
-//             std::make_pair("count", Value(2l)),
-//             std::make_pair("apple", Value(appleTable)),
-//             std::make_pair("orange", Value(orangeTable)),
-//         }))
-//     )});
-//
-//     testOk(text, expected);
-// }
-//
-// TEST(ParserOkDiscouraged, messyDottedKey) {
-//     const auto text = R"(
-//     fruit.count = 2
-//
-//     # fruit.*.color を代入
-//     fruit.apple.color = "red"
-//     fruit.orange.color = "orange"
-//
-//     # fruit.*.price を代入
-//     fruit.apple.price = 100
-//     fruit.orange.price = 200
-//     )";
-//
-//     const auto appleTable = Table({std::make_pair("color", Value("red")), std::make_pair("price", Value(100l))});
-//     const auto orangeTable = Table({std::make_pair("color", Value("orange")), std::make_pair("price", Value(200l))});
-//     const auto expected = Table({std::make_pair(
-//         "fruit",
-//         Value(Table({
-//             std::make_pair("count", Value(2l)),
-//             std::make_pair("apple", Value(appleTable)),
-//             std::make_pair("orange", Value(orangeTable)),
-//         }))
-//     )});
-//
-//     testOk(text, expected);
-// }
-//
+TEST(ParserOk, dottedKey) {
+    const auto text = R"(
+    fruit.count = 2
+
+    fruit.apple.color = "red"
+    fruit.apple.price = 100
+
+    fruit.orange.color = "orange"
+    fruit.orange.price = 200
+    )";
+
+    const auto appleTable = Table({std::make_pair("color", Value("red")), std::make_pair("price", Value(100l))});
+    const auto orangeTable = Table({std::make_pair("color", Value("orange")), std::make_pair("price", Value(200l))});
+    const auto expected = Table({std::make_pair(
+        "fruit",
+        Value(Table({
+            std::make_pair("count", Value(2l)),
+            std::make_pair("apple", Value(appleTable)),
+            std::make_pair("orange", Value(orangeTable)),
+        }))
+    )});
+
+    testOk(text, expected);
+}
+
+TEST(ParserOkDiscouraged, messyDottedKey) {
+    const auto text = R"(
+    fruit.count = 2
+
+    # fruit.*.color を代入
+    fruit.apple.color = "red"
+    fruit.orange.color = "orange"
+
+    # fruit.*.price を代入
+    fruit.apple.price = 100
+    fruit.orange.price = 200
+    )";
+
+    const auto appleTable = Table({std::make_pair("color", Value("red")), std::make_pair("price", Value(100l))});
+    const auto orangeTable = Table({std::make_pair("color", Value("orange")), std::make_pair("price", Value(200l))});
+    const auto expected = Table({std::make_pair(
+        "fruit",
+        Value(Table({
+            std::make_pair("count", Value(2l)),
+            std::make_pair("apple", Value(appleTable)),
+            std::make_pair("orange", Value(orangeTable)),
+        }))
+    )});
+
+    testOk(text, expected);
+}
+
 // TEST(ParserOk, array) {
 //     const auto text = R"(
 //     array = [1,2,]
@@ -258,25 +262,25 @@ TEST(ParserErr, exprInSameLine) {
     testErr(text);
 }
 
-// TEST(ParserErr, duplicateKey) {
-//     const auto text = R"(
-//     key = 0
-//     key = 0 # 同じキー
-//     )";
-//
-//     testErr(text);
-// }
-//
-// TEST(ParserErr, duplicateKeyQuoted) {
-//     const auto text = R"(
-//     key = 0
-//     "key" = 0 # quote しても同じキー
-//     )";
-//
-//
-//     testErr(text);
-// }
-//
+TEST(ParserErr, duplicateKey) {
+    const auto text = R"(
+    key = 0
+    key = 0 # 同じキー
+    )";
+
+    testErr(text);
+}
+
+TEST(ParserErr, duplicateKeyQuoted) {
+    const auto text = R"(
+    key = 0
+    "key" = 0 # quote しても同じキー
+    )";
+
+
+    testErr(text);
+}
+
 // TEST(ParserErr, editInlineTable) {
 //     const auto text = R"(
 //     key = { x = 1 }
