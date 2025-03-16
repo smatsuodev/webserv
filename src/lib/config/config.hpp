@@ -97,12 +97,14 @@ namespace config {
         LocationContext(
             const std::string &path,
             const DocumentRootConfig &docRootConfig,
-            const AllowedMethods &allowedMethods = getDefaultAllowedMethods()
+            const AllowedMethods &allowedMethods = getDefaultAllowedMethods(),
+            const std::vector<std::string> &cgiExtensions = std::vector<std::string>()
         );
         LocationContext(
             const std::string &path,
             const std::string &redirect,
-            const AllowedMethods &allowedMethods = getDefaultAllowedMethods()
+            const AllowedMethods &allowedMethods = getDefaultAllowedMethods(),
+            const std::vector<std::string> &cgiExtensions = std::vector<std::string>()
         );
         LocationContext(const LocationContext &other);
 
@@ -121,6 +123,7 @@ namespace config {
         std::vector<http::HttpMethod> allowedMethods_;
         Option<DocumentRootConfig> docRootConfig_;
         Option<std::string> redirect_;
+        std::vector<std::string> cgiExtensions_;
 
         static AllowedMethods getDefaultAllowedMethods();
     };
