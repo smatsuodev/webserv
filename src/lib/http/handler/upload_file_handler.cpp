@@ -7,12 +7,10 @@ http::UploadFileHandler::UploadFileHandler(const config::LocationContext::Docume
     : docConfig_(config) {}
 
 http::Response http::UploadFileHandler::serve(const Request &req) {
-    // リクエストメソッドの確認
     if (req.getMethod() != kMethodPost) {
         return Response(kStatusMethodNotAllowed, Headers(), Some(std::string("Only POST method is allowed")));
     }
 
-    // リクエストヘッダーの検証
     Option<std::string> contentTypeOpt = req.getHeader("Content-Type");
     if (contentTypeOpt.isNone() || contentTypeOpt.unwrap().find("multipart/form-data") != 0) {
         return Response(kStatusBadRequest, Headers(), Some(std::string("Content-Type must be multipart/form-data")));
@@ -25,8 +23,7 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
     }
 
     std::string boundary;
-    boundaryPos += 9; // "boundary="の長さ
-
+    boundaryPos += 9;
     if (boundaryPos < contentType.length()) {
         std::string paramValue = contentType.substr(boundaryPos);
 
@@ -51,12 +48,10 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
         return Response(kStatusBadRequest, Headers(), Some(std::string("Invalid or empty boundary parameter")));
     }
 
-    // マルチパートデータのパース
     const std::string &body = req.getBody();
     std::string delimiter = "--" + boundary;
     std::vector<std::string> parts;
 
-    // 先頭の区切り文字を探す
     std::string::size_type pos = body.find(delimiter);
     if (pos == std::string::npos) {
         return Response(
@@ -64,10 +59,9 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
         );
     }
 
-    // 先頭の区切り文字をスキップ
     pos += delimiter.length();
     if (pos + 1 < body.length() && body[pos] == '\r' && body[pos + 1] == '\n') {
-        pos += 2; // CRLF をスキップ
+        pos += 2;
     } else {
         return Response(
             kStatusBadRequest, Headers(), Some(std::string("Invalid multipart format: expected CRLF after boundary"))
@@ -75,7 +69,6 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
     }
 
     while (true) {
-        // 次の区切り文字を探す
         std::string::size_type nextPos = body.find(delimiter, pos);
         if (nextPos == std::string::npos) {
             return Response(
@@ -83,10 +76,8 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
             );
         }
 
-        // パート本体を取得
         std::string part = body.substr(pos, nextPos - pos);
 
-        // ヘッダーとボディを分離
         std::string::size_type headerEnd = part.find("\r\n\r\n");
         if (headerEnd == std::string::npos) {
             return Response(
@@ -95,20 +86,17 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
         }
 
         std::string headers = part.substr(0, headerEnd);
-        std::string content = part.substr(headerEnd + 4); // "\r\n\r\n"の長さが4
-
-        // Content-Dispositionヘッダーを解析
+        std::string content = part.substr(headerEnd + 4);
         std::string name;
         std::string filename;
 
-        // Content-Dispositionヘッダーを解析する部分を修正
         std::istringstream headerStream(headers);
         std::string headerLine;
         while (std::getline(headerStream, headerLine)) {
             if (headerLine.find("Content-Disposition:") == 0) {
                 std::string::size_type namePos = headerLine.find("name=");
                 if (namePos != std::string::npos) {
-                    namePos += 5; // "name="の長さ
+                    namePos += 5;
                     if (namePos < headerLine.length() && headerLine[namePos] == '"') {
                         std::string::size_type endQuote = headerLine.find('"', namePos + 1);
                         if (endQuote != std::string::npos) {
@@ -119,7 +107,7 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
 
                 std::string::size_type filenamePos = headerLine.find("filename=");
                 if (filenamePos != std::string::npos) {
-                    filenamePos += 9; // "filename="の長さ
+                    filenamePos += 9;
                     if (filenamePos < headerLine.length() && headerLine[filenamePos] == '"') {
                         std::string::size_type endQuote = headerLine.find('"', filenamePos + 1);
                         if (endQuote != std::string::npos) {
@@ -130,17 +118,13 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
             }
         }
 
-        // filenameが空の場合は、nameをfilenameとして使用する
         if (filename.empty() && !name.empty()) {
             filename = name;
         }
 
-        // ファイルアップロード処理
         if (!filename.empty()) {
-            // セキュリティ対策不要なので、ファイル名をそのまま使用
             std::string filePath = docConfig_.getRoot() + "/" + filename;
 
-            // CRLFの処理（末尾がCRLFで終わっている場合は削除）
             if (content.length() >= 2 && content[content.length() - 2] == '\r' &&
                 content[content.length() - 1] == '\n') {
                 content = content.substr(0, content.length() - 2);
@@ -162,15 +146,13 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
             }
         }
 
-        // 次のパートに移動
         pos = nextPos + delimiter.length();
 
-        // 終了判定
         if (pos + 1 < body.length() && body[pos] == '-' && body[pos + 1] == '-') {
-            break; // 終了区切り文字 (--boundary--) を検出
+            break;
         }
         if (pos + 1 < body.length() && body[pos] == '\r' && body[pos + 1] == '\n') {
-            pos += 2; // 次のパートへ
+            pos += 2;
         } else {
             return Response(
                 kStatusBadRequest,
