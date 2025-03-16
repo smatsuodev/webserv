@@ -1,5 +1,13 @@
 #include "config.hpp"
 
+#include "http/handler/middleware/logger.hpp"
+#include "toml/parser.hpp"
+#include "toml/value.hpp"
+#include "utils/logger.hpp"
+
+#include <fstream>
+#include <iostream>
+
 namespace config {
     /* Config */
     Config::Config(const std::vector<ServerContext> &servers) : servers_(servers) {}
@@ -15,6 +23,38 @@ namespace config {
 
     bool Config::operator==(const Config &rhs) const {
         return servers_ == rhs.servers_;
+    }
+
+    Option<Config> Config::loadConfigFromFile(const std::string &path) {
+        try {
+            std::ifstream configFile(path);
+            if (!configFile.is_open()) {
+                LOG_ERROR("Cannot open config file");
+                return None;
+            }
+
+            std::string fileContent;
+            std::string line;
+            while (std::getline(configFile, line)) {
+                fileContent += line + "\n";
+            }
+
+            toml::Table configTable =
+                toml::TomlParser(toml::Tokenizer(fileContent).tokenize().unwrap()).parse().unwrap();
+            std::vector<toml::Value> serverConfigs =
+                configTable.getValue("server").unwrap().getArray().unwrap().getElements();
+            std::vector<ServerContext> servers;
+
+            for (size_t i = 0; i < serverConfigs.size(); ++i) {
+                toml::Table serverTable = serverConfigs[i].getTable().unwrap();
+                servers.push_back(ServerContext::parseFromToml(serverTable));
+            }
+
+            return Some(Config(servers));
+        } catch (const std::exception &e) {
+            LOG_ERRORF("Config::loadConfigFromFile: %s", e.what());
+            return None;
+        }
     }
 
     const std::vector<ServerContext> &Config::getServers() const {
@@ -52,6 +92,57 @@ namespace config {
     bool ServerContext::operator==(const ServerContext &rhs) const {
         return host_ == rhs.host_ && port_ == rhs.port_ && clientMaxBodySize_ == rhs.clientMaxBodySize_ &&
             serverName_ == rhs.serverName_ && errorPage_ == rhs.errorPage_ && locations_ == rhs.locations_;
+    }
+
+    ServerContext ServerContext::parseFromToml(const toml::Table &serverTable) {
+        std::string host = "0.0.0.0";
+        if (serverTable.hasKey("host")) {
+            host = serverTable.getValue("host").unwrap().getString().unwrap();
+        }
+
+        uint16_t port = 80;
+        if (serverTable.hasKey("port")) {
+            port = static_cast<uint16_t>(serverTable.getValue("port").unwrap().getInteger().unwrap());
+        }
+
+        std::vector<std::string> serverNames;
+        if (serverTable.hasKey("server_name")) {
+            std::vector<toml::Value> serverNameValues =
+                serverTable.getValue("server_name").unwrap().getArray().unwrap().getElements();
+            for (size_t j = 0; j < serverNameValues.size(); ++j) {
+                serverNames.push_back(serverNameValues[j].getString().unwrap());
+            }
+        }
+
+        ErrorPageMap errorPages;
+        if (serverTable.hasKey("error_page")) {
+            toml::Table errorPageTable = serverTable.getValue("error_page").unwrap().getTable().unwrap();
+            std::vector<std::string> keys = errorPageTable.getKeys();
+            for (size_t j = 0; j < keys.size(); ++j) {
+                long statusCode = std::stol(keys[j]);
+                http::HttpStatusCode httpStatusCode = static_cast<http::HttpStatusCode>(statusCode);
+                std::string path = errorPageTable.getValue(keys[j]).unwrap().getString().unwrap();
+                errorPages[httpStatusCode] = path;
+            }
+        }
+
+        std::size_t clientMaxBodySize = kDefaultClientMaxBodySize;
+        if (serverTable.hasKey("client_max_body_size")) {
+            clientMaxBodySize = serverTable.getValue("client_max_body_size").unwrap().getInteger().unwrap();
+        }
+
+        std::vector<LocationContext> locations;
+        if (serverTable.hasKey("location")) {
+            std::vector<toml::Value> locationConfigs =
+                serverTable.getValue("location").unwrap().getArray().unwrap().getElements();
+
+            for (size_t j = 0; j < locationConfigs.size(); ++j) {
+                toml::Table locationTable = locationConfigs[j].getTable().unwrap();
+                locations.push_back(LocationContext::parseFromToml(locationTable));
+            }
+        }
+
+        return ServerContext(host, port, locations, serverNames, errorPages, clientMaxBodySize);
     }
 
     const std::string &ServerContext::getHost() const {
@@ -106,6 +197,55 @@ namespace config {
     bool LocationContext::operator==(const LocationContext &rhs) const {
         return path_ == rhs.path_ && allowedMethods_ == rhs.allowedMethods_ && redirect_ == rhs.redirect_ &&
             docRootConfig_ == rhs.docRootConfig_;
+    }
+
+    LocationContext LocationContext::parseFromToml(const toml::Table &locationTable) {
+        std::string path = "/";
+        if (locationTable.hasKey("path")) {
+            path = locationTable.getValue("path").unwrap().getString().unwrap();
+        }
+
+        if (locationTable.hasKey("redirect")) {
+            std::string redirect = locationTable.getValue("redirect").unwrap().getString().unwrap();
+            return LocationContext(path, redirect);
+        }
+
+        std::string root = "./";
+        if (locationTable.hasKey("root")) {
+            root = locationTable.getValue("root").unwrap().getString().unwrap();
+        }
+
+        std::string index = "index.html";
+        if (locationTable.hasKey("index")) {
+            index = locationTable.getValue("index").unwrap().getString().unwrap();
+        }
+
+        bool autoindex = false;
+        if (locationTable.hasKey("autoindex")) {
+            std::string autoindexValue = locationTable.getValue("autoindex").unwrap().getString().unwrap();
+            autoindex = (autoindexValue == "on");
+        }
+
+        std::vector<http::HttpMethod> allowedMethods = getDefaultAllowedMethods();
+        if (locationTable.hasKey("allowed_methods")) {
+            std::vector<toml::Value> methodValues =
+                locationTable.getValue("allowed_methods").unwrap().getArray().unwrap().getElements();
+            allowedMethods.clear();
+
+            for (size_t k = 0; k < methodValues.size(); ++k) {
+                std::string methodStr = methodValues[k].getString().unwrap();
+                if (methodStr == "GET") {
+                    allowedMethods.push_back(http::kMethodGet);
+                } else if (methodStr == "POST") {
+                    allowedMethods.push_back(http::kMethodPost);
+                } else if (methodStr == "DELETE") {
+                    allowedMethods.push_back(http::kMethodDelete);
+                }
+            }
+        }
+
+        DocumentRootConfig docRootConfig(root, autoindex, index);
+        return LocationContext(path, docRootConfig, allowedMethods);
     }
 
     const std::string &LocationContext::getPath() const {

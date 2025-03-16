@@ -3,6 +3,7 @@
 
 #include "http/method.hpp"
 #include "http/status.hpp"
+#include "toml/value.hpp"
 #include "utils/types/option.hpp"
 #include <stdint.h> // NOLINT(*-deprecated-headers)
 #include <string>
@@ -23,6 +24,8 @@ namespace config {
 
         Config &operator=(const Config &rhs);
         bool operator==(const Config &rhs) const;
+
+        static Option<Config> loadConfigFromFile(const std::string &path);
 
         const ServerContextList &getServers() const;
 
@@ -46,6 +49,8 @@ namespace config {
 
         ServerContext &operator=(const ServerContext &rhs);
         bool operator==(const ServerContext &rhs) const;
+
+        static ServerContext parseFromToml(const toml::Table &serverTable);
 
         const std::string &getHost() const;
         uint16_t getPort() const;
@@ -103,6 +108,8 @@ namespace config {
 
         LocationContext &operator=(const LocationContext &rhs);
         bool operator==(const LocationContext &rhs) const;
+
+        static LocationContext parseFromToml(const toml::Table &locationTable);
 
         const std::string &getPath() const;
         const std::vector<http::HttpMethod> &getAllowedMethods() const;
