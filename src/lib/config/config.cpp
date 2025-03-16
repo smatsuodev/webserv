@@ -202,20 +202,14 @@ namespace config {
     }
 
     LocationContext LocationContext::fromToml(const toml::Table &locationTable) {
-        std::string path = "/";
-        if (locationTable.hasKey("path")) {
-            path = locationTable.getValue("path").unwrap().getString().unwrap();
-        }
+        std::string path = locationTable.getValue("path").unwrap().getString().unwrap();
 
         if (locationTable.hasKey("redirect")) {
             std::string redirect = locationTable.getValue("redirect").unwrap().getString().unwrap();
             return LocationContext(path, redirect);
         }
 
-        std::string root = "./";
-        if (locationTable.hasKey("root")) {
-            root = locationTable.getValue("root").unwrap().getString().unwrap();
-        }
+        std::string root = locationTable.getValue("root").unwrap().getString().unwrap();
 
         std::string index = "index.html";
         if (locationTable.hasKey("index")) {
@@ -236,13 +230,12 @@ namespace config {
 
             for (size_t k = 0; k < methodValues.size(); ++k) {
                 std::string methodStr = methodValues[k].getString().unwrap();
-                if (methodStr == "GET") {
-                    allowedMethods.push_back(http::kMethodGet);
-                } else if (methodStr == "POST") {
-                    allowedMethods.push_back(http::kMethodPost);
-                } else if (methodStr == "DELETE") {
-                    allowedMethods.push_back(http::kMethodDelete);
+                http::HttpMethod method = http::httpMethodFromString(methodStr);
+                if (method == http::HttpMethod::kMethodUnknown) {
+                    LOG_ERRORF("unknown http method: %s", methodStr.c_str());
+                    throw std::runtime_error("unknown method: " + methodStr);
                 }
+                allowedMethods.push_back(method);
             }
         }
 
