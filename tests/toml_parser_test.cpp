@@ -218,45 +218,57 @@ TEST(ParserOkDiscouraged, messyTable) {
     testOk(text, expected);
 }
 
-// TEST(ParserOk, arrayOfTable) {
-//     const auto text = R"(
-//     [[server]]
-//     port = 80
-//     [[server]]
-//     port = 3000
-//     [[server]]  # empty
-//     )";
-//     const auto expected = Table({std::make_pair(
-//         "server",
-//         Value(Array({
-//             Value(Table({std::make_pair("port", Value(80l))})),
-//             Value(Table({std::make_pair("port", Value(3000l))})),
-//             Value(Table()),
-//         }))
-//     )});
-//
-//     testOk(text, expected);
-// }
-//
-// TEST(ParserOk, arrayOfNestedTable) {
-//     const auto text = R"(
-//     [[server]]
-//     port = 80
-//     [server.error_page]
-//     404 = "404.html"
-//     [server.foo]
-//     x = 1
-//     )";
-//     const auto errorPage = Table({std::make_pair("404", Value("404.html"))});
-//     const auto table = Table({
-//         std::make_pair("port", Value(80l)),
-//         std::make_pair("error_page", Value(errorPage)),
-//         std::make_pair("foo", Value(Table({std::make_pair("x", Value(1l))}))),
-//     });
-//     const auto expected = Table({std::make_pair("server", Value(Array({Value(table)})))});
-//
-//     testOk(text, expected);
-// }
+TEST(ParserOk, arrayOfTable) {
+    const auto text = R"(
+    [[server]]
+    port = 80
+    [[server]]
+    port = 3000
+    [[server]]  # empty
+    )";
+    const auto expected = Table({std::make_pair(
+        "server",
+        Value(Array({
+            Value(Table({std::make_pair("port", Value(80l))})),
+            Value(Table({std::make_pair("port", Value(3000l))})),
+            Value(Table()),
+        }))
+    )});
+
+    testOk(text, expected);
+}
+
+TEST(ParserOk, arrayOfNestedTable) {
+    const auto text = R"(
+    [[server]]
+    port = 80
+    [server.error_page]
+    404 = "404.html"
+    [server.foo]
+    x = 1
+
+    [[server]]
+    port = 443
+    [server.error_page]
+    404 = "404.html"
+    [server.foo]
+    x = 2
+    )";
+    const auto errorPage = Table({std::make_pair("404", Value("404.html"))});
+    const auto table1 = Table({
+        std::make_pair("port", Value(80l)),
+        std::make_pair("error_page", Value(errorPage)),
+        std::make_pair("foo", Value(Table({std::make_pair("x", Value(1l))}))),
+    });
+    const auto table2 = Table({
+        std::make_pair("port", Value(443l)),
+        std::make_pair("error_page", Value(errorPage)),
+        std::make_pair("foo", Value(Table({std::make_pair("x", Value(2l))}))),
+    });
+    const auto expected = Table({std::make_pair("server", Value(Array({Value(table1), Value(table2)})))});
+
+    testOk(text, expected);
+}
 
 TEST(ParserErr, exprInSameLine) {
     const auto text = R"(
@@ -347,21 +359,21 @@ TEST(ParserErr, overwriteTableByArrayOfTable) {
     testErr(text);
 }
 
-// TEST(ParserErr, overwriteArrayByArrayOfTable) {
-//     const auto text = R"(
-//     a = []
-//     [[a]] # a は既に配列
-//     )";
-//
-//     testErr(text);
-// }
-//
-// TEST(ParserErr, overwriteArrayOfTableByTableNested) {
-//     const auto text = R"(
-//     [[array]]
-//     [[array.nestedArray]]
-//     [array.nestedArray] # nestedArray は既に配列
-//     )";
-//
-//     testErr(text);
-// }
+TEST(ParserErr, overwriteArrayByArrayOfTable) {
+    const auto text = R"(
+    a = []
+    [[a]] # a は既に配列
+    )";
+
+    testErr(text);
+}
+
+TEST(ParserErr, overwriteArrayOfTableByTableNested) {
+    const auto text = R"(
+    [[array]]
+    [[array.nestedArray]]
+    [array.nestedArray] # nestedArray は既に配列
+    )";
+
+    testErr(text);
+}

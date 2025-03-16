@@ -1,6 +1,7 @@
 #ifndef SRC_LIB_CONFIG_TOML_VALUE_HPP
 #define SRC_LIB_CONFIG_TOML_VALUE_HPP
 
+#include "utils/types/error.hpp"
 #include "utils/types/option.hpp"
 #include <string>
 #include <vector>
@@ -20,6 +21,8 @@ namespace toml {
         bool operator==(const Array &other) const;
 
         void addElement(const Value &value);
+        size_t size() const;
+        Value &getElementRef(size_t index);
 
     private:
         std::vector<Value> elements_;
@@ -43,6 +46,7 @@ namespace toml {
         Option<Value> getValue(const std::string &key) const;
         Value &getValueRef(const std::string &key);
         const std::map<std::string, Value> &getValues() const;
+        Result<Table *, error::AppError> findOrCreateTablePath(const std::vector<std::string> &keys);
 
     private:
         std::map<std::string, Value> values_;
@@ -80,6 +84,7 @@ namespace toml {
         Option<Array> getArray() const;
         Option<Table> getTable() const;
         Table &getTableRef();
+        Array &getArrayRef();
 
     private:
         ValueType type_;

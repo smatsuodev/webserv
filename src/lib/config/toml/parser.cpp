@@ -58,7 +58,12 @@ namespace toml {
 
         while (token_.getType() != kEof) {
             if (peek(kLBracket)) {
-                table = TRY(parseTableHeader(table));
+                nextToken();
+                if (peek(kLBracket)) {
+                    table = TRY(parseArrayOfTableHeader(table));
+                } else {
+                    table = TRY(parseTableHeader(table));
+                }
             } else {
                 table = TRY(parseKeyVal(table));
                 expectNewlines();
@@ -68,8 +73,45 @@ namespace toml {
         return Ok(table);
     }
 
+    Result<Table, error::AppError> TomlParser::parseArrayOfTableHeader(Table table) {
+        nextToken();
+        std::vector<std::string> keys = TRY(parseKey());
+        TRY(expect(kRBracket));
+        TRY(expect(kRBracket));
+
+        if (keys.empty()) {
+            return Err(error::AppError::kParseUnknown);
+        }
+
+        Table *currentTable = TRY(table.findOrCreateTablePath(keys));
+        const std::string &lastKey = keys.back();
+        Option<Value> lastValue = currentTable->getValue(lastKey);
+        Table newTable;
+
+        if (lastValue.isSome()) {
+            Value &value = currentTable->getValueRef(lastKey);
+            if (value.getType() == Value::kArray) {
+                Array &array = value.getArrayRef();
+                if (array.size() == 0) {
+                    return Err(error::AppError::kParseUnknown);
+                }
+                array.addElement(Value(newTable));
+                currentTable = &array.getElementRef(array.size() - 1).getTableRef();
+            } else {
+                return Err(error::AppError::kParseUnknown);
+            }
+        } else {
+            Array array;
+            array.addElement(Value(newTable));
+            TRY(currentTable->setValue(lastKey, Value(array)).okOr(error::kParseUnknown));
+            currentTable = &currentTable->getValueRef(lastKey).getArrayRef().getElementRef(0).getTableRef();
+        }
+
+        TRY(parseTableContent(*currentTable));
+        return Ok(table);
+    }
+
     Result<Table, error::AppError> TomlParser::parseTableHeader(Table table) {
-        TRY(expect(kLBracket));
         std::vector<std::string> keys = TRY(parseKey());
         TRY(expect(kRBracket));
 
@@ -77,29 +119,10 @@ namespace toml {
             return Err(error::AppError::kParseUnknown);
         }
 
-        // ルートテーブルへのパスを作成
-        Table *currentTable = &table;
-
-        for (size_t i = 0; i < keys.size() - 1; ++i) {
-            const std::string &key = keys[i];
-            Option<Value> nextValue = currentTable->getValue(key);
-
-            if (nextValue.isSome() && nextValue.unwrap().getType() == Value::kTable) {
-                // 既存のテーブルを取得
-                currentTable = &currentTable->getValueRef(key).getTableRef();
-            } else {
-                // 新しいテーブルを作成
-                Table newTable;
-                currentTable->setValue(key, Value(newTable));
-                currentTable = &currentTable->getValueRef(key).getTableRef();
-            }
-        }
-
-        // 最後のキーに空テーブルを設定
+        Table *currentTable = TRY(table.findOrCreateTablePath(keys));
         const std::string &lastKey = keys.back();
         Table newTable;
 
-        // 既に同じキーが存在する場合はエラー（二重定義）
         if (currentTable->getValue(lastKey).isSome()) {
             return Err(error::AppError::kParseUnknown);
         }
@@ -107,19 +130,7 @@ namespace toml {
         currentTable->setValue(lastKey, Value(newTable));
         currentTable = &currentTable->getValueRef(lastKey).getTableRef();
 
-        // テーブル内のキー値ペアを解析
-        while (!peek(kLBracket) && !peek(kEof)) {
-            if (peek(kNewLine)) {
-                consumeNewlines();
-                if (peek(kLBracket) || peek(kEof)) {
-                    break;
-                }
-            }
-
-            *currentTable = TRY(parseKeyVal(*currentTable));
-            TRY(expectNewlines());
-        }
-
+        TRY(parseTableContent(*currentTable));
         return Ok(table);
     }
 
@@ -163,7 +174,7 @@ namespace toml {
     Result<std::vector<std::string>, error::AppError> TomlParser::parseKey() {
         std::vector<std::string> keys;
 
-        if (peek(kString)) {
+        if (peek(kString | kNum)) {
             keys.push_back(token_.getValue());
             nextToken();
             return Ok(keys);
@@ -239,5 +250,21 @@ namespace toml {
         }
 
         return Ok(value);
+    }
+
+    Result<types::Unit, error::AppError> TomlParser::parseTableContent(Table &table) {
+        while (!peek(kLBracket) && !peek(kEof)) {
+            if (peek(kNewLine)) {
+                consumeNewlines();
+                if (peek(kLBracket) || peek(kEof)) {
+                    break;
+                }
+            }
+
+            table = TRY(parseKeyVal(table));
+            TRY(expectNewlines());
+        }
+
+        return Ok(types::Unit());
     }
 }
