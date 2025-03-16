@@ -95,6 +95,7 @@ Result<FdAddressPair, std::string> tryCreateAndBindSocket(addrinfo *addrList) {
 
         const int opt = 1;
         if (setsockopt(sFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1 ||
+            setsockopt(sFd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1 ||
             bind(sFd, listNode->ai_addr, listNode->ai_addrlen) == -1) {
             // 他の候補を試す
             continue;
