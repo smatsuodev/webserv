@@ -7,7 +7,7 @@ using namespace config;
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        LOG_ERROR("Usage: ./webserv <config file>");
+        LOG_ERROR("Usage: webserv <config file>");
         return 1;
     }
 
