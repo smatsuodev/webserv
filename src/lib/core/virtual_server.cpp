@@ -63,7 +63,7 @@ void VirtualServer::setupRouter() {
 
     // middleware
     router_.use(new http::Logger());
-    router_.use(new http::ErrorPage());
+    router_.use(new http::ErrorPage(serverConfig_.getErrorPage()));
 }
 
 bool VirtualServer::isMatch(const Address &address) const {
