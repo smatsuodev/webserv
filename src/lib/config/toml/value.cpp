@@ -188,6 +188,10 @@ namespace toml {
         return elements_[index];
     }
 
+    std::vector<Value> &Array::getElements() {
+        return elements_;
+    }
+
     /* Table */
     Table::Table() : isEditable_(true) {}
 
@@ -281,5 +285,17 @@ namespace toml {
         }
 
         return Ok(currentTable);
+    }
+
+    bool Table::hasKey(const std::string &key) const {
+        return values_.find(key) != values_.end();
+    }
+
+    std::vector<std::string> Table::getKeys() {
+        std::vector<std::string> keys;
+        for (std::map<std::string, Value>::iterator it = values_.begin(); it != values_.end(); ++it) {
+            keys.push_back(it->first);
+        }
+        return keys;
     }
 }

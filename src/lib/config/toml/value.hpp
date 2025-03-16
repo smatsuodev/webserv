@@ -23,6 +23,7 @@ namespace toml {
         void addElement(const Value &value);
         size_t size() const;
         Value &getElementRef(size_t index);
+        std::vector<Value> &getElements();
 
     private:
         std::vector<Value> elements_;
@@ -47,6 +48,8 @@ namespace toml {
         Value &getValueRef(const std::string &key);
         const std::map<std::string, Value> &getValues() const;
         Result<Table *, error::AppError> findOrCreateTablePath(const std::vector<std::string> &keys);
+        bool hasKey(const std::string &key) const;
+        std::vector<std::string> getKeys();
 
     private:
         std::map<std::string, Value> values_;
