@@ -33,11 +33,9 @@ namespace config {
                 return None;
             }
 
-            std::string fileContent;
-            std::string line;
-            while (std::getline(configFile, line)) {
-                fileContent += line + "\n";
-            }
+            std::stringstream buf;
+            buf << configFile.rdbuf();
+            std::string fileContent = buf.str();
 
             toml::Table configTable =
                 toml::TomlParser(toml::Tokenizer(fileContent).tokenize().unwrap()).parse().unwrap();
