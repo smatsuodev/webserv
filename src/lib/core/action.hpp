@@ -31,7 +31,6 @@ public:
 
 private:
     Connection &conn_;
-    bool executed_;
 };
 
 class RegisterEventHandlerAction : public IAction {
@@ -42,7 +41,6 @@ public:
 private:
     Connection &conn_;
     IEventHandler *handler_;
-    bool executed_;
 };
 
 class UnregisterEventHandlerAction : public IAction {
@@ -52,7 +50,6 @@ public:
 
 private:
     Connection &conn_;
-    bool executed_;
 };
 
 class RegisterEventAction : public IAction {
@@ -62,7 +59,6 @@ public:
 
 private:
     Event event_;
-    bool executed_;
 };
 
 class UnregisterEventAction : public IAction {
@@ -72,7 +68,6 @@ public:
 
 private:
     Event event_;
-    bool executed_;
 };
 
 class ServeHttpAction : public IAction {
@@ -86,7 +81,6 @@ private:
     Context eventCtx_;
     http::Request req_;
     EventHandlerFactory *factory_;
-    bool executed_;
 };
 
 #endif
