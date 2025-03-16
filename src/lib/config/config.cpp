@@ -47,7 +47,7 @@ namespace config {
 
             for (size_t i = 0; i < serverConfigs.size(); ++i) {
                 toml::Table serverTable = serverConfigs[i].getTable().unwrap();
-                servers.push_back(ServerContext::parseFromToml(serverTable));
+                servers.push_back(ServerContext::fromToml(serverTable));
             }
 
             return Some(Config(servers));
@@ -94,7 +94,7 @@ namespace config {
             serverName_ == rhs.serverName_ && errorPage_ == rhs.errorPage_ && locations_ == rhs.locations_;
     }
 
-    ServerContext ServerContext::parseFromToml(const toml::Table &serverTable) {
+    ServerContext ServerContext::fromToml(const toml::Table &serverTable) {
         std::string host = "0.0.0.0";
         if (serverTable.hasKey("host")) {
             host = serverTable.getValue("host").unwrap().getString().unwrap();
@@ -142,7 +142,7 @@ namespace config {
 
             for (size_t j = 0; j < locationConfigs.size(); ++j) {
                 toml::Table locationTable = locationConfigs[j].getTable().unwrap();
-                locations.push_back(LocationContext::parseFromToml(locationTable));
+                locations.push_back(LocationContext::fromToml(locationTable));
             }
         }
 
@@ -203,7 +203,7 @@ namespace config {
             docRootConfig_ == rhs.docRootConfig_;
     }
 
-    LocationContext LocationContext::parseFromToml(const toml::Table &locationTable) {
+    LocationContext LocationContext::fromToml(const toml::Table &locationTable) {
         std::string path = "/";
         if (locationTable.hasKey("path")) {
             path = locationTable.getValue("path").unwrap().getString().unwrap();

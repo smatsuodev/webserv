@@ -50,7 +50,7 @@ namespace config {
         ServerContext &operator=(const ServerContext &rhs);
         bool operator==(const ServerContext &rhs) const;
 
-        static ServerContext parseFromToml(const toml::Table &serverTable);
+        static ServerContext fromToml(const toml::Table &serverTable);
 
         const std::string &getHost() const;
         uint16_t getPort() const;
@@ -109,7 +109,7 @@ namespace config {
         LocationContext &operator=(const LocationContext &rhs);
         bool operator==(const LocationContext &rhs) const;
 
-        static LocationContext parseFromToml(const toml::Table &locationTable);
+        static LocationContext fromToml(const toml::Table &locationTable);
 
         const std::string &getPath() const;
         const std::vector<http::HttpMethod> &getAllowedMethods() const;
