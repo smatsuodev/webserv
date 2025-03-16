@@ -29,7 +29,7 @@ namespace config {
         try {
             std::ifstream configFile(path);
             if (!configFile.is_open()) {
-                LOG_ERROR("Cannot open config file");
+                LOG_ERRORF("cannot open config file: %s", path.c_str());
                 return None;
             }
 
@@ -52,7 +52,7 @@ namespace config {
 
             return Some(Config(servers));
         } catch (const std::exception &e) {
-            LOG_ERRORF("Config::loadConfigFromFile: %s", e.what());
+            LOG_ERRORF("error while reading config: ", e.what());
             return None;
         }
     }
@@ -119,10 +119,14 @@ namespace config {
             toml::Table errorPageTable = serverTable.getValue("error_page").unwrap().getTable().unwrap();
             std::vector<std::string> keys = errorPageTable.getKeys();
             for (size_t j = 0; j < keys.size(); ++j) {
-                long statusCode = std::stol(keys[j]);
-                http::HttpStatusCode httpStatusCode = static_cast<http::HttpStatusCode>(statusCode);
+                int statusCode = std::stoi(keys[j]);
+                Option<http::HttpStatusCode> httpStatusCode = http::httpStatusCodeFromInt(statusCode);
+                if (httpStatusCode.isNone()) {
+                    LOG_WARNF("invalid HTTP status code: %d", statusCode);
+                    continue;
+                }
                 std::string path = errorPageTable.getValue(keys[j]).unwrap().getString().unwrap();
-                errorPages[httpStatusCode] = path;
+                errorPages[httpStatusCode.unwrap()] = path;
             }
         }
 
