@@ -33,11 +33,9 @@ namespace config {
                 return None;
             }
 
-            std::string fileContent;
-            std::string line;
-            while (std::getline(configFile, line)) {
-                fileContent += line + "\n";
-            }
+            std::stringstream buf;
+            buf << configFile.rdbuf();
+            std::string fileContent = buf.str();
 
             toml::Table configTable =
                 toml::TomlParser(toml::Tokenizer(fileContent).tokenize().unwrap()).parse().unwrap();
@@ -47,7 +45,7 @@ namespace config {
 
             for (size_t i = 0; i < serverConfigs.size(); ++i) {
                 toml::Table serverTable = serverConfigs[i].getTable().unwrap();
-                servers.push_back(ServerContext::parseFromToml(serverTable));
+                servers.push_back(ServerContext::fromToml(serverTable));
             }
 
             return Some(Config(servers));
@@ -94,7 +92,7 @@ namespace config {
             serverName_ == rhs.serverName_ && errorPage_ == rhs.errorPage_ && locations_ == rhs.locations_;
     }
 
-    ServerContext ServerContext::parseFromToml(const toml::Table &serverTable) {
+    ServerContext ServerContext::fromToml(const toml::Table &serverTable) {
         std::string host = "0.0.0.0";
         if (serverTable.hasKey("host")) {
             host = serverTable.getValue("host").unwrap().getString().unwrap();
@@ -142,7 +140,7 @@ namespace config {
 
             for (size_t j = 0; j < locationConfigs.size(); ++j) {
                 toml::Table locationTable = locationConfigs[j].getTable().unwrap();
-                locations.push_back(LocationContext::parseFromToml(locationTable));
+                locations.push_back(LocationContext::fromToml(locationTable));
             }
         }
 
@@ -203,21 +201,15 @@ namespace config {
             docRootConfig_ == rhs.docRootConfig_;
     }
 
-    LocationContext LocationContext::parseFromToml(const toml::Table &locationTable) {
-        std::string path = "/";
-        if (locationTable.hasKey("path")) {
-            path = locationTable.getValue("path").unwrap().getString().unwrap();
-        }
+    LocationContext LocationContext::fromToml(const toml::Table &locationTable) {
+        std::string path = locationTable.getValue("path").unwrap().getString().unwrap();
 
         if (locationTable.hasKey("redirect")) {
             std::string redirect = locationTable.getValue("redirect").unwrap().getString().unwrap();
             return LocationContext(path, redirect);
         }
 
-        std::string root = "./";
-        if (locationTable.hasKey("root")) {
-            root = locationTable.getValue("root").unwrap().getString().unwrap();
-        }
+        std::string root = locationTable.getValue("root").unwrap().getString().unwrap();
 
         std::string index = "index.html";
         if (locationTable.hasKey("index")) {
@@ -238,13 +230,12 @@ namespace config {
 
             for (size_t k = 0; k < methodValues.size(); ++k) {
                 std::string methodStr = methodValues[k].getString().unwrap();
-                if (methodStr == "GET") {
-                    allowedMethods.push_back(http::kMethodGet);
-                } else if (methodStr == "POST") {
-                    allowedMethods.push_back(http::kMethodPost);
-                } else if (methodStr == "DELETE") {
-                    allowedMethods.push_back(http::kMethodDelete);
+                http::HttpMethod method = http::httpMethodFromString(methodStr);
+                if (method == http::HttpMethod::kMethodUnknown) {
+                    LOG_ERRORF("unknown http method: %s", methodStr.c_str());
+                    throw std::runtime_error("unknown method: " + methodStr);
                 }
+                allowedMethods.push_back(method);
             }
         }
 
