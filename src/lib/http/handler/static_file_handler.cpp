@@ -3,6 +3,7 @@
 #include "http/response/response_builder.hpp"
 #include <fstream>
 #include <dirent.h>
+#include <cstring>
 #include <sys/stat.h>
 #include "static_file_handler.hpp"
 
@@ -51,6 +52,14 @@ namespace http {
         return Ok(res);
     }
 
+    Response buildFileResponse(const struct stat &st, const std::string &filePath) {
+        if (S_ISREG(st.st_mode)) {
+            return ResponseBuilder().file(filePath).build();
+        }
+        LOG_DEBUGF("not a regular file: %s", filePath.c_str());
+        return ResponseBuilder().status(kStatusForbidden).build();
+    }
+
     Response StaticFileHandler::directoryListing(const std::string &root, const std::string &target) {
         const Result<std::string, HttpStatusCode> result = makeDirectoryListingHtml(root, target);
         if (result.isErr()) {
@@ -60,8 +69,30 @@ namespace http {
         return ResponseBuilder().html(res).build();
     }
 
+    Response StaticFileHandler::handleDirectory(const Request &req, const std::string &path) const {
+        LOG_DEBUGF("is a directory: %s", path.c_str());
+        // 末尾に / がない場合はリダイレクト
+        if (!utils::endsWith(req.getRequestTarget(), "/")) {
+            return ResponseBuilder().redirect(req.getRequestTarget() + '/').build();
+        }
+        const std::string indexPath = path + docRootConfig_.getIndex();
+        struct stat indexBuf = {};
+        if (stat(indexPath.c_str(), &indexBuf) != -1) {
+            return buildFileResponse(indexBuf, indexPath);
+        }
+        if (errno == ENOENT && docRootConfig_.isAutoindexEnabled()) {
+            return directoryListing(docRootConfig_.getRoot(), req.getRequestTarget());
+        }
+
+        if (errno == ENOENT || errno == EACCES) {
+            LOG_DEBUGF("Forbidden file: %s", path.c_str());
+            return ResponseBuilder().status(kStatusForbidden).build();
+        }
+        LOG_ERRORF("failed to stat file: %s", std::strerror(errno));
+        return ResponseBuilder().status(kStatusInternalServerError).build();
+    }
+
     Response StaticFileHandler::serve(const Request &req) {
-        // root が '/' で終わると、log で '//' が発生する。
         const std::string path = docRootConfig_.getRoot() + req.getRequestTarget();
         LOG_DEBUGF("request target: %s", req.getRequestTarget().c_str());
 
@@ -71,20 +102,18 @@ namespace http {
                 LOG_DEBUGF("file does not exist: %s", path.c_str());
                 return ResponseBuilder().status(kStatusNotFound).build();
             }
+            if (errno == EACCES) {
+                LOG_DEBUGF("permission denied: %s", std::strerror(errno));
+                return ResponseBuilder().status(kStatusForbidden).build();
+            }
             LOG_DEBUGF("failed to stat file: %s", path.c_str());
             return ResponseBuilder().status(kStatusInternalServerError).build();
         }
 
         if (S_ISDIR(buf.st_mode)) {
-            LOG_DEBUGF("is a directory: %s", path.c_str());
-            return directoryListing(docRootConfig_.getRoot(), req.getRequestTarget());
+            return handleDirectory(req, path);
         }
 
-        if (!S_ISREG(buf.st_mode)) {
-            LOG_DEBUGF("is not a regular file: %s", path.c_str());
-            return ResponseBuilder().status(kStatusForbidden).build();
-        }
-
-        return ResponseBuilder().file(path).build();
+        return buildFileResponse(buf, path);
     }
 }
