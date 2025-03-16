@@ -1,6 +1,7 @@
 #ifndef SRC_LIB_CONFIG_TOML_VALUE_HPP
 #define SRC_LIB_CONFIG_TOML_VALUE_HPP
 
+#include "utils/types/error.hpp"
 #include "utils/types/option.hpp"
 #include <string>
 #include <vector>
@@ -20,6 +21,8 @@ namespace toml {
         bool operator==(const Array &other) const;
 
         void addElement(const Value &value);
+        size_t size() const;
+        Value &getElementRef(size_t index);
 
     private:
         std::vector<Value> elements_;
@@ -29,18 +32,25 @@ namespace toml {
     public:
         Table();
         explicit Table(const std::map<std::string, Value> &values);
+        Table(const std::map<std::string, Value> &values, bool isEditable);
         Table(const Table &other);
         ~Table();
 
         Table &operator=(const Table &other);
         bool operator==(const Table &other) const;
 
-        void setValue(const std::string &key, const Value &value);
+        Table readOnly() const;
+
+        Option<Value> setValue(const std::string &key, const Value &value);
 
         Option<Value> getValue(const std::string &key) const;
+        Value &getValueRef(const std::string &key);
+        const std::map<std::string, Value> &getValues() const;
+        Result<Table *, error::AppError> findOrCreateTablePath(const std::vector<std::string> &keys);
 
     private:
         std::map<std::string, Value> values_;
+        bool isEditable_;
     };
 
     class Value {
@@ -50,6 +60,7 @@ namespace toml {
         Value();
         explicit Value(ValueType type);
         explicit Value(const std::string &value);
+        explicit Value(const char *value);
         explicit Value(long value);
         explicit Value(bool value);
         explicit Value(const Array &value);
@@ -72,6 +83,8 @@ namespace toml {
         Option<bool> getBoolean() const;
         Option<Array> getArray() const;
         Option<Table> getTable() const;
+        Table &getTableRef();
+        Array &getArrayRef();
 
     private:
         ValueType type_;

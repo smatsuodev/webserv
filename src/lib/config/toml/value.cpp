@@ -1,4 +1,6 @@
 #include "value.hpp"
+#include "utils/types/result.hpp"
+#include "utils/types/try.hpp"
 
 namespace toml {
     /* Value */
@@ -6,6 +8,7 @@ namespace toml {
     Value::Value(const ValueType type) : type_(type), integerValue_(0), booleanValue_(false) {}
     Value::Value(const std::string &value)
         : type_(kString), stringValue_(value), integerValue_(0), booleanValue_(false) {}
+    Value::Value(const char *value) : type_(kString), stringValue_(value), integerValue_(0), booleanValue_(false) {}
     Value::Value(const long value) : type_(kInteger), integerValue_(value), booleanValue_(false) {}
     Value::Value(const bool value) : type_(kBoolean), integerValue_(0), booleanValue_(value) {}
     Value::Value(const Array &value) : type_(kArray), integerValue_(0), booleanValue_(false), arrayValue_(value) {}
@@ -144,6 +147,15 @@ namespace toml {
         return None;
     }
 
+    Table &Value::getTableRef() {
+        return tableValue_;
+    }
+
+    Array &Value::getArrayRef() {
+        return arrayValue_;
+    }
+
+    /* Array */
     /* Array */
     Array::Array() {}
 
@@ -168,18 +180,30 @@ namespace toml {
         elements_.push_back(value);
     }
 
+    size_t Array::size() const {
+        return elements_.size();
+    }
+
+    Value &Array::getElementRef(size_t index) {
+        return elements_[index];
+    }
+
     /* Table */
-    Table::Table() {}
+    Table::Table() : isEditable_(true) {}
 
-    Table::Table(const std::map<std::string, Value> &values) : values_(values) {}
+    Table::Table(const std::map<std::string, Value> &values) : values_(values), isEditable_(true) {}
 
-    Table::Table(const Table &other) : values_(other.values_) {}
+    Table::Table(const std::map<std::string, Value> &values, bool isEditable)
+        : values_(values), isEditable_(isEditable) {}
+
+    Table::Table(const Table &other) : values_(other.values_), isEditable_(other.isEditable_) {}
 
     Table::~Table() {}
 
     Table &Table::operator=(const Table &other) {
         if (this != &other) {
             values_ = other.values_;
+            isEditable_ = other.isEditable_;
         }
         return *this;
     }
@@ -188,8 +212,16 @@ namespace toml {
         return values_ == other.values_;
     }
 
-    void Table::setValue(const std::string &key, const Value &value) {
+    Table Table::readOnly() const {
+        return Table(values_, false);
+    }
+
+    Option<Value> Table::setValue(const std::string &key, const Value &value) {
+        if (!isEditable_ || values_.find(key) != values_.end()) {
+            return None;
+        }
         values_[key] = value;
+        return Some(value);
     }
 
     Option<Value> Table::getValue(const std::string &key) const {
@@ -198,5 +230,56 @@ namespace toml {
             return Some<Value>(it->second);
         }
         return None;
+    }
+
+    Value &Table::getValueRef(const std::string &key) {
+        return values_[key];
+    }
+
+    const std::map<std::string, Value> &Table::getValues() const {
+        return values_;
+    }
+
+    Result<Table *, error::AppError> Table::findOrCreateTablePath(const std::vector<std::string> &keys) {
+        if (keys.empty()) {
+            return Err(error::AppError::kParseUnknown);
+        }
+
+        const size_t endIndex = keys.size() - 1;
+        Table *currentTable = this;
+
+        for (size_t i = 0; i < endIndex; ++i) {
+            const std::string &key = keys[i];
+            Option<Value> nextValue = currentTable->getValue(key);
+
+            if (nextValue.isSome()) {
+                Value &value = currentTable->getValueRef(key);
+                if (value.getType() == Value::kTable) {
+                    currentTable = &value.getTableRef();
+                } else if (value.getType() == Value::kArray) {
+                    Array &array = value.getArrayRef();
+                    if (array.size() == 0) {
+                        Table newTable;
+                        array.addElement(Value(newTable));
+                        currentTable = &array.getElementRef(0).getTableRef();
+                    } else {
+                        Value &lastElement = array.getElementRef(array.size() - 1);
+                        if (lastElement.getType() == Value::kTable) {
+                            currentTable = &lastElement.getTableRef();
+                        } else {
+                            return Err(error::AppError::kParseUnknown);
+                        }
+                    }
+                } else {
+                    return Err(error::AppError::kParseUnknown);
+                }
+            } else {
+                Table newTable;
+                currentTable->setValue(key, Value(newTable));
+                currentTable = &currentTable->getValueRef(key).getTableRef();
+            }
+        }
+
+        return Ok(currentTable);
     }
 }
