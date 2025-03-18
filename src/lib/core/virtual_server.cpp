@@ -1,4 +1,6 @@
 #include "virtual_server.hpp"
+
+#include "http/handler/cgi_handler.hpp"
 #include "http/handler/delete_file_handler.hpp"
 #include "http/handler/redirect_handler.hpp"
 #include "http/handler/static_file_handler.hpp"
@@ -28,17 +30,24 @@ bool VirtualServer::operator==(const VirtualServer &rhs) const {
 
 void VirtualServer::registerHandlers(const config::LocationContext &location) {
     std::vector<http::HttpMethod> allowedMethods = location.getAllowedMethods();
+    config::LocationContext::DocumentRootConfig documentRootConfig = location.getDocumentRootConfig().unwrap();
+    bool isCgiEnabled = !documentRootConfig.getCgiExtensions().empty();
     for (std::vector<http::HttpMethod>::const_iterator iter = allowedMethods.begin(); iter != allowedMethods.end();
          ++iter) {
-        config::LocationContext::DocumentRootConfig documentRootConfig = location.getDocumentRootConfig().unwrap();
         switch (*iter) {
             case http::kMethodGet: {
                 http::IHandler *handler = new http::StaticFileHandler(documentRootConfig);
+                if (isCgiEnabled) {
+                    handler = new http::CgiHandler(documentRootConfig, handler);
+                }
                 router_.on(http::kMethodGet, location.getPath(), handler);
                 break;
             }
             case http::kMethodDelete: {
                 http::IHandler *handler = new http::DeleteFileHandler(documentRootConfig);
+                if (isCgiEnabled) {
+                    handler = new http::CgiHandler(documentRootConfig, handler);
+                }
                 router_.on(http::kMethodDelete, location.getPath(), handler);
                 break;
             }

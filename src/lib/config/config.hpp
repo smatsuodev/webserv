@@ -97,6 +97,7 @@ namespace config {
         };
 
         typedef std::vector<http::HttpMethod> AllowedMethods;
+        typedef std::vector<std::string> CgiExtensions;
 
         // NOTE: allowedMethods の初期値を指定したいが、C++98 で初期化子リストが使えない
         LocationContext(
