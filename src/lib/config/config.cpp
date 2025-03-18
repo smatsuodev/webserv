@@ -312,6 +312,10 @@ namespace config {
         return index_;
     }
 
+    const std::vector<std::string> &LocationContext::DocumentRootConfig::getCgiExtensions() const {
+        return cgiExtensions_;
+    }
+
     LocationContext::AllowedMethods LocationContext::getDefaultAllowedMethods() {
         std::vector<http::HttpMethod> allowedMethods;
         allowedMethods.push_back(http::kMethodGet);

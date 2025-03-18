@@ -87,6 +87,7 @@ namespace config {
             const std::string &getRoot() const;
             bool isAutoindexEnabled() const;
             const std::string &getIndex() const;
+            const std::vector<std::string> &getCgiExtensions() const;
 
         private:
             std::string root_;
