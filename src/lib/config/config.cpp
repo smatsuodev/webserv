@@ -173,26 +173,19 @@ namespace config {
 
     /* LocationContext */
     LocationContext::LocationContext(
-        const std::string &path,
-        const DocumentRootConfig &docRootConfig,
-        const AllowedMethods &allowedMethods,
-        const std::vector<std::string> &cgiExtensions
+        const std::string &path, const DocumentRootConfig &docRootConfig, const AllowedMethods &allowedMethods
     )
-        : path_(path), allowedMethods_(allowedMethods), docRootConfig_(Some(docRootConfig)), redirect_(None),
-          cgiExtensions_(cgiExtensions) {}
+        : path_(path), allowedMethods_(allowedMethods), docRootConfig_(Some(docRootConfig)), redirect_(None) {}
 
     LocationContext::LocationContext(
-        const std::string &path,
-        const std::string &redirect,
-        const AllowedMethods &allowedMethods,
-        const std::vector<std::string> &cgiExtensions
+        const std::string &path, const std::string &redirect, const AllowedMethods &allowedMethods
+
     )
-        : path_(path), allowedMethods_(allowedMethods), docRootConfig_(None), redirect_(Some(redirect)),
-          cgiExtensions_(cgiExtensions) {}
+        : path_(path), allowedMethods_(allowedMethods), docRootConfig_(None), redirect_(Some(redirect)) {}
 
     LocationContext::LocationContext(const LocationContext &other)
         : path_(other.path_), allowedMethods_(other.allowedMethods_), docRootConfig_(other.docRootConfig_),
-          redirect_(other.redirect_), cgiExtensions_(other.cgiExtensions_) {}
+          redirect_(other.redirect_) {}
 
     LocationContext &LocationContext::operator=(const LocationContext &rhs) {
         if (this != &rhs) {
@@ -200,14 +193,13 @@ namespace config {
             allowedMethods_ = rhs.allowedMethods_;
             docRootConfig_ = rhs.docRootConfig_;
             redirect_ = rhs.redirect_;
-            cgiExtensions_ = rhs.cgiExtensions_;
         }
         return *this;
     }
 
     bool LocationContext::operator==(const LocationContext &rhs) const {
         return path_ == rhs.path_ && allowedMethods_ == rhs.allowedMethods_ && redirect_ == rhs.redirect_ &&
-            docRootConfig_ == rhs.docRootConfig_ && cgiExtensions_ == rhs.cgiExtensions_;
+            docRootConfig_ == rhs.docRootConfig_;
     }
 
     LocationContext LocationContext::fromToml(const toml::Table &locationTable) {
@@ -231,6 +223,18 @@ namespace config {
             autoindex = (autoindexValue == "on");
         }
 
+        std::vector<std::string> cgiExtensions;
+        if (locationTable.hasKey("cgi_extensions")) {
+            std::vector<toml::Value> extensionsInConfig =
+                locationTable.getValue("cgi_extensions").unwrap().getArray().unwrap().getElements();
+
+            for (size_t i = 0; i < extensionsInConfig.size(); ++i) {
+                std::string extension = extensionsInConfig[i].getString().unwrap();
+                cgiExtensions.push_back(extension);
+            }
+        }
+
+
         std::vector<http::HttpMethod> allowedMethods = getDefaultAllowedMethods();
         if (locationTable.hasKey("allowed_methods")) {
             std::vector<toml::Value> methodValues =
@@ -248,19 +252,8 @@ namespace config {
             }
         }
 
-        std::vector<std::string> cgiExtensions;
-        if (locationTable.hasKey("cgi_extensions")) {
-            std::vector<toml::Value> extensionsInConfig =
-                locationTable.getValue("cgi_extensions").unwrap().getArray().unwrap().getElements();
-
-            for (size_t i = 0; i < extensionsInConfig.size(); ++i) {
-                std::string extension = extensionsInConfig[i].getString().unwrap();
-                cgiExtensions.push_back(extension);
-            }
-        }
-
-        DocumentRootConfig docRootConfig(root, autoindex, index);
-        return LocationContext(path, docRootConfig, allowedMethods, cgiExtensions);
+        DocumentRootConfig docRootConfig(root, autoindex, index, cgiExtensions);
+        return LocationContext(path, docRootConfig, allowedMethods);
     }
 
     const std::string &LocationContext::getPath() const {
@@ -281,24 +274,30 @@ namespace config {
 
     /* LocationContext::DocumentRootConfig */
     LocationContext::DocumentRootConfig::DocumentRootConfig(
-        const std::string &root, const bool autoindex, const std::string &index
+        const std::string &root,
+        const bool autoindex,
+        const std::string &index,
+        const std::vector<std::string> &cgiExtensions
     )
-        : root_(root), autoindex_(autoindex), index_(index) {}
+        : root_(root), autoindex_(autoindex), index_(index), cgiExtensions_(cgiExtensions) {}
 
     LocationContext::DocumentRootConfig::DocumentRootConfig(const DocumentRootConfig &other)
-        : root_(other.root_), autoindex_(other.autoindex_), index_(other.index_) {}
+        : root_(other.root_), autoindex_(other.autoindex_), index_(other.index_), cgiExtensions_(other.cgiExtensions_) {
+    }
 
     LocationContext::DocumentRootConfig &LocationContext::DocumentRootConfig::operator=(const DocumentRootConfig &rhs) {
         if (this != &rhs) {
             root_ = rhs.root_;
             autoindex_ = rhs.autoindex_;
             index_ = rhs.index_;
+            cgiExtensions_ = rhs.cgiExtensions_;
         }
         return *this;
     }
 
     bool LocationContext::DocumentRootConfig::operator==(const DocumentRootConfig &rhs) const {
-        return root_ == rhs.root_ && autoindex_ == rhs.autoindex_ && index_ == rhs.index_;
+        return root_ == rhs.root_ && autoindex_ == rhs.autoindex_ && index_ == rhs.index_ &&
+            cgiExtensions_ == rhs.cgiExtensions_;
     }
 
     const std::string &LocationContext::DocumentRootConfig::getRoot() const {

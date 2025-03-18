@@ -74,7 +74,10 @@ namespace config {
         class DocumentRootConfig {
         public:
             explicit DocumentRootConfig(
-                const std::string &root, bool autoindex = false, const std::string &index = "index.html"
+                const std::string &root,
+                bool autoindex = false,
+                const std::string &index = "index.html",
+                const std::vector<std::string> &cgiExtensions = std::vector<std::string>()
             );
             DocumentRootConfig(const DocumentRootConfig &other);
 
@@ -89,6 +92,7 @@ namespace config {
             std::string root_;
             bool autoindex_;
             std::string index_;
+            std::vector<std::string> cgiExtensions_;
         };
 
         typedef std::vector<http::HttpMethod> AllowedMethods;
@@ -97,14 +101,12 @@ namespace config {
         LocationContext(
             const std::string &path,
             const DocumentRootConfig &docRootConfig,
-            const AllowedMethods &allowedMethods = getDefaultAllowedMethods(),
-            const std::vector<std::string> &cgiExtensions = std::vector<std::string>()
+            const AllowedMethods &allowedMethods = getDefaultAllowedMethods()
         );
         LocationContext(
             const std::string &path,
             const std::string &redirect,
-            const AllowedMethods &allowedMethods = getDefaultAllowedMethods(),
-            const std::vector<std::string> &cgiExtensions = std::vector<std::string>()
+            const AllowedMethods &allowedMethods = getDefaultAllowedMethods()
         );
         LocationContext(const LocationContext &other);
 
@@ -123,7 +125,6 @@ namespace config {
         std::vector<http::HttpMethod> allowedMethods_;
         Option<DocumentRootConfig> docRootConfig_;
         Option<std::string> redirect_;
-        std::vector<std::string> cgiExtensions_;
 
         static AllowedMethods getDefaultAllowedMethods();
     };
