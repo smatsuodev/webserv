@@ -18,14 +18,23 @@ namespace http {
         if (matchResult.isNone()) {
             return next_->serve(req);
         }
-        int fd[2];
 
+        const std::string fullPath = docRootConfig_.getRoot() + requestTarget;
+        char *fullPathCStr = strdup(fullPath.c_str());
+        if (fullPathCStr == NULL) {
+            LOG_ERRORF("failed to duplicate path: %s", strerror(errno));
+            return ResponseBuilder().status(kStatusInternalServerError).build();
+        }
+
+        int fd[2];
         if (pipe(fd) == -1) {
+            LOG_ERRORF("failed to create pipe: %s", strerror(errno));
             return ResponseBuilder().status(kStatusInternalServerError).build();
         }
 
         const int pid = fork();
         if (pid == -1) {
+            LOG_ERRORF("failed to create fork: %s", strerror(errno));
             close(fd[0]);
             close(fd[1]);
             return ResponseBuilder().status(kStatusInternalServerError).build();
@@ -33,14 +42,6 @@ namespace http {
 
         if (pid == 0) {
             close(fd[0]);
-
-            const std::string fullPath = docRootConfig_.getRoot() + requestTarget;
-            char *fullPathCStr = strdup(fullPath.c_str());
-            if (fullPathCStr == NULL) {
-                close(fd[1]);
-                std::exit(errno);
-            }
-
             close(STDOUT_FILENO);
             dup2(fd[1], STDOUT_FILENO);
 
@@ -50,6 +51,8 @@ namespace http {
         }
 
         close(fd[1]);
+        free(fullPathCStr);
+
         int cgiStatus = 0;
         const int waitpidRes = waitpid(pid, &cgiStatus, WUNTRACED);
         if (waitpidRes == -1) {
