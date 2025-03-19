@@ -19,6 +19,11 @@ path = '/uploads'
 root = 'example/html'
 autoindex = 'on'
 
+[[server.location]]
+path = '/cgi'
+root = 'example'
+cgi_extensions = ['.cgi']
+
 # --
 
 [[server]]

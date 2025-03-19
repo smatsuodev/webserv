@@ -74,7 +74,10 @@ namespace config {
         class DocumentRootConfig {
         public:
             explicit DocumentRootConfig(
-                const std::string &root, bool autoindex = false, const std::string &index = "index.html"
+                const std::string &root,
+                bool autoindex = false,
+                const std::string &index = "index.html",
+                const std::vector<std::string> &cgiExtensions = std::vector<std::string>()
             );
             DocumentRootConfig(const DocumentRootConfig &other);
 
@@ -84,11 +87,13 @@ namespace config {
             const std::string &getRoot() const;
             bool isAutoindexEnabled() const;
             const std::string &getIndex() const;
+            const std::vector<std::string> &getCgiExtensions() const;
 
         private:
             std::string root_;
             bool autoindex_;
             std::string index_;
+            std::vector<std::string> cgiExtensions_;
         };
 
         typedef std::vector<http::HttpMethod> AllowedMethods;
