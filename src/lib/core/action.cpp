@@ -1,5 +1,6 @@
 #include "action.hpp"
 #include "http/handler/router.hpp"
+#include "utils/types/either.hpp"
 
 IAction::~IAction() {}
 
@@ -57,7 +58,11 @@ void ServeHttpAction::execute(ActionContext &actionCtx) {
     const Option<Ref<VirtualServer> > vs = eventCtx_.getResolver().unwrap().resolve(hostHeader);
 
     // accept したので VirtualServer は存在するはず
-    const http::Response res = vs.unwrap().get().getRouter().serve(req_);
-    IEventHandler *nextHandler = factory_(res);
+    Either<IAction *, http::Response> res; // = vs.unwrap().get().getRouter().serve(req_);
+    if (res.isLeft()) {
+        res.getLeft()->execute(actionCtx);
+        return;
+    }
+    IEventHandler *nextHandler = factory_(res.getRight());
     actionCtx.getState().getEventHandlerRepository().set(conn.getFd(), nextHandler);
 }
