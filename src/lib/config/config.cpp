@@ -179,7 +179,6 @@ namespace config {
 
     LocationContext::LocationContext(
         const std::string &path, const std::string &redirect, const AllowedMethods &allowedMethods
-
     )
         : path_(path), allowedMethods_(allowedMethods), docRootConfig_(None), redirect_(Some(redirect)) {}
 
