@@ -21,7 +21,7 @@ autoindex = 'on'
 
 [[server.location]]
 path = '/cgi'
-root = 'example/html'
+root = 'example'
 cgi_extensions = ['.cgi']
 
 # --
