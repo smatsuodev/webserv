@@ -2,6 +2,7 @@
 #include "http/handler/delete_file_handler.hpp"
 #include "http/handler/redirect_handler.hpp"
 #include "http/handler/static_file_handler.hpp"
+#include "http/handler/upload_file_handler.hpp"
 #include "http/handler/middleware/error_page.hpp"
 #include "http/handler/middleware/logger.hpp"
 #include "utils/logger.hpp"
@@ -40,6 +41,11 @@ void VirtualServer::registerHandlers(const config::LocationContext &location) {
             case http::kMethodDelete: {
                 http::IHandler *handler = new http::DeleteFileHandler(documentRootConfig);
                 router_.on(http::kMethodDelete, location.getPath(), handler);
+                break;
+            }
+            case http::kMethodPost: {
+                http::IHandler *handler = new http::UploadFileHandler(documentRootConfig);
+                router_.on(http::kMethodPost, location.getPath(), handler);
                 break;
             }
             default:
