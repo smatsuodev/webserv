@@ -113,6 +113,7 @@ add_library(webserv_lib STATIC
         lib/cgi/factory.hpp
         lib/cgi/response.cpp
         lib/cgi/response.hpp
+        lib/utils/types/either.hpp
         lib/http/handler/cgi_handler.cpp
         lib/http/handler/cgi_handler.hpp
 )

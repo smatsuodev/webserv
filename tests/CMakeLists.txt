@@ -80,3 +80,6 @@ gtest_discover_tests(toml_tokenizer_test)
 
 add_executable(toml_parser_test toml_parser_test.cpp)
 gtest_discover_tests(toml_parser_test)
+
+add_executable(either_test either_test.cpp)
+gtest_discover_tests(either_test)
