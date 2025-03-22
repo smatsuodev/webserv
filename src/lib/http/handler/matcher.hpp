@@ -22,8 +22,16 @@ namespace http {
 
     public:
         explicit Matcher(const Map &map) : map_(map), customComp_(NULL) {}
-        explicit Matcher(const Map &map, const Compare comp) : map_(map), customComp_(comp) {}
+        Matcher(const Map &map, const Compare comp) : map_(map), customComp_(comp) {}
         ~Matcher() {}
+
+        Matcher &operator=(const Matcher &other) {
+            if (this != &other) {
+                map_ = other.map_;
+                customComp_ = other.customComp_;
+            }
+            return *this;
+        }
 
         Option<T> match(const std::string &key) const {
             if (key.empty()) {
