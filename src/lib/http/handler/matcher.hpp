@@ -13,7 +13,7 @@ namespace http {
         Map map_;
 
         typedef bool (*Compare)(const std::string &a, const std::string &b);
-        const Compare customComp_;
+        Compare customComp_;
 
         bool compare(const std::string &a, const std::string &b) const {
             if (customComp_ != NULL) return customComp_(a, b);
