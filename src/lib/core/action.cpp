@@ -57,7 +57,12 @@ void ServeHttpAction::execute(ActionContext &actionCtx) {
     const Option<Ref<VirtualServer> > vs = eventCtx_.getResolver().unwrap().resolve(hostHeader);
 
     // accept したので VirtualServer は存在するはず
-    const http::Response res = vs.unwrap().get().getRouter().serve(req_);
-    IEventHandler *nextHandler = factory_(res);
-    actionCtx.getState().getEventHandlerRepository().set(conn.getFd(), nextHandler);
+    const Either<IAction *, http::Response> res = vs.unwrap().get().getRouter().serve(req_);
+    if (res.isRight()) {
+        IEventHandler *nextHandler = factory_(res.unwrapRight());
+        actionCtx.getState().getEventHandlerRepository().set(conn.getFd(), nextHandler);
+    } else {
+        // TODO: Leftのハンドリング
+        throw std::runtime_error("`ServeHttpAction::execute()` handling `Left<IAction *>` is not implemented");
+    }
 }

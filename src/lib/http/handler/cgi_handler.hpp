@@ -16,7 +16,7 @@ namespace http {
 
     public:
         explicit CgiHandler(const config::LocationContext::DocumentRootConfig &docRootConfig, IHandler *next);
-        Response serve(const Request &req);
+        Either<IAction *, Response> serve(const Request &req);
     };
 }
 

@@ -8,7 +8,7 @@ namespace http {
     class StaticFileHandler : public IHandler {
     public:
         explicit StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig);
-        virtual Response serve(const Request &req);
+        virtual Either<IAction *, Response> serve(const Request &req);
 
     private:
         static Result<std::string, HttpStatusCode>

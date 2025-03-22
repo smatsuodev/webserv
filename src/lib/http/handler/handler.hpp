@@ -3,12 +3,14 @@
 
 #include "../response/response.hpp"
 #include "../request/request.hpp"
+#include "event/event_handler.hpp"
+#include "utils/types/either.hpp"
 
 namespace http {
     class IHandler {
     public:
         virtual ~IHandler() {}
-        virtual Response serve(const Request &req) = 0;
+        virtual Either<IAction *, Response> serve(const Request &req) = 0;
     };
 }
 

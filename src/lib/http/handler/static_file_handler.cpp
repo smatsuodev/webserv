@@ -7,8 +7,6 @@
 #include <sys/stat.h>
 #include "static_file_handler.hpp"
 
-#include "http/mime.hpp"
-
 namespace http {
     StaticFileHandler::StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)
         : docRootConfig_(docRootConfig) {}
@@ -92,7 +90,7 @@ namespace http {
         return ResponseBuilder().status(kStatusInternalServerError).build();
     }
 
-    Response StaticFileHandler::serve(const Request &req) {
+    Either<IAction *, Response> StaticFileHandler::serve(const Request &req) {
         const std::string path = docRootConfig_.getRoot() + req.getRequestTarget();
         LOG_DEBUGF("request target: %s", req.getRequestTarget().c_str());
 
@@ -100,20 +98,20 @@ namespace http {
         if (stat(path.c_str(), &buf) == -1) {
             if (errno == ENOENT) {
                 LOG_DEBUGF("file does not exist: %s", path.c_str());
-                return ResponseBuilder().status(kStatusNotFound).build();
+                return Right(ResponseBuilder().status(kStatusNotFound).build());
             }
             if (errno == EACCES) {
                 LOG_DEBUGF("permission denied: %s", std::strerror(errno));
-                return ResponseBuilder().status(kStatusForbidden).build();
+                return Right(ResponseBuilder().status(kStatusForbidden).build());
             }
             LOG_DEBUGF("failed to stat file: %s", path.c_str());
-            return ResponseBuilder().status(kStatusInternalServerError).build();
+            return Right(ResponseBuilder().status(kStatusInternalServerError).build());
         }
 
         if (S_ISDIR(buf.st_mode)) {
-            return handleDirectory(req, path);
+            return Right(handleDirectory(req, path));
         }
 
-        return buildFileResponse(buf, path);
+        return Right(buildFileResponse(buf, path));
     }
 }

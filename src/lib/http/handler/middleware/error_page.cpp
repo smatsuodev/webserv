@@ -6,7 +6,13 @@
 http::ErrorPage::ErrorPage(const config::ServerContext::ErrorPageMap &errorPage) : errorPage_(errorPage) {}
 
 http::Response http::ErrorPage::intercept(const Request &req, IHandler &next) {
-    const Response res = next.serve(req);
+    const Either<IAction *, Response> serveRes = next.serve(req);
+    if (serveRes.isLeft()) {
+        // TODO: Leftのハンドリング
+        throw std::runtime_error("`Logger::intercept()` handling `Left<IAction *>` is not implemented");
+    }
+
+    const Response res = serveRes.unwrapRight();
     const HttpStatusCode status = res.getStatusCode();
     if (status < 400) {
         // エラーでなければそのまま返す

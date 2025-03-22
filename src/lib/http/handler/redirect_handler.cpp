@@ -4,7 +4,7 @@
 namespace http {
     RedirectHandler::RedirectHandler(const std::string &destination) : destination_(destination) {}
 
-    Response RedirectHandler::serve(const Request &) {
-        return ResponseBuilder().status(kStatusFound).header("Location", destination_).build();
+    Either<IAction *, Response> RedirectHandler::serve(const Request &) {
+        return Right(ResponseBuilder().status(kStatusFound).header("Location", destination_).build());
     }
 }

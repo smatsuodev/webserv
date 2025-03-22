@@ -13,7 +13,7 @@ namespace http {
     CgiHandler::CgiHandler(const config::LocationContext::DocumentRootConfig &docRootConfig, IHandler *next)
         : docRootConfig_(docRootConfig), next_(next) {}
 
-    Response CgiHandler::serve(const Request &req) {
+    Either<IAction *, Response> CgiHandler::serve(const Request &req) {
         const Matcher<CgiExtension> matcher = this->createMatcher();
         const std::string &requestTarget = req.getRequestTarget();
         const Option<CgiExtension> matchResult = matcher.match(requestTarget);
@@ -25,14 +25,14 @@ namespace http {
         char *fullPathCStr = static_cast<char *>(malloc((fullPath.size() + 1) * sizeof(char)));
         if (fullPathCStr == NULL) {
             LOG_ERRORF("failed to duplicate path: %s", strerror(errno));
-            return ResponseBuilder().status(kStatusInternalServerError).build();
+            return Right(ResponseBuilder().status(kStatusInternalServerError).build());
         }
         std::strcpy(fullPathCStr, fullPath.c_str());
 
         int fd[2];
         if (pipe(fd) == -1) {
             LOG_ERRORF("failed to create pipe: %s", strerror(errno));
-            return ResponseBuilder().status(kStatusInternalServerError).build();
+            return Right(ResponseBuilder().status(kStatusInternalServerError).build());
         }
 
         AutoFd pipeIn(fd[1]), pipeOut(fd[0]);
@@ -41,7 +41,7 @@ namespace http {
         const int pid = fork();
         if (pid == -1) {
             LOG_ERRORF("failed to create fork: %s", strerror(errno));
-            return ResponseBuilder().status(kStatusInternalServerError).build();
+            return Right(ResponseBuilder().status(kStatusInternalServerError).build());
         }
 
         if (pid == 0) {
@@ -49,7 +49,7 @@ namespace http {
             if (fcntl(pipeIn.get(), F_SETFL, FD_CLOEXEC) == -1) {
                 LOG_ERRORF("failed to set FD_CLOEXEC on pipe: %s", strerror(errno));
                 close(pipeIn.release());
-                return ResponseBuilder().status(kStatusInternalServerError).build();
+                return Right(ResponseBuilder().status(kStatusInternalServerError).build());
             }
 
             close(pipeOut.release());
@@ -69,12 +69,12 @@ namespace http {
         // if (waitpidRes == -1) {
         //     LOG_ERRORF("failed to execute CGI: %s", pid, strerror(errno));
         //     close(fd[1]);
-        //     return ResponseBuilder().status(kStatusInternalServerError).build();
+        //     return Right(ResponseBuilder().status(kStatusInternalServerError).build());
         // }
         // if (WEXITSTATUS(cgiStatus) != 0) {
         //     LOG_ERRORF("CGI did not terminate successfully: %d", WEXITSTATUS(cgiStatus));
         //     close(fd[1]);
-        //     return ResponseBuilder().status(kStatusInternalServerError).build();
+        //     return Right(ResponseBuilder().status(kStatusInternalServerError).build());
         // }
 
         std::stringstream body;
@@ -88,10 +88,10 @@ namespace http {
 
         if (bytesRead == -1) {
             LOG_ERRORF("failed to read CGI: %s", strerror(errno));
-            return ResponseBuilder().status(kStatusInternalServerError).build();
+            return Right(ResponseBuilder().status(kStatusInternalServerError).build());
         }
 
-        return ResponseBuilder().status(kStatusOk).text(body.str()).build();
+        return Right(ResponseBuilder().status(kStatusOk).text(body.str()).build());
     }
 
     Matcher<CgiHandler::CgiExtension> CgiHandler::createMatcher() const {
