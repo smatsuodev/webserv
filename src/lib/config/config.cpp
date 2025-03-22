@@ -222,6 +222,18 @@ namespace config {
             autoindex = (autoindexValue == "on");
         }
 
+        std::vector<std::string> cgiExtensions;
+        if (locationTable.hasKey("cgi_extensions")) {
+            std::vector<toml::Value> extensionsInConfig =
+                locationTable.getValue("cgi_extensions").unwrap().getArray().unwrap().getElements();
+
+            for (size_t i = 0; i < extensionsInConfig.size(); ++i) {
+                std::string extension = extensionsInConfig[i].getString().unwrap();
+                cgiExtensions.push_back(extension);
+            }
+        }
+
+
         std::vector<http::HttpMethod> allowedMethods = getDefaultAllowedMethods();
         if (locationTable.hasKey("allowed_methods")) {
             std::vector<toml::Value> methodValues =
@@ -239,7 +251,7 @@ namespace config {
             }
         }
 
-        DocumentRootConfig docRootConfig(root, autoindex, index);
+        DocumentRootConfig docRootConfig(root, autoindex, index, cgiExtensions);
         return LocationContext(path, docRootConfig, allowedMethods);
     }
 
@@ -261,24 +273,30 @@ namespace config {
 
     /* LocationContext::DocumentRootConfig */
     LocationContext::DocumentRootConfig::DocumentRootConfig(
-        const std::string &root, const bool autoindex, const std::string &index
+        const std::string &root,
+        const bool autoindex,
+        const std::string &index,
+        const std::vector<std::string> &cgiExtensions
     )
-        : root_(root), autoindex_(autoindex), index_(index) {}
+        : root_(root), autoindex_(autoindex), index_(index), cgiExtensions_(cgiExtensions) {}
 
     LocationContext::DocumentRootConfig::DocumentRootConfig(const DocumentRootConfig &other)
-        : root_(other.root_), autoindex_(other.autoindex_), index_(other.index_) {}
+        : root_(other.root_), autoindex_(other.autoindex_), index_(other.index_), cgiExtensions_(other.cgiExtensions_) {
+    }
 
     LocationContext::DocumentRootConfig &LocationContext::DocumentRootConfig::operator=(const DocumentRootConfig &rhs) {
         if (this != &rhs) {
             root_ = rhs.root_;
             autoindex_ = rhs.autoindex_;
             index_ = rhs.index_;
+            cgiExtensions_ = rhs.cgiExtensions_;
         }
         return *this;
     }
 
     bool LocationContext::DocumentRootConfig::operator==(const DocumentRootConfig &rhs) const {
-        return root_ == rhs.root_ && autoindex_ == rhs.autoindex_ && index_ == rhs.index_;
+        return root_ == rhs.root_ && autoindex_ == rhs.autoindex_ && index_ == rhs.index_ &&
+            cgiExtensions_ == rhs.cgiExtensions_;
     }
 
     const std::string &LocationContext::DocumentRootConfig::getRoot() const {
@@ -291,6 +309,10 @@ namespace config {
 
     const std::string &LocationContext::DocumentRootConfig::getIndex() const {
         return index_;
+    }
+
+    const std::vector<std::string> &LocationContext::DocumentRootConfig::getCgiExtensions() const {
+        return cgiExtensions_;
     }
 
     LocationContext::AllowedMethods LocationContext::getDefaultAllowedMethods() {

@@ -1,6 +1,5 @@
 #include "config/config.hpp"
 #include "core/server.hpp"
-#include "http/handler/redirect_handler.hpp"
 #include "utils/logger.hpp"
 
 using namespace config;
