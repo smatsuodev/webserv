@@ -15,7 +15,7 @@ namespace http {
         Router();
         ~Router();
 
-        Response serve(const Request &req);
+        Either<IAction *, Response> serve(const Request &req);
 
         // 登録された handler は Router が delete する
         void on(HttpMethod method, const std::string &path, IHandler *handler);
@@ -51,7 +51,7 @@ namespace http {
     class Router::InternalRouter : public IHandler {
     public:
         explicit InternalRouter(HandlerMap &handlers);
-        Response serve(const Request &req);
+        Either<IAction *, Response> serve(const Request &req);
 
     private:
         HandlerMap &handlers_;
@@ -61,7 +61,7 @@ namespace http {
     class Router::ChainHandler : public IHandler {
     public:
         ChainHandler(IMiddleware &middleware, IHandler &next);
-        Response serve(const Request &req);
+        Either<IAction *, Response> serve(const Request &req);
 
     private:
         IMiddleware &middleware_;
