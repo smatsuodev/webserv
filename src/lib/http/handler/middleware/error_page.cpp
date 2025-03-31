@@ -5,8 +5,8 @@
 
 http::ErrorPage::ErrorPage(const config::ServerContext::ErrorPageMap &errorPage) : errorPage_(errorPage) {}
 
-Either<IAction *, http::Response> http::ErrorPage::intercept(const Request &req, IHandler &next) {
-    const Either<IAction *, Response> serveRes = next.serve(req);
+Either<IAction *, http::Response> http::ErrorPage::intercept(const RequestContext &ctx, IHandler &next) {
+    const Either<IAction *, Response> serveRes = next.serve(ctx);
     if (serveRes.isLeft()) {
         // Left の場合はまだレスポンスが決定できない
         return serveRes;

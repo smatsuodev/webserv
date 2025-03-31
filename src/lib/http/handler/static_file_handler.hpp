@@ -8,7 +8,7 @@ namespace http {
     class StaticFileHandler : public IHandler {
     public:
         explicit StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig);
-        Either<IAction *, Response> serve(const Request &req);
+        Either<IAction *, Response> serve(const RequestContext &ctx);
 
     private:
         config::LocationContext::DocumentRootConfig docRootConfig_;

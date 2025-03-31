@@ -7,7 +7,7 @@ namespace http {
     class RedirectHandler : public IHandler {
     public:
         explicit RedirectHandler(const std::string &destination);
-        Either<IAction *, Response> serve(const Request &req);
+        Either<IAction *, Response> serve(const RequestContext &ctx);
 
     private:
         std::string destination_;

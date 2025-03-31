@@ -13,8 +13,8 @@ namespace http {
     StaticFileHandler::StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)
         : docRootConfig_(docRootConfig) {}
 
-    Either<IAction *, Response> StaticFileHandler::serve(const Request &req) {
-        return Right(this->serveInternal(req));
+    Either<IAction *, Response> StaticFileHandler::serve(const RequestContext &ctx) {
+        return Right(this->serveInternal(ctx.getRequest()));
     }
 
     Result<std::string, HttpStatusCode>

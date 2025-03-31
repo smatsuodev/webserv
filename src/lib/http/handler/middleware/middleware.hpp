@@ -7,7 +7,7 @@ namespace http {
     class IMiddleware {
     public:
         virtual ~IMiddleware() {}
-        virtual Either<IAction *, Response> intercept(const Request &req, IHandler &next) = 0;
+        virtual Either<IAction *, Response> intercept(const RequestContext &ctx, IHandler &next) = 0;
     };
 }
 
