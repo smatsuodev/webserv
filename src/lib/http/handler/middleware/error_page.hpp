@@ -9,7 +9,7 @@ namespace http {
     class ErrorPage : public IMiddleware {
     public:
         explicit ErrorPage(const config::ServerContext::ErrorPageMap &errorPage);
-        Response intercept(const Request &req, IHandler &next);
+        Either<IAction *, Response> intercept(const Request &req, IHandler &next);
 
     private:
         config::ServerContext::ErrorPageMap errorPage_;
