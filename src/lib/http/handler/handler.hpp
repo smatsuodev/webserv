@@ -7,6 +7,24 @@
 #include "utils/types/either.hpp"
 
 namespace http {
+    class RequestContext {
+    public:
+        RequestContext(const Request &request, const Ref<const Connection> &connection)
+            : request_(request), connection_(connection) {}
+
+        const Request &getRequest() const {
+            return request_;
+        }
+
+        const Ref<const Connection> &getConnection() const {
+            return connection_;
+        }
+
+    private:
+        Ref<const Request> request_;
+        Ref<const Connection> connection_;
+    };
+
     class IHandler {
     public:
         virtual ~IHandler() {}
