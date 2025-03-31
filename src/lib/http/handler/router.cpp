@@ -100,6 +100,6 @@ namespace http {
         : middleware_(middleware), next_(next) {}
 
     Either<IAction *, Response> Router::ChainHandler::serve(const RequestContext &ctx) {
-        return middleware_.intercept(ctx.getRequest(), next_);
+        return middleware_.intercept(ctx, next_);
     }
 }

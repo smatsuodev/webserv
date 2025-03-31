@@ -57,8 +57,9 @@ void ServeHttpAction::execute(ActionContext &actionCtx) {
     // accept 後は resolver は存在するはず
     const Option<Ref<VirtualServer> > vs = eventCtx_.getResolver().unwrap().resolve(hostHeader);
 
-    // accept したので VirtualServer は存在するはず
-    const Either<IAction *, http::Response> resOrAction = vs.unwrap().get().getRouter().serve(req_);
+    // accept したので Connection, VirtualServer は存在するはず
+    const http::RequestContext reqContext(req_, eventCtx_.getConnection().unwrap());
+    const Either<IAction *, http::Response> resOrAction = vs.unwrap().get().getRouter().serve(reqContext);
     if (resOrAction.isLeft()) {
         LOG_DEBUG("ServeHttpAction: action is returned");
         IAction *action = resOrAction.unwrapLeft();
