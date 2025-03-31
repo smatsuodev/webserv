@@ -33,7 +33,7 @@ namespace http {
          * この課題では CGI の実行を行うため、IAction * を返す
          * (CGI はいくらでもブロッキングしうるので、epoll などで IO の通知を待つ必要がある)
          */
-        virtual Either<IAction *, Response> serve(const Request &req) = 0;
+        virtual Either<IAction *, Response> serve(const RequestContext &ctx) = 0;
     };
 }
 

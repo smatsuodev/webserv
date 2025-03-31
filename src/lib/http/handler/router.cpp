@@ -52,15 +52,17 @@ namespace http {
         handlersChain_.push_back(new ChainHandler(*middleware, *handlersChain_.back()));
     }
 
-    Either<IAction *, Response> Router::serve(const Request &req) {
-        return handlersChain_.back()->serve(req);
+    Either<IAction *, Response> Router::serve(const RequestContext &ctx) {
+        return handlersChain_.back()->serve(ctx);
     }
 
     /* internal */
 
     Router::InternalRouter::InternalRouter(HandlerMap &handlers) : handlers_(handlers) {}
 
-    Either<IAction *, Response> Router::InternalRouter::serve(const Request &req) {
+    Either<IAction *, Response> Router::InternalRouter::serve(const RequestContext &ctx) {
+        const Request &req = ctx.getRequest();
+
         // 適切な handler を探す
         // TODO: Matcher を毎回生成し直すのをやめたい
         const Matcher<Path> matcher = this->createMatcher();
@@ -83,7 +85,7 @@ namespace http {
         }
 
         // 具体的な処理は登録した handler に委譲
-        return it->second->serve(req);
+        return it->second->serve(ctx);
     }
 
     Matcher<Router::Path> Router::InternalRouter::createMatcher() const {
@@ -97,7 +99,7 @@ namespace http {
     Router::ChainHandler::ChainHandler(IMiddleware &middleware, IHandler &next)
         : middleware_(middleware), next_(next) {}
 
-    Either<IAction *, Response> Router::ChainHandler::serve(const Request &req) {
-        return middleware_.intercept(req, next_);
+    Either<IAction *, Response> Router::ChainHandler::serve(const RequestContext &ctx) {
+        return middleware_.intercept(ctx.getRequest(), next_);
     }
 }
