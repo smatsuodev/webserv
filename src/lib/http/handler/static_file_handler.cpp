@@ -13,6 +13,10 @@ namespace http {
     StaticFileHandler::StaticFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)
         : docRootConfig_(docRootConfig) {}
 
+    Either<IAction *, Response> StaticFileHandler::serve(const Request &req) {
+        return Right(this->serveInternal(req));
+    }
+
     Result<std::string, HttpStatusCode>
     StaticFileHandler::makeDirectoryListingHtml(const std::string &root, const std::string &target) {
         DIR *dir = opendir((root + target).c_str());
@@ -92,7 +96,7 @@ namespace http {
         return ResponseBuilder().status(kStatusInternalServerError).build();
     }
 
-    Response StaticFileHandler::serve(const Request &req) {
+    Response StaticFileHandler::serveInternal(const Request &req) const {
         const std::string path = docRootConfig_.getRoot() + req.getRequestTarget();
         LOG_DEBUGF("request target: %s", req.getRequestTarget().c_str());
 
