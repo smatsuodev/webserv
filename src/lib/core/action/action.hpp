@@ -3,8 +3,8 @@
 
 #include "event/event_handler.hpp"
 #include "http/request/request.hpp"
-#include "server_state.hpp"
-#include "virtual_server_resolver.hpp"
+#include "../server_state.hpp"
+#include "../virtual_server_resolver.hpp"
 
 class ActionContext {
 public:
