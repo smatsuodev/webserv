@@ -8,8 +8,11 @@
 
 class ActionContext {
 public:
-    explicit ActionContext(ServerState &state);
-    ServerState &getState() const;
+    explicit ActionContext(ServerState &state) : state_(state) {}
+
+    ServerState &getState() const {
+        return state_;
+    }
 
 private:
     ServerState &state_;

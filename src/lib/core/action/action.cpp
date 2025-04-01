@@ -2,12 +2,6 @@
 #include "http/handler/router.hpp"
 #include "utils/logger.hpp"
 
-ActionContext::ActionContext(ServerState &state) : state_(state) {}
-
-ServerState &ActionContext::getState() const {
-    return state_;
-}
-
 AddConnectionAction::AddConnectionAction(Connection *conn) : conn_(conn) {}
 
 void AddConnectionAction::execute(ActionContext &ctx) {
