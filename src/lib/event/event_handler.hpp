@@ -48,7 +48,7 @@ private:
 // IEventHandler が返す Command オブジェクト
 class IAction {
 public:
-    virtual ~IAction();
+    virtual ~IAction() {}
     // NOTE: core の ActionContext に依存していて、設計的に微妙?
     virtual void execute(ActionContext &ctx) = 0;
 };

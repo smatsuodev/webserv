@@ -2,8 +2,6 @@
 #include "http/handler/router.hpp"
 #include "utils/logger.hpp"
 
-IAction::~IAction() {}
-
 ActionContext::ActionContext(ServerState &state) : state_(state) {}
 
 ServerState &ActionContext::getState() const {
