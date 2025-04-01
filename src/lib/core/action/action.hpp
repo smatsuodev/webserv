@@ -3,13 +3,15 @@
 
 #include "event/event_handler.hpp"
 #include "http/request/request.hpp"
-#include "server_state.hpp"
-#include "virtual_server_resolver.hpp"
+#include "../server_state.hpp"
+#include "../virtual_server_resolver.hpp"
 
 class ActionContext {
 public:
-    explicit ActionContext(ServerState &state);
-    ServerState &getState() const;
+    explicit ActionContext(ServerState &state) : state_(state) {}
+    ServerState &getState() const {
+        return state_;
+    }
 
 private:
     ServerState &state_;
@@ -17,7 +19,7 @@ private:
 
 class AddConnectionAction : public IAction {
 public:
-    explicit AddConnectionAction(Connection *conn);
+    explicit AddConnectionAction(Connection *conn) : conn_(conn) {}
     void execute(ActionContext &ctx);
 
 private:
@@ -26,7 +28,7 @@ private:
 
 class RemoveConnectionAction : public IAction {
 public:
-    explicit RemoveConnectionAction(Connection &conn);
+    explicit RemoveConnectionAction(Connection &conn) : conn_(conn) {}
     void execute(ActionContext &ctx);
 
 private:
@@ -35,7 +37,7 @@ private:
 
 class RegisterEventHandlerAction : public IAction {
 public:
-    RegisterEventHandlerAction(Connection &conn, IEventHandler *handler);
+    RegisterEventHandlerAction(Connection &conn, IEventHandler *handler) : conn_(conn), handler_(handler) {}
     void execute(ActionContext &ctx);
 
 private:
@@ -45,7 +47,7 @@ private:
 
 class UnregisterEventHandlerAction : public IAction {
 public:
-    explicit UnregisterEventHandlerAction(Connection &conn);
+    explicit UnregisterEventHandlerAction(Connection &conn) : conn_(conn) {}
     void execute(ActionContext &ctx);
 
 private:
@@ -54,7 +56,7 @@ private:
 
 class RegisterEventAction : public IAction {
 public:
-    explicit RegisterEventAction(const Event &event);
+    explicit RegisterEventAction(const Event &event) : event_(event) {}
     void execute(ActionContext &ctx);
 
 private:
@@ -63,7 +65,7 @@ private:
 
 class UnregisterEventAction : public IAction {
 public:
-    explicit UnregisterEventAction(const Event &event);
+    explicit UnregisterEventAction(const Event &event) : event_(event) {}
     void execute(ActionContext &ctx);
 
 private:
@@ -74,7 +76,8 @@ class ServeHttpAction : public IAction {
 public:
     typedef IEventHandler *(EventHandlerFactory)(const http::Response &);
 
-    ServeHttpAction(const Context &eventCtx, const http::Request &req, EventHandlerFactory *factory);
+    ServeHttpAction(const Context &eventCtx, const http::Request &req, EventHandlerFactory *factory)
+        : eventCtx_(eventCtx), req_(req), factory_(factory) {}
     void execute(ActionContext &actionCtx);
 
 private:
