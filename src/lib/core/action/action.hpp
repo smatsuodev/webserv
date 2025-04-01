@@ -1,5 +1,5 @@
-#ifndef SRC_LIB_CORE_ACTION_HPP
-#define SRC_LIB_CORE_ACTION_HPP
+#ifndef SRC_LIB_CORE_ACTION_ACTION_HPP
+#define SRC_LIB_CORE_ACTION_ACTION_HPP
 
 #include "event/event_handler.hpp"
 #include "http/request/request.hpp"
