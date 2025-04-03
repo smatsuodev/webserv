@@ -6,7 +6,12 @@
 namespace http {
     DeleteFileHandler::DeleteFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)
         : docRootConfig_(docRootConfig) {}
-    Response DeleteFileHandler::serve(const Request &req) {
+
+    Either<IAction *, Response> DeleteFileHandler::serve(const RequestContext &ctx) {
+        return Right(this->serveInternal(ctx.getRequest()));
+    }
+
+    Response DeleteFileHandler::serveInternal(const Request &req) const {
         const std::string path = docRootConfig_.getRoot() + '/' + req.getRequestTarget();
         LOG_DEBUGF("request target: %s", req.getRequestTarget().c_str());
 

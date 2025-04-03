@@ -5,12 +5,18 @@
 
 http::ErrorPage::ErrorPage(const config::ServerContext::ErrorPageMap &errorPage) : errorPage_(errorPage) {}
 
-http::Response http::ErrorPage::intercept(const Request &req, IHandler &next) {
-    const Response res = next.serve(req);
+Either<IAction *, http::Response> http::ErrorPage::intercept(const RequestContext &ctx, IHandler &next) {
+    const Either<IAction *, Response> serveRes = next.serve(ctx);
+    if (serveRes.isLeft()) {
+        // Left の場合はまだレスポンスが決定できない
+        return serveRes;
+    }
+
+    const Response res = serveRes.unwrapRight();
     const HttpStatusCode status = res.getStatusCode();
     if (status < 400) {
         // エラーでなければそのまま返す
-        return res;
+        return Right(res);
     }
 
     std::string body;
@@ -39,5 +45,5 @@ http::Response http::ErrorPage::intercept(const Request &req, IHandler &next) {
         );
     }
 
-    return ResponseBuilder().html(body, status).build();
+    return Right(ResponseBuilder().html(body, status).build());
 }

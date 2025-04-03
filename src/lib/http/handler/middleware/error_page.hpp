@@ -5,11 +5,10 @@
 #include "config/config.hpp"
 
 namespace http {
-    // TODO: 設定を受け取る
     class ErrorPage : public IMiddleware {
     public:
         explicit ErrorPage(const config::ServerContext::ErrorPageMap &errorPage);
-        Response intercept(const Request &req, IHandler &next);
+        Either<IAction *, Response> intercept(const RequestContext &ctx, IHandler &next);
 
     private:
         config::ServerContext::ErrorPageMap errorPage_;

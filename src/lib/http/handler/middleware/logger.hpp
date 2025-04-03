@@ -6,7 +6,7 @@
 namespace http {
     class Logger : public IMiddleware {
     public:
-        Response intercept(const Request &req, IHandler &next);
+        Either<IAction *, Response> intercept(const RequestContext &ctx, IHandler &next);
     };
 }
 

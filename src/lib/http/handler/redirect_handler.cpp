@@ -4,7 +4,11 @@
 namespace http {
     RedirectHandler::RedirectHandler(const std::string &destination) : destination_(destination) {}
 
-    Response RedirectHandler::serve(const Request &) {
+    Either<IAction *, Response> RedirectHandler::serve(const RequestContext &ctx) {
+        return Right(this->serveInternal(ctx.getRequest()));
+    }
+
+    Response RedirectHandler::serveInternal(const Request &) const {
         return ResponseBuilder().status(kStatusFound).header("Location", destination_).build();
     }
 }

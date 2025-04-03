@@ -8,11 +8,13 @@ namespace http {
     class DeleteFileHandler : public IHandler {
     public:
         explicit DeleteFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig);
-        Response serve(const Request &req);
+        Either<IAction *, Response> serve(const RequestContext &ctx);
 
     private:
         config::LocationContext::DocumentRootConfig docRootConfig_;
+
+        Response serveInternal(const Request &req) const;
     };
-} // http
+}
 
 #endif
