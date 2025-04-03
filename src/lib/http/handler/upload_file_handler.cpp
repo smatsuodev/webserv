@@ -14,7 +14,7 @@ http::UploadFileHandler::UploadFileHandler(const config::LocationContext::Docume
     : docConfig_(config) {}
 
 Either<IAction *, http::Response> http::UploadFileHandler::serve(const RequestContext &ctx) {
-    const http::Request &req = ctx.getRequest();
+    const Request &req = ctx.getRequest();
     const Option<std::string> contentTypeOpt = req.getHeader("Content-Type");
     if (contentTypeOpt.isNone()) {
         return Right(
