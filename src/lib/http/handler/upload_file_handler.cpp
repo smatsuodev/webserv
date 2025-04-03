@@ -13,13 +13,16 @@ const std::string http::UploadFileHandler::kBoundary = "boundary";
 http::UploadFileHandler::UploadFileHandler(const config::LocationContext::DocumentRootConfig &config)
     : docConfig_(config) {}
 
-http::Response http::UploadFileHandler::serve(const Request &req) {
+Either<IAction *, http::Response> http::UploadFileHandler::serve(const RequestContext &ctx) {
+    const http::Request &req = ctx.getRequest();
     const Option<std::string> contentTypeOpt = req.getHeader("Content-Type");
     if (contentTypeOpt.isNone()) {
-        return ResponseBuilder()
-            .status(kStatusUnsupportedMediaType)
-            .text("Content-Type must be multipart/form-data")
-            .build();
+        return Right(
+            ResponseBuilder()
+                .status(kStatusUnsupportedMediaType)
+                .text("Content-Type must be multipart/form-data")
+                .build()
+        );
     }
 
     // Content-Typeをセミコロン区切りでパース
@@ -28,10 +31,12 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
 
     // 最初の部分がmultipart/form-dataであるか確認
     if (contentTypeParams.empty() || utils::trim(contentTypeParams[0]) != kContentTypeMultipartFormData) {
-        return ResponseBuilder()
-            .status(kStatusUnsupportedMediaType)
-            .text("Content-Type must be multipart/form-data")
-            .build();
+        return Right(
+            ResponseBuilder()
+                .status(kStatusUnsupportedMediaType)
+                .text("Content-Type must be multipart/form-data")
+                .build()
+        );
     }
 
     // boundaryパラメータを探す
@@ -48,7 +53,9 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
         // key=valueの形式を確認
         const std::string::size_type eqPos = param.find('=');
         if (eqPos == std::string::npos) {
-            return ResponseBuilder().status(kStatusBadRequest).text("Invalid parameter format: " + param).build();
+            return Right(
+                ResponseBuilder().status(kStatusBadRequest).text("Invalid parameter format: " + param).build()
+            );
         }
 
         std::string key = utils::trim(param.substr(0, eqPos));
@@ -58,13 +65,15 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
         if (key != kBoundary) continue;
 
         if (value.empty()) {
-            return ResponseBuilder().status(kStatusBadRequest).text("Empty boundary parameter").build();
+            return Right(ResponseBuilder().status(kStatusBadRequest).text("Empty boundary parameter").build());
         }
 
         // 引用符付きの値の処理
         if (value[0] == '"') {
             if (value.length() < 2 || value[value.length() - 1] != '"') {
-                return ResponseBuilder().status(kStatusBadRequest).text("Unclosed quoted boundary parameter").build();
+                return Right(
+                    ResponseBuilder().status(kStatusBadRequest).text("Unclosed quoted boundary parameter").build()
+                );
             }
             boundary = value.substr(1, value.length() - 2);
         } else {
@@ -73,19 +82,20 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
 
         // RFC 1341に基づく境界値の検証
         if (boundary.length() > 70) {
-            return ResponseBuilder()
-                .status(kStatusBadRequest)
-                .text("Boundary parameter too long (max 70 characters)")
-                .build();
+            return Right(
+                ResponseBuilder()
+                    .status(kStatusBadRequest)
+                    .text("Boundary parameter too long (max 70 characters)")
+                    .build()
+            );
         }
 
         for (size_t j = 0; j < boundary.length(); j++) {
             const char c = boundary[j];
             if (c < 32 || c > 126) {
-                return ResponseBuilder()
-                    .status(kStatusBadRequest)
-                    .text("Invalid character in boundary parameter")
-                    .build();
+                return Right(
+                    ResponseBuilder().status(kStatusBadRequest).text("Invalid character in boundary parameter").build()
+                );
             }
         }
 
@@ -94,11 +104,11 @@ http::Response http::UploadFileHandler::serve(const Request &req) {
     }
 
     if (!foundBoundary || boundary.empty()) {
-        return ResponseBuilder().status(kStatusBadRequest).text("No boundary parameter in Content-Type").build();
+        return Right(ResponseBuilder().status(kStatusBadRequest).text("No boundary parameter in Content-Type").build());
     }
 
     const std::string &body = req.getBody();
-    return parseMultipartBody(body, boundary);
+    return Right(parseMultipartBody(body, boundary));
 }
 
 http::Response http::UploadFileHandler::parseMultipartBody(const std::string &body, const std::string &boundary) const {

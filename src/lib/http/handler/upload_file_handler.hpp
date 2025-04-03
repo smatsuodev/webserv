@@ -7,7 +7,7 @@ namespace http {
     class UploadFileHandler : public IHandler {
     public:
         explicit UploadFileHandler(const config::LocationContext::DocumentRootConfig &config);
-        Response serve(const Request &req);
+        Either<IAction *, Response> serve(const RequestContext &ctx);
 
     private:
         static const std::string kContentTypeMultipartFormData;
