@@ -1,10 +1,11 @@
-#ifndef SRC_LIB_CORE_ACTION_HPP
-#define SRC_LIB_CORE_ACTION_HPP
+#ifndef SRC_LIB_CORE_ACTION_ACTION_HPP
+#define SRC_LIB_CORE_ACTION_ACTION_HPP
 
 #include "event/event_handler.hpp"
 #include "http/request/request.hpp"
 #include "../server_state.hpp"
 #include "../virtual_server_resolver.hpp"
+#include "cgi/request.hpp"
 
 class ActionContext {
 public:
@@ -84,6 +85,15 @@ private:
     Context eventCtx_;
     http::Request req_;
     EventHandlerFactory *factory_;
+};
+
+class RunCgiAction : public IAction {
+public:
+    explicit RunCgiAction(const cgi::Request &cgiRequest) : cgiRequest_(cgiRequest) {}
+    void execute(ActionContext &ctx);
+
+private:
+    cgi::Request cgiRequest_;
 };
 
 #endif
