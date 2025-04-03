@@ -27,10 +27,9 @@ namespace http {
         return *this;
     }
 
-    ResponseBuilder &ResponseBuilder::text(const std::string &body, const HttpStatusCode status) {
+    ResponseBuilder &ResponseBuilder::text(const std::string &body) {
         body_ = Some(body);
-        return this->status(status)
-            .header("Content-Type", "text/plain; charset=UTF-8")
+        return this->header("Content-Type", "text/plain; charset=UTF-8")
             .header("Content-Length", utils::toString(body.size()));
     }
 
