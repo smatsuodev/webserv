@@ -115,6 +115,8 @@ add_library(webserv_lib STATIC
         lib/cgi/response.hpp
         lib/utils/types/either.hpp
         lib/core/action/serveHttpAction.cpp
+        lib/http/handler/upload_file_handler.cpp
+        lib/http/handler/upload_file_handler.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

@@ -19,7 +19,7 @@ namespace http {
         ResponseBuilder &header(const std::string &name, const std::string &value);
 
         // Content-Type, Content-Length などの必要な header を自動で付与
-        ResponseBuilder &text(const std::string &body, HttpStatusCode status = kStatusOk);
+        ResponseBuilder &text(const std::string &body);
         ResponseBuilder &html(const std::string &body, HttpStatusCode status = kStatusOk);
         ResponseBuilder &redirect(const std::string &location, HttpStatusCode status = kStatusFound);
         ResponseBuilder &file(const std::string &path, HttpStatusCode status = kStatusOk);
