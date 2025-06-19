@@ -3,6 +3,7 @@
 
 #include "handler.hpp"
 #include "cgi/request.hpp"
+#include "config/config.hpp"
 #include <string>
 
 namespace http {
@@ -10,8 +11,12 @@ namespace http {
     class CgiHandler : public IHandler {
     public:
         // リクエストが CGI スクリプトに対するものでない場合、fallbackHandler を呼び出す
-        CgiHandler(const std::string &serverName, IHandler *fallbackHandler)
-            : serverName_(serverName), fallbackHandler_(fallbackHandler) {}
+        CgiHandler(
+            const std::string &serverName,
+            const config::LocationContext::DocumentRootConfig &docRootConfig,
+            IHandler *fallbackHandler
+        )
+            : serverName_(serverName), docRootConfig_(docRootConfig), fallbackHandler_(fallbackHandler) {}
 
         ~CgiHandler() {
             delete fallbackHandler_;
@@ -21,6 +26,7 @@ namespace http {
 
     private:
         std::string serverName_;
+        config::LocationContext::DocumentRootConfig docRootConfig_;
         IHandler *fallbackHandler_;
 
         bool isCgiRequest(const RequestContext &ctx) const;
