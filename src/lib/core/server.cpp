@@ -72,6 +72,9 @@ void Server::start() {
             // Event::kRead, Event::kWrite の handler を取り出して実行
             const std::vector<Event::EventType> eventTypes = {Event::kRead, Event::kWrite};
             for (std::vector<Event::EventType>::const_iterator it = eventTypes.begin(); it != eventTypes.end(); ++it) {
+                if ((*it & ev.getTypeFlags()) == 0) {
+                    continue;
+                }
                 Option<Ref<IEventHandler> > handler = state_.getEventHandlerRepository().get(ev.getFd(), *it);
                 if (handler.isNone()) {
                     continue;
