@@ -38,21 +38,24 @@ private:
 
 class RegisterEventHandlerAction : public IAction {
 public:
-    RegisterEventHandlerAction(Connection &conn, IEventHandler *handler) : conn_(conn), handler_(handler) {}
+    RegisterEventHandlerAction(Connection &conn, Event::EventType type, IEventHandler *handler)
+        : conn_(conn), type_(type), handler_(handler) {}
     void execute(ActionContext &ctx);
 
 private:
     Connection &conn_;
+    Event::EventType type_;
     IEventHandler *handler_;
 };
 
 class UnregisterEventHandlerAction : public IAction {
 public:
-    explicit UnregisterEventHandlerAction(Connection &conn) : conn_(conn) {}
+    explicit UnregisterEventHandlerAction(Connection &conn, Event::EventType type) : conn_(conn), type_(type) {}
     void execute(ActionContext &ctx);
 
 private:
     Connection &conn_;
+    Event::EventType type_;
 };
 
 class RegisterEventAction : public IAction {

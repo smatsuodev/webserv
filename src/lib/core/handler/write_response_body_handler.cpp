@@ -1,4 +1,4 @@
-#include "write_response_handler.hpp"
+#include "write_response_body_handler.hpp"
 #include "core/action/action.hpp"
 #include "utils/logger.hpp"
 #include <cerrno>
@@ -25,7 +25,8 @@ IEventHandler::InvokeResult WriteResponseHandler::invoke(const Context &ctx) {
 
     std::vector<IAction *> actions;
     actions.push_back(new UnregisterEventAction(ctx.getEvent()));
-    actions.push_back(new UnregisterEventHandlerAction(conn));
+    actions.push_back(new UnregisterEventHandlerAction(conn, Event::kRead));
+    actions.push_back(new UnregisterEventHandlerAction(conn, Event::kWrite));
     actions.push_back(new RemoveConnectionAction(ctx.getConnection().unwrap()));
 
     return Ok(actions);

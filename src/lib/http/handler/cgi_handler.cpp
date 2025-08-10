@@ -8,7 +8,7 @@
 namespace http {
     Either<IAction *, Response> CgiHandler::serve(const RequestContext &ctx) {
         if (!this->isCgiRequest(ctx)) {
-            return fallbackHandler_(ctx);
+            return fallbackHandler_->serve(ctx);
         }
 
         const Result<cgi::Request, error::AppError> &createResult = this->createCgiRequest(ctx);

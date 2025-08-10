@@ -30,6 +30,7 @@ private:
     void onHandlerError(const Context &ctx, error::AppError err);
     void onErrorEvent(const Event &event);
     static void executeActions(ActionContext &actionCtx, std::vector<IAction *> actions);
+    void invokeHandler(const Context &ctx, const Option<Ref<IEventHandler> > &handler);
 };
 
 #endif

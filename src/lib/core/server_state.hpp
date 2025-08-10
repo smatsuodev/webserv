@@ -31,12 +31,13 @@ public:
     EventHandlerRepository();
     ~EventHandlerRepository();
 
-    Option<Ref<IEventHandler> > get(int fd);
-    void set(int fd, IEventHandler *handler);
-    void remove(int fd);
+    Option<Ref<IEventHandler> > get(int fd, Event::EventType type);
+    void set(int fd, Event::EventType type, IEventHandler *handler);
+    void remove(int fd, Event::EventType type);
 
 private:
-    std::map<int, IEventHandler *> handlers_;
+    typedef std::pair<int, Event::EventType> Key;
+    std::map<Key, IEventHandler *> handlers_;
 };
 
 class ServerState {
