@@ -11,7 +11,7 @@ root = 'example/html'
 [[server.location]]
 path = '/other'
 root = 'example/html'
-index = 'top.html'
+index = 'home.html'
 
 # upload したファイルの取得
 [[server.location]]
