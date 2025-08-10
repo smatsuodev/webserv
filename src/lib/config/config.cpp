@@ -233,7 +233,6 @@ namespace config {
             }
         }
 
-
         std::vector<http::HttpMethod> allowedMethods = getDefaultAllowedMethods();
         if (locationTable.hasKey("allowed_methods")) {
             std::vector<toml::Value> methodValues =

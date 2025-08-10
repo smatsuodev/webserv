@@ -11,6 +11,8 @@ public:
     InvokeResult invoke(const Context &ctx);
 
 private:
+    std::string body_;
+    size_t bytesWritten_;
 };
 
 #endif

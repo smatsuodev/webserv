@@ -19,7 +19,9 @@ namespace cgi {
             const std::string &serverPort;
             const std::string &scriptName;
             const std::string &pathInfo;
+            const std::string &documentRoot;
         };
+        ;
         static Result<cgi::Request, error::AppError> create(const Parameter &param);
     };
 
