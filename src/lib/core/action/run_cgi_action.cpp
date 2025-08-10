@@ -7,6 +7,7 @@
 
 #include "../../cgi/meta_variable.hpp"
 
+#include "utils/log.hpp"
 extern char **environ;
 
 // parent <-> child の双方向の IPC が必要
@@ -18,6 +19,7 @@ void RunCgiAction::execute(ActionContext &ctx) {
     AutoFd socketParent(pair[0]);
     AutoFd socketChild(pair[1]);
 
+    LOG_DEBUG("Forking CGI process");
     const pid_t childPid = fork();
     if (childPid == -1) {
         throw std::runtime_error("fork failed");
@@ -81,10 +83,12 @@ void RunCgiAction::execute(ActionContext &ctx) {
         }
 
         // CGI を実行
+        LOG_DEBUGF("Executing CGI program: %s", cgiProgram.c_str());
         char *const argv[] = {const_cast<char *>(cgiProgram.c_str()), NULL};
         execve(cgiProgram.c_str(), argv, envp.data());
 
         // exec に失敗
+        LOG_ERRORF("Failed to execute CGI program: %s", cgiProgram.c_str());
         std::exit(1);
     }
 
@@ -93,16 +97,24 @@ void RunCgiAction::execute(ActionContext &ctx) {
     const Address dummyLocal("127.0.0.1", 0);
     const Address dummyForeign("127.0.0.1", 0);
     ctx.getState().getConnectionRepository().set(socketParent, new Connection(socketParent, dummyLocal, dummyForeign));
+    
+    // AutoFdの管理から外す（ConnectionがFDを管理するため）
+    const int socketFd = socketParent.release();
 
-    ctx.getState().getEventNotifier().registerEvent(Event(socketParent, Event::kRead | Event::kWrite));
+    ctx.getState().getEventNotifier().registerEvent(Event(socketFd, Event::kRead | Event::kWrite));
 
     const Option<std::string> body = cgiRequest_.getBody();
     if (body.isSome()) {
         ctx.getState().getEventHandlerRepository().set(
-            socketParent, Event::kWrite, new WriteCgiRequestBodyHandler(body.unwrap())
+            socketFd, Event::kWrite, new WriteCgiRequestBodyHandler(body.unwrap())
         );
     }
     ctx.getState().getEventHandlerRepository().set(
-        socketParent, Event::kRead, new ReadCgiResponseHandler(clientFd_, childPid)
+        socketFd, Event::kRead, new ReadCgiResponseHandler(clientFd_, childPid)
     );
+
+    // クライアント接続のイベントハンドラーを削除（無限ループ防止）
+    ctx.getState().getEventNotifier().unregisterEvent(Event(clientFd_, Event::kRead));
+    ctx.getState().getEventHandlerRepository().remove(clientFd_, Event::kRead);
+    ctx.getState().getEventHandlerRepository().remove(clientFd_, Event::kWrite);
 }

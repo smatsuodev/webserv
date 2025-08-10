@@ -19,7 +19,7 @@ IEventHandler::InvokeResult WriteResponseHandler::invoke(const Context &ctx) {
         LOG_WARN("failed to write response");
         return Err(error::kIOUnknown);
     }
-    totalBytesWritten_ += bytesToWrite;
+    totalBytesWritten_ += bytesWritten;
 
     LOG_DEBUG("response written");
 

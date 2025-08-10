@@ -140,11 +140,13 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
         // clientFd_に対してWriteイベントとハンドラを登録
         actions.push_back(new RegisterEventAction(Event(clientFd_, Event::kWrite)));
 
-        // クライアントConnectionを仮想的に作成（FIXME: 本来はConnectionRepositoryから取得すべき）
+        // クライアントConnection用にダミーのConnectionを作成してRepositoryに追加
+        // NOTE: 本来はクライアントConnectionが既に存在するはずだが、
+        // CGI処理の際に削除されている可能性があるため、再作成する
         const Address dummyLocal("127.0.0.1", 0);
         const Address dummyForeign("127.0.0.1", 0);
         Connection *clientConn = new Connection(clientFd_, dummyLocal, dummyForeign);
-
+        
         actions.push_back(new AddConnectionAction(clientConn));
         actions.push_back(
             new RegisterEventHandlerAction(*clientConn, Event::kWrite, new WriteResponseHandler(httpResponse))
