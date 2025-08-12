@@ -14,7 +14,6 @@ public:
 
 private:
     std::string responseBuffer_;
-    bool headersParsed_;
     Option<cgi::Response> cgiResponse_;
     int clientFd_;
     pid_t childPid_;
