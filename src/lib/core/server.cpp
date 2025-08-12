@@ -62,11 +62,6 @@ void Server::start() {
             const Event &ev = events[i];
             LOG_DEBUGF("event arrived for fd %d (flags: %x)", ev.getFd(), ev.getTypeFlags());
 
-            if (ev.isError()) {
-                this->onErrorEvent(ev);
-                continue;
-            }
-
             Option<Ref<Connection> > conn = state_.getConnectionRepository().get(ev.getFd());
             const Context ctx(ev, conn, vsResolverFactory);
 
@@ -74,6 +69,26 @@ void Server::start() {
                 state_.getEventHandlerRepository().get(ev.getFd(), Event::kRead);
             const Option<Ref<IEventHandler> > writeHandler =
                 state_.getEventHandlerRepository().get(ev.getFd(), Event::kWrite);
+
+            if (ev.isError()) {
+                IEventHandler::ErrorHandleResult result;
+
+                if (readHandler.isSome()) {
+                    result = readHandler.unwrap().get().onErrorEvent(ctx);
+                } else if (writeHandler.isSome()) {
+                    result = writeHandler.unwrap().get().onErrorEvent(ctx);
+                }
+
+                if (!result.actions.empty()) {
+                    ActionContext actionCtx(state_);
+                    executeActions(actionCtx, result.actions);
+                }
+
+                if (result.shouldFallback) {
+                    this->onErrorEvent(ev);
+                }
+                continue;
+            }
 
             if (readHandler.isSome()) {
                 this->invokeHandler(ctx, readHandler);
