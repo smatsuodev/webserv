@@ -12,6 +12,8 @@
 #include "../../utils/types/option.hpp"
 #include "../../http/request/request_parser.hpp"
 
+#include <sys/poll.h>
+
 ReadCgiResponseHandler::ReadCgiResponseHandler(int clientFd, pid_t childPid)
     : responseBuffer_(""), headersParsed_(false), cgiResponse_(None), clientFd_(clientFd), childPid_(childPid) {}
 
@@ -34,6 +36,7 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
     if (bytesRead == 0) {
         // EOF - CGIプロセスが終了
         LOG_DEBUG("CGI process finished");
+        LOG_DEBUGF("CGI response: %s", responseBuffer_.c_str());
 
         // CGIレスポンスをパース
         if (!headersParsed_) {
@@ -68,7 +71,7 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
                 }
             } else {
                 // ヘッダーが不完全
-                LOG_WARN("Incomplete CGI headers");
+                LOG_WARN("incomplete CGI headers");
                 cgi::Headers headers;
                 headers["Content-Type"] = "text/plain"; // デフォルト
                 const Result<cgi::Response, error::AppError> result =
@@ -146,7 +149,7 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
         const Address dummyLocal("127.0.0.1", 0);
         const Address dummyForeign("127.0.0.1", 0);
         Connection *clientConn = new Connection(clientFd_, dummyLocal, dummyForeign);
-        
+
         actions.push_back(new AddConnectionAction(clientConn));
         actions.push_back(
             new RegisterEventHandlerAction(*clientConn, Event::kWrite, new WriteResponseHandler(httpResponse))
@@ -205,4 +208,15 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
 
     // まだデータが来る可能性がある
     return Err(error::kRecoverable);
+}
+
+IEventHandler::ErrorHandleResult ReadCgiResponseHandler::onErrorEvent(const Context &ctx, const Event &event) {
+    LOG_WARNF("ReadCgiResponseHandler received an error event %d", event.getTypeFlags());
+
+    if (event.getTypeFlags() & Event::kHangUp) {
+        // TODO: 読み込み処理を続行するためのactionを登録する
+        return ErrorHandleResult(false, std::vector<IAction *>());
+    }
+
+    return ErrorHandleResult();
 }

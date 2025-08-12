@@ -10,6 +10,7 @@ public:
     ~ReadCgiResponseHandler();
 
     InvokeResult invoke(const Context &ctx);
+    ErrorHandleResult onErrorEvent(const Context &ctx, const Event &event) override;
 
 private:
     std::string responseBuffer_;

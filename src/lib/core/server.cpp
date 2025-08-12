@@ -74,9 +74,9 @@ void Server::start() {
                 IEventHandler::ErrorHandleResult result;
 
                 if (readHandler.isSome()) {
-                    result = readHandler.unwrap().get().onErrorEvent(ctx);
+                    result = readHandler.unwrap().get().onErrorEvent(ctx, ev);
                 } else if (writeHandler.isSome()) {
-                    result = writeHandler.unwrap().get().onErrorEvent(ctx);
+                    result = writeHandler.unwrap().get().onErrorEvent(ctx, ev);
                 }
 
                 if (!result.actions.empty()) {
@@ -86,8 +86,8 @@ void Server::start() {
 
                 if (result.shouldFallback) {
                     this->onErrorEvent(ev);
+                    continue;
                 }
-                continue;
             }
 
             if (readHandler.isSome()) {

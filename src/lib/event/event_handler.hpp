@@ -71,22 +71,18 @@ public:
      */
     typedef Result<std::vector<IAction *>, error::AppError> InvokeResult;
     virtual InvokeResult invoke(const Context &ctx) = 0;
-    
-    // エラーイベントハンドリング用の構造体
+
     struct ErrorHandleResult {
-        bool shouldFallback;  // trueの場合、Server::onErrorEventも呼ばれる
-        std::vector<IAction *> actions;  // 実行したいアクション
-        
-        // デフォルトコンストラクタ：フォールバックする、アクションなし
-        ErrorHandleResult() : shouldFallback(true), actions() {}
-        
-        // 明示的なコンストラクタ
-        ErrorHandleResult(bool fallback, const std::vector<IAction *>& acts) 
+        bool shouldFallback;
+        std::vector<IAction *> actions;
+
+        ErrorHandleResult() : shouldFallback(true) {}
+
+        ErrorHandleResult(bool fallback, const std::vector<IAction *> &acts)
             : shouldFallback(fallback), actions(acts) {}
     };
-    
-    // エラーイベントハンドリング（デフォルト実装：何もせずにフォールバック）
-    virtual ErrorHandleResult onErrorEvent(const Context & /* ctx */) {
+
+    virtual ErrorHandleResult onErrorEvent(const Context &, const Event &event) {
         return ErrorHandleResult();
     }
 };
