@@ -48,6 +48,18 @@ private:
     IEventHandler *handler_;
 };
 
+class RegisterEventHandlerByFdAction : public IAction {
+public:
+    RegisterEventHandlerByFdAction(int fd, Event::EventType type, IEventHandler *handler)
+        : fd_(fd), type_(type), handler_(handler) {}
+    void execute(ActionContext &ctx);
+
+private:
+    int fd_;
+    Event::EventType type_;
+    IEventHandler *handler_;
+};
+
 class UnregisterEventHandlerAction : public IAction {
 public:
     explicit UnregisterEventHandlerAction(Connection &conn, Event::EventType type) : conn_(conn), type_(type) {}
