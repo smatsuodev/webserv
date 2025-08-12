@@ -68,19 +68,18 @@ void Server::start() {
             }
 
             Option<Ref<Connection> > conn = state_.getConnectionRepository().get(ev.getFd());
+            const Context ctx(ev, conn, vsResolverFactory);
 
-            // Event::kRead, Event::kWrite の handler を取り出して実行
-            const std::vector<Event::EventType> eventTypes = {Event::kRead, Event::kWrite};
-            for (std::vector<Event::EventType>::const_iterator it = eventTypes.begin(); it != eventTypes.end(); ++it) {
-                if ((*it & ev.getTypeFlags()) == 0) {
-                    continue;
-                }
-                Option<Ref<IEventHandler> > handler = state_.getEventHandlerRepository().get(ev.getFd(), *it);
-                if (handler.isNone()) {
-                    continue;
-                }
-                const Context ctx(ev, conn, vsResolverFactory);
-                this->invokeHandler(ctx, handler);
+            const Option<Ref<IEventHandler> > readHandler =
+                state_.getEventHandlerRepository().get(ev.getFd(), Event::kRead);
+            const Option<Ref<IEventHandler> > writeHandler =
+                state_.getEventHandlerRepository().get(ev.getFd(), Event::kWrite);
+
+            if (readHandler.isSome()) {
+                this->invokeHandler(ctx, readHandler);
+            }
+            if (writeHandler.isSome()) {
+                this->invokeHandler(ctx, writeHandler);
             }
         }
     }

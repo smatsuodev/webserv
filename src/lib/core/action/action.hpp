@@ -92,13 +92,16 @@ private:
 
 class RunCgiAction : public IAction {
 public:
-    explicit RunCgiAction(const cgi::Request &cgiRequest, int clientFd)
+    explicit RunCgiAction(const cgi::Request &cgiRequest, const int clientFd)
         : cgiRequest_(cgiRequest), clientFd_(clientFd) {}
     void execute(ActionContext &ctx);
 
 private:
     cgi::Request cgiRequest_;
     int clientFd_;
+
+    void childRoutine(int socketFd) const;
+    void parentRoutine(const ActionContext &ctx, int socketFd, pid_t childPid) const;
 };
 
 #endif

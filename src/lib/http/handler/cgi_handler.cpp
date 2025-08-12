@@ -25,16 +25,11 @@ namespace http {
         const std::string &path = ctx.getRequest().getRequestTarget();
 
         // クエリ文字列を除去
-        size_t queryPos = path.find('?');
-        std::string pathWithoutQuery = (queryPos != std::string::npos) ? path.substr(0, queryPos) : path;
+        const size_t queryPos = path.find('?');
+        const std::string pathWithoutQuery = (queryPos != std::string::npos) ? path.substr(0, queryPos) : path;
 
-        // CGI拡張子のチェック
         const std::vector<std::string> &cgiExtensions = docRootConfig_.getCgiExtensions();
         if (cgiExtensions.empty()) {
-            // CGI拡張子が設定されていない場合は、デフォルトで.cgiをチェック
-            if (pathWithoutQuery.length() >= 4 && pathWithoutQuery.substr(pathWithoutQuery.length() - 4) == ".cgi") {
-                return true;
-            }
             return false;
         }
 
@@ -67,23 +62,17 @@ namespace http {
         const std::string &path = ctx.getRequest().getRequestTarget();
 
         // クエリ文字列を除去
-        size_t queryPos = path.find('?');
+        const size_t queryPos = path.find('?');
         std::string scriptPath = (queryPos != std::string::npos) ? path.substr(0, queryPos) : path;
 
         // PATH_INFOがある場合は、スクリプト名部分のみ返す
         // 例: /cgi/test.cgi/extra/path -> /cgi/test.cgi
         const std::vector<std::string> &cgiExtensions = docRootConfig_.getCgiExtensions();
-        
-        // デフォルト拡張子の処理
-        std::vector<std::string> extensions = cgiExtensions;
-        if (extensions.empty()) {
-            extensions.push_back(".cgi");
-        }
-        
+
         // 各拡張子で検索
-        for (std::vector<std::string>::const_iterator it = extensions.begin(); it != extensions.end(); ++it) {
+        for (std::vector<std::string>::const_iterator it = cgiExtensions.begin(); it != cgiExtensions.end(); ++it) {
             const std::string &ext = *it;
-            size_t extPos = scriptPath.find(ext);
+            const size_t extPos = scriptPath.find(ext);
             if (extPos != std::string::npos && extPos + ext.length() <= scriptPath.length()) {
                 return scriptPath.substr(0, extPos + ext.length());
             }
@@ -96,23 +85,17 @@ namespace http {
         const std::string &path = ctx.getRequest().getRequestTarget();
 
         // クエリ文字列を除去
-        size_t queryPos = path.find('?');
+        const size_t queryPos = path.find('?');
         std::string fullPath = (queryPos != std::string::npos) ? path.substr(0, queryPos) : path;
 
         // スクリプト名の後の追加パスを取得
         // 例: /cgi/test.cgi/extra/path -> /extra/path
         const std::vector<std::string> &cgiExtensions = docRootConfig_.getCgiExtensions();
-        
-        // デフォルト拡張子の処理
-        std::vector<std::string> extensions = cgiExtensions;
-        if (extensions.empty()) {
-            extensions.push_back(".cgi");
-        }
-        
+
         // 各拡張子で検索
-        for (std::vector<std::string>::const_iterator it = extensions.begin(); it != extensions.end(); ++it) {
+        for (std::vector<std::string>::const_iterator it = cgiExtensions.begin(); it != cgiExtensions.end(); ++it) {
             const std::string &ext = *it;
-            size_t extPos = fullPath.find(ext);
+            const size_t extPos = fullPath.find(ext);
             if (extPos != std::string::npos && extPos + ext.length() < fullPath.length()) {
                 return fullPath.substr(extPos + ext.length());
             }

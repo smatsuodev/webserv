@@ -27,6 +27,7 @@ IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
 
     std::vector<IAction *> actions;
     actions.push_back(new RegisterEventAction(Event(ctx.getEvent().getFd(), Event::kWrite)));
+    actions.push_back(new UnregisterEventHandlerAction(ctx.getConnection().unwrap(), Event::kRead));
     actions.push_back(new ServeHttpAction(ctx, req.unwrap(), writeResponseHandlerFactory));
 
     return Ok(actions);
