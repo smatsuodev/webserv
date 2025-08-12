@@ -75,7 +75,6 @@ void RunCgiAction::childRoutine(const int socketFd) const {
 
     // TODO: エラーハンドリングはこれでいい?
     if (scriptName.empty() || documentRoot.empty()) {
-        LOG_ERROR("SCRIPT_NAME or DOCUMENT_ROOT is not set in CGI variables");
         std::exit(1);
     }
 
@@ -83,12 +82,10 @@ void RunCgiAction::childRoutine(const int socketFd) const {
     const std::string cgiProgram = (scriptName[0] == '/') ? documentRoot + scriptName : documentRoot + "/" + scriptName;
 
     // CGI を実行
-    LOG_DEBUGF("Executing CGI program: %s", cgiProgram.c_str());
     char *const argv[] = {const_cast<char *>(cgiProgram.c_str()), NULL};
     execve(cgiProgram.c_str(), argv, envp.data());
 
     // exec に失敗
-    LOG_ERRORF("Failed to execute CGI program: %s", cgiProgram.c_str());
     std::exit(1);
 }
 
