@@ -1,8 +1,6 @@
-#include "read_cgi_response_handler.hpp"
-
 #include <unistd.h>
 #include <sys/wait.h>
-
+#include "read_cgi_response_handler.hpp"
 #include "../action/action.hpp"
 #include "../../event/event.hpp"
 #include "../../transport/connection.hpp"
@@ -11,8 +9,6 @@
 #include "write_response_body_handler.hpp"
 #include "../../utils/types/option.hpp"
 #include "../../http/request/request_parser.hpp"
-
-#include <sys/poll.h>
 
 ReadCgiResponseHandler::ReadCgiResponseHandler(const int clientFd, const pid_t childPid)
     : cgiResponse_(None), clientFd_(clientFd), childPid_(childPid) {}
@@ -56,7 +52,7 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
     // status, body を設定
     if (cgiResponse_.isSome()) {
         const cgi::Response &response = cgiResponse_.unwrap();
-        http::HttpStatusCode statusCode = determineStatusCode(response);
+        const http::HttpStatusCode statusCode = determineStatusCode(response);
 
         builder.status(statusCode);
         if (response.getBody().isSome()) {
