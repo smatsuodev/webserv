@@ -18,9 +18,10 @@ private:
     int clientFd_;
     pid_t childPid_;
 
-    std::vector<IAction *> makeNextActions(Connection &conn, const http::Response &httpResponse) const;
+    static std::vector<IAction *> makeNextActions(Connection &conn, int clientFd, const http::Response &httpResponse);
     static http::HttpStatusCode determineStatusCode(const cgi::Response &response);
     static Result<cgi::Response, error::AppError> createCgiResponseFromBuffer(const std::string &buf);
+    static http::Response toHttpResponse(const cgi::Response &response);
 };
 
 #endif

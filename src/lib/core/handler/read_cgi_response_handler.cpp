@@ -30,9 +30,8 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
 
     if (bytesRead != 0) {
         // データを蓄積
-        responseBuffer_.append(buffer, bytesRead);
         LOG_DEBUGF("CGI response: %zd bytes read, total: %zu", bytesRead, responseBuffer_.size());
-
+        responseBuffer_.append(buffer, bytesRead);
         // まだデータが来る可能性がある
         return Err(error::kRecoverable);
     }
@@ -43,30 +42,8 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
     int status;
     waitpid(childPid_, &status, WNOHANG);
 
-    // CGIレスポンスをパース
-    const cgi::Response &response = TRY(createCgiResponseFromBuffer(responseBuffer_));
-
-    // HTTPレスポンスを生成
-    http::ResponseBuilder builder;
-
-    // status, body を設定
-    const http::HttpStatusCode statusCode = determineStatusCode(response);
-    builder.status(statusCode);
-    if (response.getBody().isSome()) {
-        builder.body(response.getBody().unwrap(), statusCode);
-    }
-
-    // ヘッダーを設定
-    for (std::map<std::string, std::string>::const_iterator it = response.getHeaders().begin();
-         it != response.getHeaders().end();
-         ++it) {
-        // Statusヘッダーは既に処理済みなのでスキップ
-        if (it->first == "Status") continue;
-        builder.header(it->first, it->second);
-    }
-
-    const http::Response httpResponse = builder.build();
-    return Ok(makeNextActions(conn, httpResponse));
+    const cgi::Response &cgiRes = TRY(createCgiResponseFromBuffer(responseBuffer_));
+    return Ok(makeNextActions(conn, clientFd_, toHttpResponse(cgiRes)));
 }
 
 IEventHandler::ErrorHandleResult ReadCgiResponseHandler::onErrorEvent(const Context &, const Event &event) {
@@ -80,7 +57,7 @@ IEventHandler::ErrorHandleResult ReadCgiResponseHandler::onErrorEvent(const Cont
 }
 
 std::vector<IAction *>
-ReadCgiResponseHandler::makeNextActions(Connection &conn, const http::Response &httpResponse) const {
+ReadCgiResponseHandler::makeNextActions(Connection &conn, const int clientFd, const http::Response &httpResponse) {
     // クライアントへレスポンスを送信するアクションを作成
     std::vector<IAction *> actions;
 
@@ -91,14 +68,14 @@ ReadCgiResponseHandler::makeNextActions(Connection &conn, const http::Response &
 
     // クライアントへのレスポンス送信
     // clientFd_に対してWriteイベントとハンドラを登録
-    actions.push_back(new RegisterEventAction(Event(clientFd_, Event::kWrite)));
+    actions.push_back(new RegisterEventAction(Event(clientFd, Event::kWrite)));
 
     // クライアントへのレスポンス送信
     // NOTE: クライアントConnectionは既にRepositoryに存在しているはず
     // AddConnectionActionは使わず、既存のConnectionを保持する
     // RegisterEventHandlerByFdActionを使用してfdで直接ハンドラーを登録
     actions.push_back(
-        new RegisterEventHandlerByFdAction(clientFd_, Event::kWrite, new WriteResponseHandler(httpResponse))
+        new RegisterEventHandlerByFdAction(clientFd, Event::kWrite, new WriteResponseHandler(httpResponse))
     );
 
     return actions;
@@ -163,4 +140,26 @@ Result<cgi::Response, error::AppError> ReadCgiResponseHandler::createCgiResponse
         headers["Content-Type"] = "text/plain";
     }
     return cgi::Response::create(headers, Some(bodyPart));
+}
+
+http::Response ReadCgiResponseHandler::toHttpResponse(const cgi::Response &response) {
+    http::ResponseBuilder builder;
+
+    // status, body を設定
+    const http::HttpStatusCode statusCode = determineStatusCode(response);
+    builder.status(statusCode);
+    if (response.getBody().isSome()) {
+        builder.body(response.getBody().unwrap(), statusCode);
+    }
+
+    // ヘッダーを設定
+    for (std::map<std::string, std::string>::const_iterator it = response.getHeaders().begin();
+         it != response.getHeaders().end();
+         ++it) {
+        // Statusヘッダーは既に処理済みなのでスキップ
+        if (it->first == "Status") continue;
+        builder.header(it->first, it->second);
+    }
+
+    return builder.build();
 }
