@@ -6,6 +6,7 @@
 
 namespace utils {
     Result<void, error::AppError> setNonBlocking(int fd);
+    Result<void, error::AppError> setCloseOnExec(int fd);
 }
 
 #endif

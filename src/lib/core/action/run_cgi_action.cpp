@@ -7,6 +7,7 @@
 #include "core/handler/read_cgi_response_handler.hpp"
 #include "core/handler/write_cgi_request_handler.hpp"
 #include "../../cgi/meta_variable.hpp"
+#include "utils/fd.hpp"
 #include "utils/logger.hpp"
 
 void RunCgiAction::execute(ActionContext &ctx) {
@@ -16,6 +17,12 @@ void RunCgiAction::execute(ActionContext &ctx) {
     }
     AutoFd socketParent(pair[0]);
     AutoFd socketChild(pair[1]);
+
+    utils::setNonBlocking(socketParent);
+    utils::setCloseOnExec(socketParent);
+    utils::setCloseOnExec(socketChild);
+
+    LOG_DEBUGF("socketParent: %d, socketChild: %d", socketParent.get(), socketChild.get());
 
     LOG_DEBUG("Forking CGI process");
     const pid_t childPid = fork();
@@ -38,7 +45,6 @@ void RunCgiAction::childRoutine(const int socketFd) const {
     if (dup2(socketFd, STDOUT_FILENO) == -1) {
         throw std::runtime_error("dup2 failed");
     }
-    close(socketFd);
 
     const std::vector<cgi::MetaVariable> &variables = cgiRequest_.getVariables();
 
