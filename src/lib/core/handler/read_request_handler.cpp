@@ -1,5 +1,5 @@
 #include "read_request_handler.hpp"
-#include "write_response_handler.hpp"
+#include "write_response_body_handler.hpp"
 #include "core/action/action.hpp"
 #include "utils/logger.hpp"
 #include "utils/types/try.hpp"
@@ -27,6 +27,7 @@ IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
 
     std::vector<IAction *> actions;
     actions.push_back(new RegisterEventAction(Event(ctx.getEvent().getFd(), Event::kWrite)));
+    actions.push_back(new UnregisterEventHandlerAction(ctx.getConnection().unwrap(), Event::kRead));
     actions.push_back(new ServeHttpAction(ctx, req.unwrap(), writeResponseHandlerFactory));
 
     return Ok(actions);

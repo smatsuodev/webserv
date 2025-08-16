@@ -20,5 +20,5 @@ void ServeHttpAction::execute(ActionContext &actionCtx) {
     }
 
     IEventHandler *nextHandler = factory_(resOrAction.unwrapRight());
-    actionCtx.getState().getEventHandlerRepository().set(conn.getFd(), nextHandler);
+    actionCtx.getState().getEventHandlerRepository().set(conn.getFd(), Event::kWrite, nextHandler);
 }

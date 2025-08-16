@@ -48,38 +48,41 @@ void ConnectionRepository::remove(const int fd) {
 EventHandlerRepository::EventHandlerRepository() {}
 
 EventHandlerRepository::~EventHandlerRepository() {
-    for (std::map<int, IEventHandler *>::const_iterator it = handlers_.begin(); it != handlers_.end(); ++it) {
+    for (std::map<Key, IEventHandler *>::const_iterator it = handlers_.begin(); it != handlers_.end(); ++it) {
         delete it->second;
     }
 }
 
-Option<Ref<IEventHandler> > EventHandlerRepository::get(const int fd) {
-    const std::map<int, IEventHandler *>::const_iterator it = handlers_.find(fd);
+Option<Ref<IEventHandler> > EventHandlerRepository::get(const int fd, const Event::EventType type) {
+    const Key key(fd, type);
+    const std::map<Key, IEventHandler *>::const_iterator it = handlers_.find(key);
     if (it == handlers_.end()) {
         return None;
     }
     return Some(Ref<IEventHandler>(*it->second));
 }
 
-void EventHandlerRepository::set(const int fd, IEventHandler *handler) {
-    if (handlers_[fd]) {
+void EventHandlerRepository::set(const int fd, Event::EventType type, IEventHandler *handler) {
+    const Key key(fd, type);
+    if (handlers_[key]) {
         LOG_DEBUGF("outdated event handler found for fd %d", fd);
-        delete handlers_[fd];
+        delete handlers_[key];
     }
 
-    handlers_[fd] = handler;
+    handlers_[key] = handler;
     LOG_DEBUGF("event handler added to fd %d", fd);
 }
 
-void EventHandlerRepository::remove(const int fd) {
-    const std::map<int, IEventHandler *>::const_iterator it = handlers_.find(fd);
+void EventHandlerRepository::remove(const int fd, Event::EventType type) {
+    const Key key(fd, type);
+    const std::map<Key, IEventHandler *>::const_iterator it = handlers_.find(key);
     if (it == handlers_.end()) {
         LOG_DEBUG("EventHandlerRepository::remove: handler not found");
         return;
     }
 
     delete it->second;
-    handlers_.erase(fd);
+    handlers_.erase(key);
 
     LOG_DEBUGF("event handler removed from fd %d", fd);
 }

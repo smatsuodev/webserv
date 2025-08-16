@@ -219,7 +219,7 @@ namespace config {
         bool autoindex = false;
         if (locationTable.hasKey("autoindex")) {
             std::string autoindexValue = locationTable.getValue("autoindex").unwrap().getString().unwrap();
-            autoindex = (autoindexValue == "on");
+            autoindex = autoindexValue == "on";
         }
 
         std::vector<std::string> cgiExtensions;
@@ -232,7 +232,6 @@ namespace config {
                 cgiExtensions.push_back(extension);
             }
         }
-
 
         std::vector<http::HttpMethod> allowedMethods = getDefaultAllowedMethods();
         if (locationTable.hasKey("allowed_methods")) {

@@ -1,4 +1,5 @@
 #include "virtual_server.hpp"
+#include "http/handler/cgi_handler.hpp"
 #include "http/handler/delete_file_handler.hpp"
 #include "http/handler/redirect_handler.hpp"
 #include "http/handler/static_file_handler.hpp"
@@ -34,6 +35,18 @@ void VirtualServer::registerHandlers(const config::LocationContext &location) {
         switch (*iter) {
             case http::kMethodGet: {
                 http::IHandler *handler = new http::StaticFileHandler(documentRootConfig);
+
+                // CGI拡張子が設定されている場合は、CgiHandlerでラップ
+                if (!documentRootConfig.getCgiExtensions().empty()) {
+                    // StaticFileHandlerをfallbackとしてCgiHandlerを作成
+                    handler = new http::CgiHandler(
+                        serverConfig_.getServerName().empty() ? serverConfig_.getHost()
+                                                              : serverConfig_.getServerName()[0],
+                        documentRootConfig,
+                        handler
+                    );
+                }
+
                 router_.on(http::kMethodGet, location.getPath(), handler);
                 break;
             }

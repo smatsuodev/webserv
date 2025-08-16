@@ -28,7 +28,8 @@ Server::Server(const config::Config &config) : config_(config) {
 
             // Listener の fd に対する read を待ち、AcceptHandler で処理する
             state_.getEventNotifier().registerEvent(Event(fd, Event::kRead));
-            state_.getEventHandlerRepository().set(fd, new AcceptHandler(*listener));
+            // TODO: read 待ちでええんか?
+            state_.getEventHandlerRepository().set(fd, Event::kRead, new AcceptHandler(*listener));
         }
 
         // Virtual Server を作成
@@ -61,30 +62,53 @@ void Server::start() {
             const Event &ev = events[i];
             LOG_DEBUGF("event arrived for fd %d (flags: %x)", ev.getFd(), ev.getTypeFlags());
 
-            if (ev.isError()) {
-                this->onErrorEvent(ev);
-                continue;
-            }
-
             Option<Ref<Connection> > conn = state_.getConnectionRepository().get(ev.getFd());
-            Option<Ref<IEventHandler> > handler = state_.getEventHandlerRepository().get(ev.getFd());
-            if (handler.isNone()) {
-                LOG_DEBUGF("event handler for fd %d is not registered", ev.getFd());
-                continue;
-            }
-
             const Context ctx(ev, conn, vsResolverFactory);
 
-            const IEventHandler::InvokeResult result = handler.unwrap().get().invoke(ctx);
-            if (result.isErr()) {
-                this->onHandlerError(ctx, result.unwrapErr());
-                continue;
+            const Option<Ref<IEventHandler> > readHandler =
+                state_.getEventHandlerRepository().get(ev.getFd(), Event::kRead);
+            const Option<Ref<IEventHandler> > writeHandler =
+                state_.getEventHandlerRepository().get(ev.getFd(), Event::kWrite);
+
+            if (ev.isError()) {
+                IEventHandler::ErrorHandleResult result;
+
+                if (readHandler.isSome()) {
+                    result = readHandler.unwrap().get().onErrorEvent(ctx, ev);
+                } else if (writeHandler.isSome()) {
+                    result = writeHandler.unwrap().get().onErrorEvent(ctx, ev);
+                }
+
+                if (!result.actions.empty()) {
+                    ActionContext actionCtx(state_);
+                    executeActions(actionCtx, result.actions);
+                }
+
+                if (result.shouldFallback) {
+                    this->onErrorEvent(ev);
+                    continue;
+                }
             }
 
-            ActionContext actionCtx(state_);
-            Server::executeActions(actionCtx, result.unwrap());
+            if (readHandler.isSome()) {
+                this->invokeHandler(ctx, readHandler);
+            }
+            if (writeHandler.isSome()) {
+                this->invokeHandler(ctx, writeHandler);
+            }
         }
     }
+}
+
+void Server::invokeHandler(const Context &ctx, const Option<Ref<IEventHandler> > &handler) {
+    const IEventHandler::InvokeResult result = handler.unwrap().get().invoke(ctx);
+    if (result.isErr()) {
+        this->onHandlerError(ctx, result.unwrapErr());
+        return;
+    }
+
+    ActionContext actionCtx(state_);
+    Server::executeActions(actionCtx, result.unwrap());
 }
 
 /**
@@ -102,7 +126,8 @@ void Server::onHandlerError(const Context &ctx, const error::AppError err) {
     const Event &ev = ctx.getEvent();
     if (listenerFds_.count(ev.getFd()) == 0) {
         state_.getEventNotifier().unregisterEvent(ev);
-        state_.getEventHandlerRepository().remove(ev.getFd());
+        state_.getEventHandlerRepository().remove(ev.getFd(), Event::kRead);
+        state_.getEventHandlerRepository().remove(ev.getFd(), Event::kWrite);
         state_.getConnectionRepository().remove(ev.getFd());
     }
 }
@@ -118,7 +143,8 @@ void Server::onErrorEvent(const Event &event) {
     // (たぶん) 継続不可なので cleanup
     if (listenerFds_.count(fd) == 0) {
         state_.getEventNotifier().unregisterEvent(event);
-        state_.getEventHandlerRepository().remove(fd);
+        state_.getEventHandlerRepository().remove(fd, Event::kRead);
+        state_.getEventHandlerRepository().remove(fd, Event::kWrite);
         state_.getConnectionRepository().remove(fd);
     }
 }
