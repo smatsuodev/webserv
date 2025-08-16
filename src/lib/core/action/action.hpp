@@ -38,7 +38,7 @@ private:
 
 class RegisterEventHandlerAction : public IAction {
 public:
-    RegisterEventHandlerAction(Connection &conn, Event::EventType type, IEventHandler *handler)
+    RegisterEventHandlerAction(Connection &conn, const Event::EventType type, IEventHandler *handler)
         : conn_(conn), type_(type), handler_(handler) {}
     void execute(ActionContext &ctx);
 
@@ -48,9 +48,21 @@ private:
     IEventHandler *handler_;
 };
 
+class RegisterEventHandlerByFdAction : public IAction {
+public:
+    RegisterEventHandlerByFdAction(const int fd, const Event::EventType type, IEventHandler *handler)
+        : fd_(fd), type_(type), handler_(handler) {}
+    void execute(ActionContext &ctx);
+
+private:
+    int fd_;
+    Event::EventType type_;
+    IEventHandler *handler_;
+};
+
 class UnregisterEventHandlerAction : public IAction {
 public:
-    explicit UnregisterEventHandlerAction(Connection &conn, Event::EventType type) : conn_(conn), type_(type) {}
+    explicit UnregisterEventHandlerAction(Connection &conn, const Event::EventType type) : conn_(conn), type_(type) {}
     void execute(ActionContext &ctx);
 
 private:
@@ -92,11 +104,16 @@ private:
 
 class RunCgiAction : public IAction {
 public:
-    explicit RunCgiAction(const cgi::Request &cgiRequest) : cgiRequest_(cgiRequest) {}
+    explicit RunCgiAction(const cgi::Request &cgiRequest, const int clientFd)
+        : cgiRequest_(cgiRequest), clientFd_(clientFd) {}
     void execute(ActionContext &ctx);
 
 private:
     cgi::Request cgiRequest_;
+    int clientFd_;
+
+    void childRoutine(int socketFd) const;
+    void parentRoutine(const ActionContext &ctx, int socketFd, pid_t childPid) const;
 };
 
 #endif

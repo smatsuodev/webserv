@@ -62,25 +62,39 @@ void Server::start() {
             const Event &ev = events[i];
             LOG_DEBUGF("event arrived for fd %d (flags: %x)", ev.getFd(), ev.getTypeFlags());
 
+            Option<Ref<Connection> > conn = state_.getConnectionRepository().get(ev.getFd());
+            const Context ctx(ev, conn, vsResolverFactory);
+
+            const Option<Ref<IEventHandler> > readHandler =
+                state_.getEventHandlerRepository().get(ev.getFd(), Event::kRead);
+            const Option<Ref<IEventHandler> > writeHandler =
+                state_.getEventHandlerRepository().get(ev.getFd(), Event::kWrite);
+
             if (ev.isError()) {
-                this->onErrorEvent(ev);
-                continue;
+                IEventHandler::ErrorHandleResult result;
+
+                if (readHandler.isSome()) {
+                    result = readHandler.unwrap().get().onErrorEvent(ctx, ev);
+                } else if (writeHandler.isSome()) {
+                    result = writeHandler.unwrap().get().onErrorEvent(ctx, ev);
+                }
+
+                if (!result.actions.empty()) {
+                    ActionContext actionCtx(state_);
+                    executeActions(actionCtx, result.actions);
+                }
+
+                if (result.shouldFallback) {
+                    this->onErrorEvent(ev);
+                    continue;
+                }
             }
 
-            Option<Ref<Connection> > conn = state_.getConnectionRepository().get(ev.getFd());
-
-            // Event::kRead, Event::kWrite の handler を取り出して実行
-            const std::vector<Event::EventType> eventTypes = {Event::kRead, Event::kWrite};
-            for (std::vector<Event::EventType>::const_iterator it = eventTypes.begin(); it != eventTypes.end(); ++it) {
-                if ((*it & ev.getTypeFlags()) == 0) {
-                    continue;
-                }
-                Option<Ref<IEventHandler> > handler = state_.getEventHandlerRepository().get(ev.getFd(), *it);
-                if (handler.isNone()) {
-                    continue;
-                }
-                const Context ctx(ev, conn, vsResolverFactory);
-                this->invokeHandler(ctx, handler);
+            if (readHandler.isSome()) {
+                this->invokeHandler(ctx, readHandler);
+            }
+            if (writeHandler.isSome()) {
+                this->invokeHandler(ctx, writeHandler);
             }
         }
     }

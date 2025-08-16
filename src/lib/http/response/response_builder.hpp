@@ -24,14 +24,14 @@ namespace http {
         ResponseBuilder &redirect(const std::string &location, HttpStatusCode status = kStatusFound);
         ResponseBuilder &file(const std::string &path, HttpStatusCode status = kStatusOk);
 
+        // 元は乱用できないように private だった。CGI で必要になったので public に変更
+        ResponseBuilder &body(const std::string &body, HttpStatusCode status);
+
     private:
         HttpStatusCode status_;
         std::string httpVersion_; // HTTP version は今のところ固定
         Headers headers_;
         Option<std::string> body_;
-
-        // 通常は header の付与も伴うので、body のみの設定は private にしている
-        ResponseBuilder &body(const std::string &body, HttpStatusCode status);
     };
 }
 

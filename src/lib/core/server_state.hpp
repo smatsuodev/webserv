@@ -31,6 +31,7 @@ public:
     EventHandlerRepository();
     ~EventHandlerRepository();
 
+    // get, set, remove が受け取る Event::EventType は、どれか 1 bit が立ったフラグのみを想定している (和はダメ)
     Option<Ref<IEventHandler> > get(int fd, Event::EventType type);
     void set(int fd, Event::EventType type, IEventHandler *handler);
     void remove(int fd, Event::EventType type);
