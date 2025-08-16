@@ -122,6 +122,10 @@ add_library(webserv_lib STATIC
         lib/core/handler/read_cgi_response_handler.cpp
         lib/core/handler/read_cgi_response_handler.hpp
         lib/core/action/run_cgi_action.cpp
+        lib/core/self_pipe_sigchld.cpp
+        lib/core/self_pipe_sigchld.hpp
+        lib/core/child_reaper.cpp
+        lib/core/child_reaper.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

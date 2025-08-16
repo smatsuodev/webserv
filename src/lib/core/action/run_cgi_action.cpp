@@ -106,16 +106,14 @@ void RunCgiAction::childRoutine(const int socketFd) const {
     std::exit(errno == ENOENT ? 127 : 126);
 }
 
-void RunCgiAction::parentRoutine(const ActionContext &ctx, const int socketFd, const pid_t childPid) const {
+void RunCgiAction::parentRoutine(const ActionContext &ctx, const int socketFd, const pid_t) const {
     // FIXME: 無理やり Connection として扱うために、ダミーのアドレスを作成している
     const Address dummyAddr("127.0.0.1", 0);
     ctx.getState().getConnectionRepository().set(socketFd, new Connection(socketFd, dummyAddr, dummyAddr));
 
     // 子プロセスからの出力の読み込みを待つ
     uint32_t eventTypeFlag = Event::kRead;
-    ctx.getState().getEventHandlerRepository().set(
-        socketFd, Event::kRead, new ReadCgiResponseHandler(clientFd_, childPid)
-    );
+    ctx.getState().getEventHandlerRepository().set(socketFd, Event::kRead, new ReadCgiResponseHandler(clientFd_));
 
     const Option<std::string> body = cgiRequest_.getBody();
     if (body.isSome()) {

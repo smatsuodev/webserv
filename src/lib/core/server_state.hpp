@@ -1,6 +1,7 @@
 #ifndef SRC_LIB_CORE_SERVER_STATE_HPP
 #define SRC_LIB_CORE_SERVER_STATE_HPP
 
+#include "child_reaper.hpp"
 #include "event/event_notifier.hpp"
 #include "event/event_handler.hpp"
 #include "transport/connection.hpp"
@@ -43,9 +44,12 @@ private:
 
 class ServerState {
 public:
+    ServerState();
+
     IEventNotifier &getEventNotifier();
     ConnectionRepository &getConnectionRepository();
     EventHandlerRepository &getEventHandlerRepository();
+    ChildReaper &getChildReaper();
 
 private:
     // EventNotifier はあんまり state っぽくない
@@ -54,6 +58,8 @@ private:
 #else
     PollEventNotifier notifier_;
 #endif
+
+    ChildReaper reaper_;
 
     ConnectionRepository connRepo_;
     EventHandlerRepository handlerRepo_;
