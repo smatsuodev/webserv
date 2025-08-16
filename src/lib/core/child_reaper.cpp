@@ -1,4 +1,5 @@
 #include "child_reaper.hpp"
+#include <sys/wait.h>
 
 void ChildReaper::attachToEventNotifier(IEventNotifier *notifier) const {
     selfPipe_.registerWithEventNotifier(notifier);
