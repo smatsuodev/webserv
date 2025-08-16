@@ -1,14 +1,14 @@
+#include <unistd.h>
+#include <sys/socket.h>
+#include <vector>
+#include <map>
+#include <cerrno>
 #include "./action.hpp"
 #include "core/handler/read_cgi_response_handler.hpp"
 #include "core/handler/write_cgi_request_handler.hpp"
-#include <unistd.h>
-#include <sys/socket.h>
 #include "../../cgi/meta_variable.hpp"
 #include "utils/logger.hpp"
 
-extern char **environ;
-
-// parent <-> child の双方向の IPC が必要
 void RunCgiAction::execute(ActionContext &ctx) {
     int pair[2];
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1) {
@@ -40,24 +40,35 @@ void RunCgiAction::childRoutine(const int socketFd) const {
     }
     close(socketFd);
 
-    // CGI メタ変数を環境変数に変換
     const std::vector<cgi::MetaVariable> &variables = cgiRequest_.getVariables();
+
+    std::map<std::string, std::string> envMap;
+    for (std::size_t i = 0; i < variables.size(); i++) {
+        const std::string &k = variables[i].getName();
+        const std::string &v = variables[i].getValue();
+        envMap[k] = v;
+    }
+
+    // 環境変数を継承
+    static const char *envWhitelist[] = {"PATH", "TZ", "LANG", "LC_ALL", "LC_CTYPE", NULL};
+    for (const char **envVar = envWhitelist; *envVar != NULL; ++envVar) {
+        const char *value = std::getenv(*envVar);
+        if (value != NULL) {
+            envMap[*envVar] = value;
+        }
+    }
+    if (envMap.find("PATH") == envMap.end()) {
+        envMap["PATH"] = "/usr/local/bin:/bin:/usr/bin";
+    }
+
     std::vector<std::string> envStrings;
+    envStrings.reserve(envMap.size());
+    for (std::map<std::string, std::string>::const_iterator it = envMap.begin(); it != envMap.end(); ++it) {
+        envStrings.push_back(it->first + "=" + it->second);
+    }
     std::vector<char *> envp;
-
-    // 既存の環境変数を追加
-    for (char **env = environ; *env != NULL; env++) {
-        envStrings.push_back(*env);
-    }
-
-    // CGI メタ変数を追加
-    for (size_t i = 0; i < variables.size(); i++) {
-        envStrings.push_back(variables[i].getName() + "=" + variables[i].getValue());
-    }
-
-    // char * 配列に変換
-    envp.reserve(envStrings.size());
-    for (size_t i = 0; i < envStrings.size(); i++) {
+    envp.reserve(envStrings.size() + 1);
+    for (std::size_t i = 0; i < envStrings.size(); i++) {
         envp.push_back(const_cast<char *>(envStrings[i].c_str()));
     }
     envp.push_back(NULL);
@@ -75,7 +86,7 @@ void RunCgiAction::childRoutine(const int socketFd) const {
 
     // TODO: エラーハンドリングはこれでいい?
     if (scriptName.empty() || documentRoot.empty()) {
-        std::exit(1);
+        std::exit(126);
     }
 
     // ドキュメントルートとスクリプト名を結合して実際のファイルパスを生成
@@ -86,7 +97,7 @@ void RunCgiAction::childRoutine(const int socketFd) const {
     execve(cgiProgram.c_str(), argv, envp.data());
 
     // exec に失敗
-    std::exit(1);
+    std::exit(errno == ENOENT ? 127 : 126);
 }
 
 void RunCgiAction::parentRoutine(const ActionContext &ctx, const int socketFd, const pid_t childPid) const {
