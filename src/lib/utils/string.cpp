@@ -58,7 +58,7 @@ utils::StoulResult utils::stoul(const std::string &str) {
         }
     }
 
-
+    errno = 0;
     const unsigned long result = std::strtoul(str.c_str(), NULL, 10);
     if (errno == ERANGE) {
         LOG_DEBUGF("utils::stoul: out of range");
