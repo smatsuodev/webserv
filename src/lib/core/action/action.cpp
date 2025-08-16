@@ -11,11 +11,15 @@ void RemoveConnectionAction::execute(ActionContext &ctx) {
 }
 
 void RegisterEventHandlerAction::execute(ActionContext &ctx) {
-    ctx.getState().getEventHandlerRepository().set(conn_.getFd(), handler_);
+    ctx.getState().getEventHandlerRepository().set(conn_.getFd(), type_, handler_);
+}
+
+void RegisterEventHandlerByFdAction::execute(ActionContext &ctx) {
+    ctx.getState().getEventHandlerRepository().set(fd_, type_, handler_);
 }
 
 void UnregisterEventHandlerAction::execute(ActionContext &ctx) {
-    ctx.getState().getEventHandlerRepository().remove(conn_.getFd());
+    ctx.getState().getEventHandlerRepository().remove(conn_.getFd(), type_);
 }
 
 void RegisterEventAction::execute(ActionContext &ctx) {

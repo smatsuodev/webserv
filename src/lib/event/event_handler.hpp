@@ -71,6 +71,20 @@ public:
      */
     typedef Result<std::vector<IAction *>, error::AppError> InvokeResult;
     virtual InvokeResult invoke(const Context &ctx) = 0;
+
+    struct ErrorHandleResult {
+        bool shouldFallback;
+        std::vector<IAction *> actions;
+
+        ErrorHandleResult() : shouldFallback(true) {}
+
+        ErrorHandleResult(const bool fallback, const std::vector<IAction *> &acts)
+            : shouldFallback(fallback), actions(acts) {}
+    };
+
+    virtual ErrorHandleResult onErrorEvent(const Context &, const Event &) {
+        return ErrorHandleResult();
+    }
 };
 
 #endif

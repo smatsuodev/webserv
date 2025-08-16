@@ -8,3 +8,10 @@ Result<void, error::AppError> utils::setNonBlocking(const int fd) {
     }
     return Ok();
 }
+
+Result<void, error::AppError> utils::setCloseOnExec(const int fd) {
+    if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
+        return Err(error::kUnknown);
+    }
+    return Ok();
+}

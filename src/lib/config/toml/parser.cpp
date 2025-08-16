@@ -75,7 +75,7 @@ namespace toml {
 
     Result<Table, error::AppError> TomlParser::parseArrayOfTableHeader(Table table) {
         nextToken();
-        std::vector<std::string> keys = TRY(parseKey());
+        const std::vector<std::string> keys = TRY(parseKey());
         TRY(expect(kRBracket));
         TRY(expect(kRBracket));
 
@@ -85,8 +85,8 @@ namespace toml {
 
         Table *currentTable = TRY(table.findOrCreateTablePath(keys));
         const std::string &lastKey = keys.back();
-        Option<Value> lastValue = currentTable->getValue(lastKey);
-        Table newTable;
+        const Option<Value> lastValue = currentTable->getValue(lastKey);
+        const Table newTable;
 
         if (lastValue.isSome()) {
             Value &value = currentTable->getValueRef(lastKey);
@@ -112,7 +112,7 @@ namespace toml {
     }
 
     Result<Table, error::AppError> TomlParser::parseTableHeader(Table table) {
-        std::vector<std::string> keys = TRY(parseKey());
+        const std::vector<std::string> keys = TRY(parseKey());
         TRY(expect(kRBracket));
 
         if (keys.empty()) {
@@ -121,7 +121,7 @@ namespace toml {
 
         Table *currentTable = TRY(table.findOrCreateTablePath(keys));
         const std::string &lastKey = keys.back();
-        Table newTable;
+        const Table newTable;
 
         if (currentTable->getValue(lastKey).isSome()) {
             return Err(error::AppError::kParseUnknown);

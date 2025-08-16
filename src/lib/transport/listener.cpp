@@ -39,10 +39,13 @@ Listener::AcceptConnectionResult Listener::acceptConnection() const {
     }
     const Address foreignAddress(inet_ntoa(sockAddr.sin_addr), ntohs(sockAddr.sin_port));
 
-    const Result<void, error::AppError> result = utils::setNonBlocking(fd);
-    if (result.isErr()) {
+    if (utils::setNonBlocking(fd).isErr()) {
         LOG_ERROR("failed to set non-blocking fd");
         return Err<std::string>("failed to set non-blocking fd");
+    }
+    if (utils::setCloseOnExec(fd).isErr()) {
+        LOG_ERROR("failed to set close-on-exec fd");
+        return Err<std::string>("failed to set close-on-exec fd");
     }
 
     LOG_INFOF("connection established from %s (fd: %d)", foreignAddress.toString().c_str(), fd.get());
@@ -117,9 +120,11 @@ Result<FdAddressPair, std::string> setNonBlocking(const FdAddressPair fdAddrPair
     // close 漏れを防ぐため、AutoFd で wrap
     AutoFd fd(fdAddrPair.first);
 
-    const Result<void, error::AppError> result = utils::setNonBlocking(fd);
-    if (result.isErr()) {
+    if (utils::setNonBlocking(fd).isErr()) {
         return Err(utils::format("failed to set non blocking mode: %s", std::strerror(errno)));
+    }
+    if (utils::setCloseOnExec(fd).isErr()) {
+        return Err(utils::format("failed to set close-on-exec: %s", std::strerror(errno)));
     }
 
     // 成功したら fd が close されないように、所有権を放棄

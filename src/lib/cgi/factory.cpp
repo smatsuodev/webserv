@@ -46,6 +46,7 @@ namespace cgi {
         variables.push_back(MetaVariable("REMOTE_ADDR", param.foreignAddress.getIp()));
         variables.push_back(MetaVariable("SERVER_NAME", param.serverName));
         variables.push_back(MetaVariable("SERVER_PORT", param.serverPort));
+        variables.push_back(MetaVariable("DOCUMENT_ROOT", param.documentRoot));
 
         return cgi::Request::create(variables, body);
     }

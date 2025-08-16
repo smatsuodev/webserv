@@ -54,8 +54,8 @@ add_library(webserv_lib STATIC
         lib/http/header.hpp
         lib/http/response/response.cpp
         lib/http/response/response.hpp
-        lib/core/handler/write_response_handler.cpp
-        lib/core/handler/write_response_handler.hpp
+        lib/core/handler/write_response_body_handler.cpp
+        lib/core/handler/write_response_body_handler.hpp
         lib/http/response/response_builder.cpp
         lib/http/response/response_builder.hpp
         lib/utils/ref.hpp
@@ -114,9 +114,20 @@ add_library(webserv_lib STATIC
         lib/cgi/response.cpp
         lib/cgi/response.hpp
         lib/utils/types/either.hpp
-        lib/core/action/serveHttpAction.cpp
         lib/http/handler/upload_file_handler.cpp
         lib/http/handler/upload_file_handler.hpp
+        lib/core/action/serve_http_action.cpp
+        lib/http/handler/cgi_handler.cpp
+        lib/http/handler/cgi_handler.hpp
+        lib/core/handler/write_cgi_request_handler.cpp
+        lib/core/handler/write_cgi_request_handler.hpp
+        lib/core/handler/read_cgi_response_handler.cpp
+        lib/core/handler/read_cgi_response_handler.hpp
+        lib/core/action/run_cgi_action.cpp
+        lib/core/self_pipe_sigchld.cpp
+        lib/core/self_pipe_sigchld.hpp
+        lib/core/child_reaper.cpp
+        lib/core/child_reaper.hpp
 )
 # lib/ を include path に追加
 # PUBLIC にすると、依存するターゲットにも反映される

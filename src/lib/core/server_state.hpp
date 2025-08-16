@@ -1,6 +1,7 @@
 #ifndef SRC_LIB_CORE_SERVER_STATE_HPP
 #define SRC_LIB_CORE_SERVER_STATE_HPP
 
+#include "child_reaper.hpp"
 #include "event/event_notifier.hpp"
 #include "event/event_handler.hpp"
 #include "transport/connection.hpp"
@@ -31,19 +32,24 @@ public:
     EventHandlerRepository();
     ~EventHandlerRepository();
 
-    Option<Ref<IEventHandler> > get(int fd);
-    void set(int fd, IEventHandler *handler);
-    void remove(int fd);
+    // get, set, remove が受け取る Event::EventType は、どれか 1 bit が立ったフラグのみを想定している (和はダメ)
+    Option<Ref<IEventHandler> > get(int fd, Event::EventType type);
+    void set(int fd, Event::EventType type, IEventHandler *handler);
+    void remove(int fd, Event::EventType type);
 
 private:
-    std::map<int, IEventHandler *> handlers_;
+    typedef std::pair<int, Event::EventType> Key;
+    std::map<Key, IEventHandler *> handlers_;
 };
 
 class ServerState {
 public:
+    ServerState();
+
     IEventNotifier &getEventNotifier();
     ConnectionRepository &getConnectionRepository();
     EventHandlerRepository &getEventHandlerRepository();
+    ChildReaper &getChildReaper();
 
 private:
     // EventNotifier はあんまり state っぽくない
@@ -52,6 +58,8 @@ private:
 #else
     PollEventNotifier notifier_;
 #endif
+
+    ChildReaper reaper_;
 
     ConnectionRepository connRepo_;
     EventHandlerRepository handlerRepo_;
