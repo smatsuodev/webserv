@@ -128,27 +128,7 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
         int status;
         waitpid(childPid_, &status, WNOHANG);
 
-        // クライアントへレスポンスを送信するアクションを作成
-        std::vector<IAction *> actions;
-
-        // CGIソケットのクリーンアップ
-        actions.push_back(new UnregisterEventAction(Event(conn.getFd(), Event::kRead)));
-        actions.push_back(new UnregisterEventHandlerAction(conn, Event::kRead));
-        actions.push_back(new RemoveConnectionAction(conn));
-
-        // クライアントへのレスポンス送信
-        // clientFd_に対してWriteイベントとハンドラを登録
-        actions.push_back(new RegisterEventAction(Event(clientFd_, Event::kWrite)));
-
-        // クライアントへのレスポンス送信
-        // NOTE: クライアントConnectionは既にRepositoryに存在しているはず
-        // AddConnectionActionは使わず、既存のConnectionを保持する
-        // RegisterEventHandlerByFdActionを使用してfdで直接ハンドラーを登録
-        actions.push_back(
-            new RegisterEventHandlerByFdAction(clientFd_, Event::kWrite, new WriteResponseHandler(httpResponse))
-        );
-
-        return Ok(actions);
+        return Ok(makeNextActions(conn, httpResponse));
     }
 
     // データを蓄積
@@ -167,4 +147,29 @@ IEventHandler::ErrorHandleResult ReadCgiResponseHandler::onErrorEvent(const Cont
     }
 
     return ErrorHandleResult();
+}
+
+std::vector<IAction *>
+ReadCgiResponseHandler::makeNextActions(Connection &conn, const http::Response &httpResponse) const {
+    // クライアントへレスポンスを送信するアクションを作成
+    std::vector<IAction *> actions;
+
+    // CGIソケットのクリーンアップ
+    actions.push_back(new UnregisterEventAction(Event(conn.getFd(), Event::kRead)));
+    actions.push_back(new UnregisterEventHandlerAction(conn, Event::kRead));
+    actions.push_back(new RemoveConnectionAction(conn));
+
+    // クライアントへのレスポンス送信
+    // clientFd_に対してWriteイベントとハンドラを登録
+    actions.push_back(new RegisterEventAction(Event(clientFd_, Event::kWrite)));
+
+    // クライアントへのレスポンス送信
+    // NOTE: クライアントConnectionは既にRepositoryに存在しているはず
+    // AddConnectionActionは使わず、既存のConnectionを保持する
+    // RegisterEventHandlerByFdActionを使用してfdで直接ハンドラーを登録
+    actions.push_back(
+        new RegisterEventHandlerByFdAction(clientFd_, Event::kWrite, new WriteResponseHandler(httpResponse))
+    );
+
+    return actions;
 }
