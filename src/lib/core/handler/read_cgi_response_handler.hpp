@@ -11,7 +11,7 @@ public:
     ~ReadCgiResponseHandler();
 
     InvokeResult invoke(const Context &ctx);
-    ErrorHandleResult onErrorEvent(const Context &ctx, const Event &event) override;
+    ErrorHandleResult onErrorEvent(const Context &ctx, const Event &event);
 
 private:
     std::string responseBuffer_;
