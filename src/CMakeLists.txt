@@ -114,6 +114,8 @@ add_library(webserv_lib STATIC
         lib/cgi/response.cpp
         lib/cgi/response.hpp
         lib/utils/types/either.hpp
+        lib/http/handler/upload_file_handler.cpp
+        lib/http/handler/upload_file_handler.hpp
         lib/core/action/serve_http_action.cpp
         lib/http/handler/cgi_handler.cpp
         lib/http/handler/cgi_handler.hpp

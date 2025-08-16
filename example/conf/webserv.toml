@@ -27,7 +27,7 @@ cgi_extensions = ['.cgi']
 # --
 
 [[server]]
-port = 8080
+port = 8082
 server_name = ['upload.example.com']
 
 # upload 専用
