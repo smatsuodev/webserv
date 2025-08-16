@@ -30,11 +30,6 @@ IEventHandler::InvokeResult WriteCgiRequestBodyHandler::invoke(const Context &ct
     const ssize_t bytesWritten = write(conn.getFd(), body_.c_str() + bytesWritten_, bytesToWrite);
 
     if (bytesWritten == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            // まだ書き込めない、次のイベントを待つ
-            LOG_DEBUG("CGI request body write would block");
-            return Err(error::kRecoverable);
-        }
         LOG_WARN("failed to write CGI request body");
         // エラー時のクリーンアップ
         std::vector<IAction *> actions;
