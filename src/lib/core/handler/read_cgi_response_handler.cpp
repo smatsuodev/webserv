@@ -117,7 +117,7 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
         if (cgiResponse_.isSome()) {
             const cgi::Response &response = cgiResponse_.unwrap();
             if (response.getBody().isSome()) {
-                builder.text(response.getBody().unwrap());
+                builder.body(response.getBody().unwrap(), statusCode);
             }
         }
 
