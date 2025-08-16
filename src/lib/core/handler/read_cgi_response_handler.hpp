@@ -4,7 +4,6 @@
 #include "event/event_handler.hpp"
 #include "cgi/response.hpp"
 #include "http/response/response.hpp"
-#include "utils/types/option.hpp"
 
 class ReadCgiResponseHandler : public IEventHandler {
 public:
@@ -16,7 +15,6 @@ public:
 
 private:
     std::string responseBuffer_;
-    Option<cgi::Response> cgiResponse_;
     int clientFd_;
     pid_t childPid_;
 

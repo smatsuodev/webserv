@@ -9,9 +9,10 @@
 #include "write_response_body_handler.hpp"
 #include "../../utils/types/option.hpp"
 #include "../../http/request/request_parser.hpp"
+#include "utils/types/try.hpp"
 
 ReadCgiResponseHandler::ReadCgiResponseHandler(const int clientFd, const pid_t childPid)
-    : cgiResponse_(None), clientFd_(clientFd), childPid_(childPid) {}
+    : clientFd_(clientFd), childPid_(childPid) {}
 
 ReadCgiResponseHandler::~ReadCgiResponseHandler() {}
 
@@ -39,42 +40,30 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
     // NOTE: ほんまに?
     // EOF - CGIプロセスが終了
     LOG_DEBUG("CGI process finished");
+    int status;
+    waitpid(childPid_, &status, WNOHANG);
 
     // CGIレスポンスをパース
-    const Result<cgi::Response, error::AppError> result = createCgiResponseFromBuffer(responseBuffer_);
-    if (result.isOk()) {
-        cgiResponse_ = Some(result.unwrap());
-    }
+    const cgi::Response &response = TRY(createCgiResponseFromBuffer(responseBuffer_));
 
     // HTTPレスポンスを生成
     http::ResponseBuilder builder;
 
     // status, body を設定
-    if (cgiResponse_.isSome()) {
-        const cgi::Response &response = cgiResponse_.unwrap();
-        const http::HttpStatusCode statusCode = determineStatusCode(response);
-
-        builder.status(statusCode);
-        if (response.getBody().isSome()) {
-            builder.body(response.getBody().unwrap(), statusCode);
-        }
+    const http::HttpStatusCode statusCode = determineStatusCode(response);
+    builder.status(statusCode);
+    if (response.getBody().isSome()) {
+        builder.body(response.getBody().unwrap(), statusCode);
     }
 
     // ヘッダーを設定
-    if (cgiResponse_.isSome()) {
-        const cgi::Response &response = cgiResponse_.unwrap();
-        for (std::map<std::string, std::string>::const_iterator it = response.getHeaders().begin();
-             it != response.getHeaders().end();
-             ++it) {
-            // Statusヘッダーは既に処理済みなのでスキップ
-            if (it->first == "Status") continue;
-            builder.header(it->first, it->second);
-        }
+    for (std::map<std::string, std::string>::const_iterator it = response.getHeaders().begin();
+         it != response.getHeaders().end();
+         ++it) {
+        // Statusヘッダーは既に処理済みなのでスキップ
+        if (it->first == "Status") continue;
+        builder.header(it->first, it->second);
     }
-
-    // 子プロセスの回収
-    int status;
-    waitpid(childPid_, &status, WNOHANG);
 
     const http::Response httpResponse = builder.build();
     return Ok(makeNextActions(conn, httpResponse));
