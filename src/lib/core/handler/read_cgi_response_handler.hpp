@@ -20,7 +20,8 @@ private:
     pid_t childPid_;
 
     std::vector<IAction *> makeNextActions(Connection &conn, const http::Response &httpResponse) const;
-    http::HttpStatusCode determineStatusCode(const cgi::Response &response);
+    static http::HttpStatusCode determineStatusCode(const cgi::Response &response);
+    static Result<cgi::Response, error::AppError> createCgiResponseFromBuffer(const std::string &buf);
 };
 
 #endif

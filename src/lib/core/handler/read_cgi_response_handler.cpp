@@ -45,44 +45,9 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
     LOG_DEBUG("CGI process finished");
 
     // CGIレスポンスをパース
-    // ヘッダーをパース
-    const size_t headerEnd = responseBuffer_.find("\n\n");
-    if (headerEnd != std::string::npos) {
-        const std::string headerPart = responseBuffer_.substr(0, headerEnd);
-        const std::string bodyPart = responseBuffer_.substr(headerEnd + 2);
-
-        // CGIヘッダーをパース（RequestParser::parseHeaderFieldLineを使用）
-        cgi::Headers headers;
-        std::istringstream headerStream(headerPart);
-        std::string line;
-        while (std::getline(headerStream, line)) {
-            if (!line.empty() && line.back() == '\r') {
-                line.pop_back();
-            }
-            const http::RequestParser::ParseHeaderFieldLineResult result =
-                http::RequestParser::parseHeaderFieldLine(line);
-            if (result.isOk()) {
-                const http::RequestParser::HeaderField &field = result.unwrap();
-                headers[field.first] = field.second;
-            }
-        }
-        // Content-Typeが設定されていない場合はデフォルト値を設定
-        if (headers.find("Content-Type") == headers.end()) {
-            headers["Content-Type"] = "text/plain";
-        }
-        const Result<cgi::Response, error::AppError> result = cgi::Response::create(headers, Some(bodyPart));
-        if (result.isOk()) {
-            cgiResponse_ = Some(result.unwrap());
-        }
-    } else {
-        // ヘッダーが不完全
-        LOG_WARN("incomplete CGI headers");
-        cgi::Headers headers;
-        headers["Content-Type"] = "text/plain"; // デフォルト
-        const Result<cgi::Response, error::AppError> result = cgi::Response::create(headers, Some(responseBuffer_));
-        if (result.isOk()) {
-            cgiResponse_ = Some(result.unwrap());
-        }
+    const Result<cgi::Response, error::AppError> result = createCgiResponseFromBuffer(responseBuffer_);
+    if (result.isOk()) {
+        cgiResponse_ = Some(result.unwrap());
     }
 
     // HTTPレスポンスを生成
@@ -181,4 +146,38 @@ http::HttpStatusCode ReadCgiResponseHandler::determineStatusCode(const cgi::Resp
 
     // 有効な "Status" ヘッダーがないなら、成功扱いにする
     return http::kStatusOk;
+}
+
+Result<cgi::Response, error::AppError> ReadCgiResponseHandler::createCgiResponseFromBuffer(const std::string &buf) {
+    const std::size_t headerEnd = buf.find("\n\n");
+    if (headerEnd == std::string::npos) {
+        // ヘッダーが不完全
+        LOG_WARN("incomplete CGI headers");
+        cgi::Headers headers;
+        headers["Content-Type"] = "text/plain"; // デフォルト
+        return cgi::Response::create(headers, Some(buf));
+    }
+
+    const std::string headerPart = buf.substr(0, headerEnd);
+    const std::string bodyPart = buf.substr(headerEnd + 2);
+
+    // CGIヘッダーをパース（RequestParser::parseHeaderFieldLineを使用）
+    cgi::Headers headers;
+    std::istringstream headerStream(headerPart);
+    std::string line;
+    while (std::getline(headerStream, line)) {
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        const http::RequestParser::ParseHeaderFieldLineResult result = http::RequestParser::parseHeaderFieldLine(line);
+        if (result.isOk()) {
+            const http::RequestParser::HeaderField &field = result.unwrap();
+            headers[field.first] = field.second;
+        }
+    }
+    // Content-Typeが設定されていない場合はデフォルト値を設定
+    if (headers.find("Content-Type") == headers.end()) {
+        headers["Content-Type"] = "text/plain";
+    }
+    return cgi::Response::create(headers, Some(bodyPart));
 }
