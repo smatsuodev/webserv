@@ -38,7 +38,7 @@ private:
 
 class RegisterEventHandlerAction : public IAction {
 public:
-    RegisterEventHandlerAction(Connection &conn, Event::EventType type, IEventHandler *handler)
+    RegisterEventHandlerAction(Connection &conn, const Event::EventType type, IEventHandler *handler)
         : conn_(conn), type_(type), handler_(handler) {}
     void execute(ActionContext &ctx);
 
@@ -50,7 +50,7 @@ private:
 
 class RegisterEventHandlerByFdAction : public IAction {
 public:
-    RegisterEventHandlerByFdAction(int fd, Event::EventType type, IEventHandler *handler)
+    RegisterEventHandlerByFdAction(const int fd, const Event::EventType type, IEventHandler *handler)
         : fd_(fd), type_(type), handler_(handler) {}
     void execute(ActionContext &ctx);
 
@@ -62,7 +62,7 @@ private:
 
 class UnregisterEventHandlerAction : public IAction {
 public:
-    explicit UnregisterEventHandlerAction(Connection &conn, Event::EventType type) : conn_(conn), type_(type) {}
+    explicit UnregisterEventHandlerAction(Connection &conn, const Event::EventType type) : conn_(conn), type_(type) {}
     void execute(ActionContext &ctx);
 
 private:

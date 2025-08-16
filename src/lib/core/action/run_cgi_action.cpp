@@ -90,7 +90,7 @@ void RunCgiAction::childRoutine(const int socketFd) const {
     }
 
     // ドキュメントルートとスクリプト名を結合して実際のファイルパスを生成
-    const std::string cgiProgram = (scriptName[0] == '/') ? documentRoot + scriptName : documentRoot + "/" + scriptName;
+    const std::string cgiProgram = scriptName[0] == '/' ? documentRoot + scriptName : documentRoot + "/" + scriptName;
 
     // CGI を実行
     char *const argv[] = {const_cast<char *>(cgiProgram.c_str()), NULL};

@@ -14,8 +14,8 @@
 
 #include <sys/poll.h>
 
-ReadCgiResponseHandler::ReadCgiResponseHandler(int clientFd, pid_t childPid)
-    : responseBuffer_(""), cgiResponse_(None), clientFd_(clientFd), childPid_(childPid) {}
+ReadCgiResponseHandler::ReadCgiResponseHandler(const int clientFd, const pid_t childPid)
+    : cgiResponse_(None), clientFd_(clientFd), childPid_(childPid) {}
 
 ReadCgiResponseHandler::~ReadCgiResponseHandler() {}
 
@@ -159,7 +159,7 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
     return Err(error::kRecoverable);
 }
 
-IEventHandler::ErrorHandleResult ReadCgiResponseHandler::onErrorEvent(const Context &ctx, const Event &event) {
+IEventHandler::ErrorHandleResult ReadCgiResponseHandler::onErrorEvent(const Context &, const Event &event) {
     LOG_WARNF("ReadCgiResponseHandler received an error event %d", event.getTypeFlags());
 
     if (event.getTypeFlags() & Event::kHangUp) {

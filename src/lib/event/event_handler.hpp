@@ -78,11 +78,11 @@ public:
 
         ErrorHandleResult() : shouldFallback(true) {}
 
-        ErrorHandleResult(bool fallback, const std::vector<IAction *> &acts)
+        ErrorHandleResult(const bool fallback, const std::vector<IAction *> &acts)
             : shouldFallback(fallback), actions(acts) {}
     };
 
-    virtual ErrorHandleResult onErrorEvent(const Context &, const Event &event) {
+    virtual ErrorHandleResult onErrorEvent(const Context &, const Event &) {
         return ErrorHandleResult();
     }
 };

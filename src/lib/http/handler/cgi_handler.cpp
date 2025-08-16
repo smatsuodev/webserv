@@ -26,7 +26,7 @@ namespace http {
 
         // クエリ文字列を除去
         const size_t queryPos = path.find('?');
-        const std::string pathWithoutQuery = (queryPos != std::string::npos) ? path.substr(0, queryPos) : path;
+        const std::string pathWithoutQuery = queryPos != std::string::npos ? path.substr(0, queryPos) : path;
 
         const std::vector<std::string> &cgiExtensions = docRootConfig_.getCgiExtensions();
         if (cgiExtensions.empty()) {
@@ -63,7 +63,7 @@ namespace http {
 
         // クエリ文字列を除去
         const size_t queryPos = path.find('?');
-        std::string scriptPath = (queryPos != std::string::npos) ? path.substr(0, queryPos) : path;
+        std::string scriptPath = queryPos != std::string::npos ? path.substr(0, queryPos) : path;
 
         // PATH_INFOがある場合は、スクリプト名部分のみ返す
         // 例: /cgi/test.cgi/extra/path -> /cgi/test.cgi
@@ -86,7 +86,7 @@ namespace http {
 
         // クエリ文字列を除去
         const size_t queryPos = path.find('?');
-        std::string fullPath = (queryPos != std::string::npos) ? path.substr(0, queryPos) : path;
+        std::string fullPath = queryPos != std::string::npos ? path.substr(0, queryPos) : path;
 
         // スクリプト名の後の追加パスを取得
         // 例: /cgi/test.cgi/extra/path -> /extra/path

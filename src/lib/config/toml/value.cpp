@@ -184,7 +184,7 @@ namespace toml {
         return elements_.size();
     }
 
-    Value &Array::getElementRef(size_t index) {
+    Value &Array::getElementRef(const size_t index) {
         return elements_[index];
     }
 
@@ -197,7 +197,7 @@ namespace toml {
 
     Table::Table(const std::map<std::string, Value> &values) : values_(values), isEditable_(true) {}
 
-    Table::Table(const std::map<std::string, Value> &values, bool isEditable)
+    Table::Table(const std::map<std::string, Value> &values, const bool isEditable)
         : values_(values), isEditable_(isEditable) {}
 
     Table::Table(const Table &other) : values_(other.values_), isEditable_(other.isEditable_) {}

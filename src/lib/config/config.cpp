@@ -219,7 +219,7 @@ namespace config {
         bool autoindex = false;
         if (locationTable.hasKey("autoindex")) {
             std::string autoindexValue = locationTable.getValue("autoindex").unwrap().getString().unwrap();
-            autoindex = (autoindexValue == "on");
+            autoindex = autoindexValue == "on";
         }
 
         std::vector<std::string> cgiExtensions;
