@@ -88,43 +88,26 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
     // HTTPレスポンスを生成
     http::ResponseBuilder builder;
 
-    // CGIヘッダーをHTTPヘッダーに変換
-    http::HttpStatusCode statusCode = http::kStatusOk;
+    // status, body を設定
     if (cgiResponse_.isSome()) {
         const cgi::Response &response = cgiResponse_.unwrap();
-        const cgi::Headers &cgiHeaders = response.getHeaders();
+        http::HttpStatusCode statusCode = determineStatusCode(response);
 
-        // Statusヘッダーの処理
-        auto statusIt = cgiHeaders.find("Status");
-        if (statusIt != cgiHeaders.end()) {
-            // "200 OK" のような形式から数値を抽出
-            const std::string &statusStr = statusIt->second;
-            if (!statusStr.empty()) {
-                std::istringstream iss(statusStr);
-                int code;
-                if (iss >> code) {
-                    statusCode = static_cast<http::HttpStatusCode>(code);
-                }
-            }
-        }
-
-        // その他のヘッダーをHTTPヘッダーに設定
-        for (const auto &header : cgiHeaders) {
-            // Statusヘッダーは既に処理済みなのでスキップ
-            if (header.first != "Status") {
-                builder.header(header.first, header.second);
-            }
-            LOG_DEBUGF("CGI header: %s: %s", header.first.c_str(), header.second.c_str());
+        builder.status(statusCode);
+        if (response.getBody().isSome()) {
+            builder.body(response.getBody().unwrap(), statusCode);
         }
     }
 
-    builder.status(statusCode);
-
-    // ボディを設定
+    // ヘッダーを設定
     if (cgiResponse_.isSome()) {
         const cgi::Response &response = cgiResponse_.unwrap();
-        if (response.getBody().isSome()) {
-            builder.body(response.getBody().unwrap(), statusCode);
+        for (std::map<std::string, std::string>::const_iterator it = response.getHeaders().begin();
+             it != response.getHeaders().end();
+             ++it) {
+            // Statusヘッダーは既に処理済みなのでスキップ
+            if (it->first == "Status") continue;
+            builder.header(it->first, it->second);
         }
     }
 
@@ -171,4 +154,31 @@ ReadCgiResponseHandler::makeNextActions(Connection &conn, const http::Response &
     );
 
     return actions;
+}
+
+http::HttpStatusCode ReadCgiResponseHandler::determineStatusCode(const cgi::Response &response) {
+    const cgi::Headers &cgiHeaders = response.getHeaders();
+
+    const cgi::Headers::const_iterator it = cgiHeaders.find("Status");
+    if (it == cgiHeaders.end()) {
+        // "Status" ヘッダーが存在しない場合はデフォルトのステータスコードを返す
+        return http::kStatusOk;
+    }
+
+    // "200 OK" のような形式から数値を抽出
+    const std::string &statusStr = it->second;
+    if (!statusStr.empty()) {
+        std::istringstream iss(statusStr);
+        int rawCode;
+        if (iss >> rawCode) {
+            const Option<http::HttpStatusCode> code = http::httpStatusCodeFromInt(rawCode);
+            if (code.isSome()) {
+                return code.unwrap();
+            }
+            LOG_WARNF("Invalid status code: %d", rawCode);
+        }
+    }
+
+    // 有効な "Status" ヘッダーがないなら、成功扱いにする
+    return http::kStatusOk;
 }
