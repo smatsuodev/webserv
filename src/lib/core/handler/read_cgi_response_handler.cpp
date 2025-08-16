@@ -121,7 +121,7 @@ Result<cgi::Response, error::AppError> ReadCgiResponseHandler::createCgiResponse
     const std::string headerPart = buf.substr(0, headerEnd);
     const std::string bodyPart = buf.substr(headerEnd + 2);
 
-    // CGIヘッダーをパース（RequestParser::parseHeaderFieldLineを使用）
+    // CGIヘッダーをパース
     cgi::Headers headers;
     std::istringstream headerStream(headerPart);
     std::string line;
