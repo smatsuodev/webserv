@@ -21,7 +21,6 @@ namespace cgi {
             const std::string &pathInfo;
             const std::string &documentRoot;
         };
-        ;
         static Result<cgi::Request, error::AppError> create(const Parameter &param);
     };
 

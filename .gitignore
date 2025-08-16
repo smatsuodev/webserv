@@ -2,6 +2,7 @@
 bin/webserv
 build/
 .cache/
+tmp/
 
 # Prerequisites
 *.d
