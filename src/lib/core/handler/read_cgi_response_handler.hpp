@@ -7,8 +7,8 @@
 
 class ReadCgiResponseHandler : public IEventHandler {
 public:
-    ReadCgiResponseHandler(int clientFd, pid_t childPid);
-    ~ReadCgiResponseHandler();
+    explicit ReadCgiResponseHandler(const int clientFd) : clientFd_(clientFd) {}
+    ~ReadCgiResponseHandler() {}
 
     InvokeResult invoke(const Context &ctx);
     ErrorHandleResult onErrorEvent(const Context &ctx, const Event &event);
@@ -16,7 +16,6 @@ public:
 private:
     std::string responseBuffer_;
     int clientFd_;
-    pid_t childPid_;
 
     static std::vector<IAction *> makeNextActions(Connection &conn, int clientFd, const http::Response &httpResponse);
     static http::HttpStatusCode determineStatusCode(const cgi::Response &response);

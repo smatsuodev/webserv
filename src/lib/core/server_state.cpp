@@ -87,6 +87,10 @@ void EventHandlerRepository::remove(const int fd, Event::EventType type) {
     LOG_DEBUGF("event handler removed from fd %d", fd);
 }
 
+ServerState::ServerState() {
+    // self-pipe の読み端を監視対象にする
+    reaper_.attachToEventNotifier(&getEventNotifier());
+}
 
 IEventNotifier &ServerState::getEventNotifier() {
     return notifier_;
@@ -98,4 +102,8 @@ ConnectionRepository &ServerState::getConnectionRepository() {
 
 EventHandlerRepository &ServerState::getEventHandlerRepository() {
     return handlerRepo_;
+}
+
+ChildReaper &ServerState::getChildReaper() {
+    return reaper_;
 }

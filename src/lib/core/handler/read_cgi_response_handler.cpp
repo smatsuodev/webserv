@@ -11,11 +11,6 @@
 #include "../../http/request/request_parser.hpp"
 #include "utils/types/try.hpp"
 
-ReadCgiResponseHandler::ReadCgiResponseHandler(const int clientFd, const pid_t childPid)
-    : clientFd_(clientFd), childPid_(childPid) {}
-
-ReadCgiResponseHandler::~ReadCgiResponseHandler() {}
-
 IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start ReadCgiResponseHandler::invoke");
 
@@ -35,12 +30,6 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
         // まだデータが来る可能性がある
         return Err(error::kRecoverable);
     }
-
-    // NOTE: ほんまに?
-    // EOF - CGIプロセスが終了
-    LOG_DEBUG("CGI process finished");
-    int status;
-    waitpid(childPid_, &status, WNOHANG);
 
     const cgi::Response &cgiRes = TRY(createCgiResponseFromBuffer(responseBuffer_));
     return Ok(makeNextActions(conn, clientFd_, toHttpResponse(cgiRes)));

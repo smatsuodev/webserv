@@ -62,6 +62,13 @@ void Server::start() {
             const Event &ev = events[i];
             LOG_DEBUGF("event arrived for fd %d (flags: %x)", ev.getFd(), ev.getTypeFlags());
 
+            // SIGCHLD を監視する self-pipe のイベント
+            if (ev.getFd() == state_.getChildReaper().getReadFd()) {
+                const bool isReaped = state_.getChildReaper().onSignalEvent();
+                if (isReaped) LOG_DEBUG("child process reaped");
+                continue;
+            }
+
             Option<Ref<Connection> > conn = state_.getConnectionRepository().get(ev.getFd());
             const Context ctx(ev, conn, vsResolverFactory);
 
