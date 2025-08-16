@@ -72,13 +72,11 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
         }
     }
 
-    const http::Response httpResponse = builder.build();
-    const std::string responseMessage = httpResponse.toString();
-
     // 子プロセスの回収
     int status;
     waitpid(childPid_, &status, WNOHANG);
 
+    const http::Response httpResponse = builder.build();
     return Ok(makeNextActions(conn, httpResponse));
 }
 
