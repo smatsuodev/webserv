@@ -16,7 +16,7 @@ index = 'home.html'
 # upload したファイルの取得
 [[server.location]]
 path = '/uploads'
-root = 'example/html'
+root = 'example'
 autoindex = 'on'
 
 [[server.location]]
@@ -33,7 +33,7 @@ server_name = ['upload.example.com']
 # upload 専用
 [[server.location]]
 path = '/'
-root = 'example/html/uploads'
+root = 'example/uploads'
 allowed_methods = ['POST']
 
 # --
