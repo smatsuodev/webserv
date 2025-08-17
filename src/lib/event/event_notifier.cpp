@@ -26,32 +26,45 @@ EpollEventNotifier::EpollEventNotifier() : epollFd_(-1) {
     LOG_DEBUGF("epoll fd created (fd: %d)", epollFd_.get());
 }
 
-void EpollEventNotifier::registerEvent(const Event &event) {
-    const int targetFd = event.getFd();
-
-    epoll_event eev = {};
-    eev.events = EPOLLIN | EPOLLOUT;
-    eev.data.fd = targetFd;
-    const int epollOp = registeredEvents_.count(targetFd) == 0 ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
-    if (epoll_ctl(epollFd_, epollOp, targetFd, &eev) == -1) {
-        LOG_WARNF("failed to add to epoll fd: %s", std::strerror(errno));
-        return;
-    }
-
-    registeredEvents_[targetFd] = event;
-    LOG_DEBUGF("fd %d added to epoll", targetFd);
-}
-
 void EpollEventNotifier::unregisterEvent(const Event &event) {
-    const int targetFd = event.getFd();
+    const int fd = event.getFd();
 
-    if (epoll_ctl(epollFd_, EPOLL_CTL_DEL, targetFd, NULL) == -1) {
-        LOG_WARNF("failed to remove from epoll fd: %s", std::strerror(errno));
+    const std::map<int, Event>::iterator it = registeredEvents_.find(fd);
+    if (it == registeredEvents_.end()) {
         return;
     }
 
-    registeredEvents_.erase(targetFd);
-    LOG_DEBUGF("fd %d removed from epoll", targetFd);
+    const uint32_t oldFlags = it->second.getTypeFlags();
+    const uint32_t rmFlags  = event.getTypeFlags();
+    const uint32_t newFlags = oldFlags & ~rmFlags;
+
+    if (newFlags == 0) {
+        // 完全に削除
+        if (epoll_ctl(epollFd_.get(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
+            LOG_WARNF("failed to remove from epoll fd: %s", std::strerror(errno));
+            return; // 失敗時はマップを保持して不整合を避ける
+        }
+        registeredEvents_.erase(fd);
+        LOG_DEBUGF("fd %d removed from epoll", fd);
+        return;
+    }
+
+    // フラグが変化する場合のみ、epoll に変更を反映
+    if (newFlags != oldFlags) {
+        epoll_event eev = {};
+        std::memset(&eev, 0, sizeof(eev));
+        eev.data.fd = fd;
+
+        eev.events = toEpollEvents(Event(fd, newFlags));
+
+        if (epoll_ctl(epollFd_.get(), EPOLL_CTL_MOD, fd, &eev) == -1) {
+            LOG_WARNF("failed to modify epoll fd: %s", std::strerror(errno));
+            return; // 失敗時は登録状態を変更しない
+        }
+
+        registeredEvents_[fd] = Event(fd, newFlags);
+        LOG_DEBUGF("fd %d modified in epoll (%u -> %u)", fd, oldFlags, newFlags);
+    }
 }
 
 EpollEventNotifier::WaitEventsResult EpollEventNotifier::waitEvents() {
