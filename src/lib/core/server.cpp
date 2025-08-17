@@ -101,7 +101,7 @@ void Server::invokeHandlers(const Context &ctx) {
 }
 
 void Server::invokeSingleHandler(const Context &ctx, const Ref<IEventHandler> &handler) {
-    const Event event = ctx.getEvent();
+    const Event &event = ctx.getEvent();
 
     if (event.isError()) {
         const IEventHandler::ErrorHandleResult result = handler.get().onErrorEvent(ctx, event);
