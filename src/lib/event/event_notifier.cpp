@@ -124,9 +124,22 @@ void PollEventNotifier::registerEvent(const Event &event) {
     LOG_DEBUGF("fd %d added to poll", event.getFd());
 }
 
+/**
+ * NOTE: registerEvent は上書きするが、unregister は flag を考慮して待機するイベントを変更、場合によって削除を行う
+ * (非対称でちょっと嫌)
+ */
 void PollEventNotifier::unregisterEvent(const Event &event) {
-    registeredEvents_.erase(event.getFd());
-    LOG_DEBUGF("fd %d removed from poll", event.getFd());
+    const std::map<int, Event>::iterator it = registeredEvents_.find(event.getFd());
+    if (it == registeredEvents_.end()) return;
+
+    const uint32_t newFlag = it->second.getTypeFlags() & ~event.getTypeFlags();
+    if (newFlag == 0) {
+        LOG_DEBUGF("fd %d removed from poll", event.getFd());
+        registeredEvents_.erase(event.getFd());
+    } else if (newFlag != it->second.getTypeFlags()) {
+        LOG_DEBUGF("fd %d modified in poll (%d -> %d)", event.getFd(), it->second.getTypeFlags(), newFlag);
+        registeredEvents_[event.getFd()] = Event(event.getFd(), newFlag);
+    }
 }
 
 IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
