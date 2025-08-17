@@ -56,7 +56,7 @@ void EpollEventNotifier::unregisterEvent(const Event &event) {
 
     if (newFlags == 0) {
         // 完全に削除
-        if (epoll_ctl(epollFd_.get(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
+        if (epoll_ctl(epollFd_.get(), EPOLL_CTL_DEL, fd, NULL) == -1) {
             LOG_WARNF("failed to remove from epoll fd: %s", std::strerror(errno));
             return; // 失敗時はマップを保持して不整合を避ける
         }
@@ -65,19 +65,7 @@ void EpollEventNotifier::unregisterEvent(const Event &event) {
         return;
     }
 
-    // フラグが変化する場合のみ、epoll に変更を反映
     if (newFlags != oldFlags) {
-        epoll_event eev = {};
-        std::memset(&eev, 0, sizeof(eev));
-        eev.data.fd = fd;
-
-        eev.events = toEpollEvents(Event(fd, newFlags));
-
-        if (epoll_ctl(epollFd_.get(), EPOLL_CTL_MOD, fd, &eev) == -1) {
-            LOG_WARNF("failed to modify epoll fd: %s", std::strerror(errno));
-            return; // 失敗時は登録状態を変更しない
-        }
-
         registeredEvents_[fd] = Event(fd, newFlags);
         LOG_DEBUGF("fd %d modified in epoll (%u -> %u)", fd, oldFlags, newFlags);
     }
