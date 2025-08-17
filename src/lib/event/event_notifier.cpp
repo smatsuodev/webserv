@@ -85,7 +85,7 @@ EpollEventNotifier::WaitEventsResult EpollEventNotifier::waitEvents() {
         LOG_DEBUGF("epoll events: fd=%d, events=%d", evs[i].data.fd, evs[i].events);
         const uint32_t flags = EpollEventNotifier::toEventTypeFlags(evs[i].events);
         // エラー or イベント登録時のフラグと一致するイベントのみ返す
-        if (flags & (registeredEvents_[evs[i].data.fd].getTypeFlags() | EPOLLERR | EPOLLHUP)) {
+        if (flags & (registeredEvents_[evs[i].data.fd].getTypeFlags() | Event::kError | Event::kHangUp)) {
             events.push_back(Event(evs[i].data.fd, flags));
         }
     }
