@@ -85,9 +85,11 @@ void Server::invokeHandlers(const Context &ctx) {
 
     const std::vector<Event::EventType> types = {Event::kRead, Event::kWrite};
     // TODO: handler の呼び方が壊れてる
-    for (auto it = types.begin(); it != types.end(); ++it) {
+    for (std::vector<Event::EventType>::const_iterator it = types.begin(); it != types.end(); ++it) {
         const Event::EventType type = *it;
-        if ((type & event.getTypeFlags()) == 0) {
+        const bool shouldCallHandler = (event.getTypeFlags() & type) != 0;
+
+        if (!(shouldCallHandler || event.isError())) {
             // 待っていないイベントは無視
             continue;
         }
@@ -96,11 +98,11 @@ void Server::invokeHandlers(const Context &ctx) {
         if (handler.isNone()) {
             continue;
         }
-        this->invokeSingleHandler(ctx, handler.unwrap());
+        this->invokeSingleHandler(ctx, handler.unwrap(), shouldCallHandler);
     }
 }
 
-void Server::invokeSingleHandler(const Context &ctx, const Ref<IEventHandler> &handler) {
+void Server::invokeSingleHandler(const Context &ctx, const Ref<IEventHandler> &handler, const bool shouldCallHandler) {
     const Event &event = ctx.getEvent();
 
     if (event.isError()) {
@@ -114,6 +116,10 @@ void Server::invokeSingleHandler(const Context &ctx, const Ref<IEventHandler> &h
             return;
         }
         // この場合はそのまま handler を呼ぶ
+    }
+
+    if (!shouldCallHandler) {
+        return;
     }
 
     const Result<std::vector<IAction *>, error::AppError> result = handler.get().invoke(ctx);

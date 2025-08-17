@@ -31,7 +31,7 @@ private:
     void onErrorEvent(const Event &event);
     static void executeActions(ActionContext &actionCtx, std::vector<IAction *> actions);
     void invokeHandlers(const Context &ctx);
-    void invokeSingleHandler(const Context &ctx, const Ref<IEventHandler> &handler);
+    void invokeSingleHandler(const Context &ctx, const Ref<IEventHandler> &handler, bool shouldCallHandler);
 };
 
 #endif
