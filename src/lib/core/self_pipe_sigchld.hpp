@@ -16,7 +16,8 @@ public:
 private:
     int readFd_;
     int writeFd_;
-    sig_t prev_;
+    sig_t prevSigchldHandler_;
+    sig_t prevSigpipeHandler_;
     static SelfPipeSigchld *instance_;
 
     static void handler(int signum);
