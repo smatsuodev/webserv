@@ -26,6 +26,22 @@ EpollEventNotifier::EpollEventNotifier() : epollFd_(-1) {
     LOG_DEBUGF("epoll fd created (fd: %d)", epollFd_.get());
 }
 
+void EpollEventNotifier::registerEvent(const Event &event) {
+    const int targetFd = event.getFd();
+
+    epoll_event eev = {};
+    eev.events = EPOLLIN | EPOLLOUT;
+    eev.data.fd = targetFd;
+    const int epollOp = registeredEvents_.count(targetFd) == 0 ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
+    if (epoll_ctl(epollFd_, epollOp, targetFd, &eev) == -1) {
+        LOG_WARNF("failed to add to epoll fd: %s", std::strerror(errno));
+        return;
+    }
+
+    registeredEvents_[targetFd] = event;
+    LOG_DEBUGF("fd %d added to epoll", targetFd);
+}
+
 void EpollEventNotifier::unregisterEvent(const Event &event) {
     const int fd = event.getFd();
 
