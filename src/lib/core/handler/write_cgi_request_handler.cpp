@@ -1,7 +1,6 @@
-#include "write_cgi_request_handler.hpp"
-
 #include <unistd.h>
-
+#include <sys/socket.h>
+#include "write_cgi_request_handler.hpp"
 #include "../action/action.hpp"
 #include "../../event/event.hpp"
 #include "../../transport/connection.hpp"
@@ -20,6 +19,8 @@ IEventHandler::InvokeResult WriteCgiRequestBodyHandler::invoke(const Context &ct
     if (bytesToWrite == 0) {
         // 書き込み完了
         LOG_DEBUG("CGI request body fully written");
+        shutdown(conn.getFd(), SHUT_WR);
+
         std::vector<IAction *> actions;
         actions.push_back(new UnregisterEventAction(Event(conn.getFd(), Event::kWrite)));
         actions.push_back(new UnregisterEventHandlerAction(conn, Event::kWrite));
@@ -47,6 +48,8 @@ IEventHandler::InvokeResult WriteCgiRequestBodyHandler::invoke(const Context &ct
     if (bytesWritten_ == body_.size()) {
         // 書き込み完了
         LOG_DEBUG("CGI request body fully written");
+        shutdown(conn.getFd(), SHUT_WR);
+
         std::vector<IAction *> actions;
         actions.push_back(new UnregisterEventAction(Event(conn.getFd(), Event::kWrite)));
         actions.push_back(new UnregisterEventHandlerAction(conn, Event::kWrite));

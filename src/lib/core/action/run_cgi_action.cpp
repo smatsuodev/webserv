@@ -122,6 +122,8 @@ void RunCgiAction::parentRoutine(const ActionContext &ctx, const int socketFd, c
         ctx.getState().getEventHandlerRepository().set(
             socketFd, Event::kWrite, new WriteCgiRequestBodyHandler(body.unwrap())
         );
+    } else {
+        shutdown(socketFd, SHUT_WR);
     }
 
     // 子プロセスとの間のソケットのイベントを待つ
@@ -129,6 +131,7 @@ void RunCgiAction::parentRoutine(const ActionContext &ctx, const int socketFd, c
 
     // HTTP レスポンスが準備できるまで、peer に関するイベント待ちなどは解除
     ctx.getState().getEventNotifier().unregisterEvent(Event(clientFd_, Event::kRead));
+    ctx.getState().getEventNotifier().unregisterEvent(Event(clientFd_, Event::kWrite));
     ctx.getState().getEventHandlerRepository().remove(clientFd_, Event::kRead);
     ctx.getState().getEventHandlerRepository().remove(clientFd_, Event::kWrite);
 }
