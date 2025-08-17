@@ -87,9 +87,8 @@ void Server::invokeHandlers(const Context &ctx) {
     // TODO: handler の呼び方が壊れてる
     for (auto it = types.begin(); it != types.end(); ++it) {
         const Event::EventType type = *it;
-        // エラーでない && 待っていないイベントは無視
-        // 逆にエラーに対しは onErrorEvent を呼びたいので計測
-        if ((type & event.getTypeFlags()) == 0 && !event.isError()) {
+        if ((type & event.getTypeFlags()) == 0) {
+            // 待っていないイベントは無視
             continue;
         }
 
@@ -112,8 +111,9 @@ void Server::invokeSingleHandler(const Context &ctx, const Ref<IEventHandler> &h
         }
         if (result.shouldFallback) {
             this->onErrorEvent(event);
+            return;
         }
-        return;
+        // この場合はそのまま handler を呼ぶ
     }
 
     const Result<std::vector<IAction *>, error::AppError> result = handler.get().invoke(ctx);
