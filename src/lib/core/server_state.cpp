@@ -70,7 +70,7 @@ void EventHandlerRepository::set(const int fd, Event::EventType type, IEventHand
     }
 
     handlers_[key] = handler;
-    LOG_DEBUGF("event handler added to fd %d", fd);
+    LOG_DEBUGF("event handler added to fd %d (type: %d)", fd, type);
 }
 
 void EventHandlerRepository::remove(const int fd, Event::EventType type) {
@@ -84,7 +84,7 @@ void EventHandlerRepository::remove(const int fd, Event::EventType type) {
     delete it->second;
     handlers_.erase(key);
 
-    LOG_DEBUGF("event handler removed from fd %d", fd);
+    LOG_DEBUGF("event handler removed from fd %d (type: %d)", fd, type);
 }
 
 ServerState::ServerState() {
