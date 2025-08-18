@@ -383,10 +383,7 @@ TEST(TokenizerOk, mixedArray) {
 }
 
 TEST(TokenizerOk, justStringArray) {
-    const auto text = R "(k1.k2 = ["[1] ", " {
-        a.b = 0
-    }
-    "])";
+    const auto text = R "(k1.k2 = ["[1] ", " {a.b = 0} "])";
     testOk(
         text,
         {
