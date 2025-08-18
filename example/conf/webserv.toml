@@ -13,11 +13,10 @@ path = '/other'
 root = 'example/html'
 index = 'home.html'
 
-# upload したファイルの取得
 [[server.location]]
-path = '/uploads'
-root = 'example'
-autoindex = 'on'
+path = '/'
+root = 'example/uploads'
+allowed_methods = ['POST']
 
 [[server.location]]
 path = '/cgi'
@@ -28,19 +27,19 @@ cgi_extensions = ['.cgi']
 # --
 
 [[server]]
-port = 8082
+port = 8081
 server_name = ['upload.example.com']
 
-# upload 専用
+# upload したファイルの取得
 [[server.location]]
 path = '/'
 root = 'example/uploads'
-allowed_methods = ['POST']
+autoindex = 'on'
 
 # --
 
 [[server]]
-port = 8081
+port = 8082
 server_name = ['redirect.example.com']
 
 # NOTE: /foo/bar はどこにリダイレクトするべきか?
