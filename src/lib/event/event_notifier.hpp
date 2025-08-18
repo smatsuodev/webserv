@@ -8,6 +8,9 @@
 #include <vector>
 #include <map>
 
+// TODO: poll, epoll の二重管理が辛いので、今は epoll を無効化
+#define USE_EPOLL 0
+
 class IEventNotifier {
 public:
     virtual ~IEventNotifier();

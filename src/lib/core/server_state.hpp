@@ -53,7 +53,7 @@ public:
 
 private:
     // EventNotifier はあんまり state っぽくない
-#if defined(__linux__)
+#if defined(__linux__) && USE_EPOLL
     EpollEventNotifier notifier_;
 #else
     PollEventNotifier notifier_;

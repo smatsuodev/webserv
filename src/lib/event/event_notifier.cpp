@@ -4,10 +4,11 @@
 #include <cerrno>
 #include <map>
 #include <string>
+#include <sys/socket.h>
 
 IEventNotifier::~IEventNotifier() {}
 
-#if defined(__linux__)
+#if defined(__linux__) && USE_EPOLL
 
 #include <sys/epoll.h>
 
@@ -43,15 +44,32 @@ void EpollEventNotifier::registerEvent(const Event &event) {
 }
 
 void EpollEventNotifier::unregisterEvent(const Event &event) {
-    const int targetFd = event.getFd();
+    const int fd = event.getFd();
 
-    if (epoll_ctl(epollFd_, EPOLL_CTL_DEL, targetFd, NULL) == -1) {
-        LOG_WARNF("failed to remove from epoll fd: %s", std::strerror(errno));
+    const std::map<int, Event>::iterator it = registeredEvents_.find(fd);
+    if (it == registeredEvents_.end()) {
         return;
     }
 
-    registeredEvents_.erase(targetFd);
-    LOG_DEBUGF("fd %d removed from epoll", targetFd);
+    const uint32_t oldFlags = it->second.getTypeFlags();
+    const uint32_t rmFlags = event.getTypeFlags();
+    const uint32_t newFlags = oldFlags & ~rmFlags;
+
+    if (newFlags == 0) {
+        // 完全に削除
+        if (epoll_ctl(epollFd_.get(), EPOLL_CTL_DEL, fd, NULL) == -1) {
+            LOG_WARNF("failed to remove from epoll fd: %s", std::strerror(errno));
+            return; // 失敗時はマップを保持して不整合を避ける
+        }
+        registeredEvents_.erase(fd);
+        LOG_DEBUGF("fd %d removed from epoll", fd);
+        return;
+    }
+
+    if (newFlags != oldFlags) {
+        registeredEvents_[fd] = Event(fd, newFlags);
+        LOG_DEBUGF("fd %d modified in epoll (%u -> %u)", fd, oldFlags, newFlags);
+    }
 }
 
 EpollEventNotifier::WaitEventsResult EpollEventNotifier::waitEvents() {
@@ -68,7 +86,7 @@ EpollEventNotifier::WaitEventsResult EpollEventNotifier::waitEvents() {
         LOG_DEBUGF("epoll events: fd=%d, events=%d", evs[i].data.fd, evs[i].events);
         const uint32_t flags = EpollEventNotifier::toEventTypeFlags(evs[i].events);
         // エラー or イベント登録時のフラグと一致するイベントのみ返す
-        if (flags & (registeredEvents_[evs[i].data.fd].getTypeFlags() | EPOLLERR | EPOLLHUP)) {
+        if (flags & (registeredEvents_[evs[i].data.fd].getTypeFlags() | Event::kError | Event::kHangUp)) {
             events.push_back(Event(evs[i].data.fd, flags));
         }
     }
@@ -124,9 +142,22 @@ void PollEventNotifier::registerEvent(const Event &event) {
     LOG_DEBUGF("fd %d added to poll", event.getFd());
 }
 
+/**
+ * NOTE: registerEvent は上書きするが、unregister は flag を考慮して待機するイベントを変更、場合によって削除を行う
+ * (非対称でちょっと嫌)
+ */
 void PollEventNotifier::unregisterEvent(const Event &event) {
-    registeredEvents_.erase(event.getFd());
-    LOG_DEBUGF("fd %d removed from poll", event.getFd());
+    const std::map<int, Event>::iterator it = registeredEvents_.find(event.getFd());
+    if (it == registeredEvents_.end()) return;
+
+    const uint32_t newFlag = it->second.getTypeFlags() & ~event.getTypeFlags();
+    if (newFlag == 0) {
+        LOG_DEBUGF("fd %d removed from poll", event.getFd());
+        registeredEvents_.erase(event.getFd());
+    } else if (newFlag != it->second.getTypeFlags()) {
+        LOG_DEBUGF("fd %d modified in poll (%d -> %d)", event.getFd(), it->second.getTypeFlags(), newFlag);
+        registeredEvents_[event.getFd()] = Event(event.getFd(), newFlag);
+    }
 }
 
 IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
@@ -150,6 +181,13 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
         if (pfd.revents == 0) {
             continue;
         }
+        int soerr = 0;
+        socklen_t sl = sizeof(soerr);
+        if (getsockopt(pfd.fd, SOL_SOCKET, SO_ERROR, &soerr, &sl) == 0 && soerr != 0) {
+            // POLLERR を消化する。 ないと主に Linux でエラーになることがある。
+            continue;
+        }
+
         const uint32_t flags = PollEventNotifier::toEventTypeFlags(pfd.revents);
         if (flags == 0) {
             continue;

@@ -22,6 +22,7 @@ autoindex = 'on'
 [[server.location]]
 path = '/cgi'
 root = 'example'
+allowed_methods = ['GET', 'POST']
 cgi_extensions = ['.cgi']
 
 # --

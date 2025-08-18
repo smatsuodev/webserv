@@ -33,38 +33,37 @@ void VirtualServer::registerHandlers(const config::LocationContext &location) {
     for (std::vector<http::HttpMethod>::const_iterator iter = allowedMethods.begin(); iter != allowedMethods.end();
          ++iter) {
         config::LocationContext::DocumentRootConfig documentRootConfig = location.getDocumentRootConfig().unwrap();
+        http::IHandler *handler = NULL;
+
         switch (*iter) {
             case http::kMethodGet: {
-                http::IHandler *handler = new http::StaticFileHandler(documentRootConfig);
-
-                // CGI拡張子が設定されている場合は、CgiHandlerでラップ
-                if (!documentRootConfig.getCgiExtensions().empty()) {
-                    // StaticFileHandlerをfallbackとしてCgiHandlerを作成
-                    handler = new http::CgiHandler(
-                        serverConfig_.getServerName().empty() ? serverConfig_.getHost()
-                                                              : serverConfig_.getServerName()[0],
-                        documentRootConfig,
-                        handler
-                    );
-                }
-
-                router_.on(http::kMethodGet, location.getPath(), handler);
+                handler = new http::StaticFileHandler(documentRootConfig);
                 break;
             }
             case http::kMethodDelete: {
-                http::IHandler *handler = new http::DeleteFileHandler(documentRootConfig);
-                router_.on(http::kMethodDelete, location.getPath(), handler);
+                handler = new http::DeleteFileHandler(documentRootConfig);
                 break;
             }
             case http::kMethodPost: {
-                http::IHandler *handler = new http::UploadFileHandler(documentRootConfig);
-                router_.on(http::kMethodPost, location.getPath(), handler);
+                handler = new http::UploadFileHandler(documentRootConfig);
                 break;
             }
             default:
                 // do nothing
                 break;
         }
+        if (handler == NULL) continue;
+
+        // CGI拡張子が設定されている場合は、CgiHandlerでラップ
+        if (!documentRootConfig.getCgiExtensions().empty()) {
+            // StaticFileHandlerをfallbackとしてCgiHandlerを作成
+            handler = new http::CgiHandler(
+                serverConfig_.getServerName().empty() ? serverConfig_.getHost() : serverConfig_.getServerName()[0],
+                documentRootConfig,
+                handler
+            );
+        }
+        router_.on(*iter, location.getPath(), handler);
     }
 }
 

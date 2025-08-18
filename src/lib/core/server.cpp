@@ -53,7 +53,10 @@ void Server::start() {
     while (true) {
         const IEventNotifier::WaitEventsResult waitResult = state_.getEventNotifier().waitEvents();
         if (waitResult.isErr()) {
-            LOG_ERRORF("EventNotifier::waitEvents failed");
+            if (errno == EINTR)
+                LOG_DEBUG("waitEvents interrupted by signal, retrying...");
+            else
+                LOG_ERROR("EventNotifier::waitEvents failed");
             continue;
         }
 
@@ -72,50 +75,62 @@ void Server::start() {
             Option<Ref<Connection> > conn = state_.getConnectionRepository().get(ev.getFd());
             const Context ctx(ev, conn, vsResolverFactory);
 
-            const Option<Ref<IEventHandler> > readHandler =
-                state_.getEventHandlerRepository().get(ev.getFd(), Event::kRead);
-            const Option<Ref<IEventHandler> > writeHandler =
-                state_.getEventHandlerRepository().get(ev.getFd(), Event::kWrite);
-
-            if (ev.isError()) {
-                IEventHandler::ErrorHandleResult result;
-
-                if (readHandler.isSome()) {
-                    result = readHandler.unwrap().get().onErrorEvent(ctx, ev);
-                } else if (writeHandler.isSome()) {
-                    result = writeHandler.unwrap().get().onErrorEvent(ctx, ev);
-                }
-
-                if (!result.actions.empty()) {
-                    ActionContext actionCtx(state_);
-                    executeActions(actionCtx, result.actions);
-                }
-
-                if (result.shouldFallback) {
-                    this->onErrorEvent(ev);
-                    continue;
-                }
-            }
-
-            if (readHandler.isSome()) {
-                this->invokeHandler(ctx, readHandler);
-            }
-            if (writeHandler.isSome()) {
-                this->invokeHandler(ctx, writeHandler);
-            }
+            invokeHandlers(ctx);
         }
     }
 }
 
-void Server::invokeHandler(const Context &ctx, const Option<Ref<IEventHandler> > &handler) {
-    const IEventHandler::InvokeResult result = handler.unwrap().get().invoke(ctx);
+void Server::invokeHandlers(const Context &ctx) {
+    const Event &event = ctx.getEvent();
+
+    const std::vector<Event::EventType> types = {Event::kRead, Event::kWrite};
+    // TODO: handler の呼び方が壊れてる
+    for (std::vector<Event::EventType>::const_iterator it = types.begin(); it != types.end(); ++it) {
+        const Event::EventType type = *it;
+        const bool shouldCallHandler = (event.getTypeFlags() & type) != 0;
+
+        if (!(shouldCallHandler || event.isError())) {
+            // 待っていないイベントは無視
+            continue;
+        }
+
+        const Option<Ref<IEventHandler> > handler = state_.getEventHandlerRepository().get(event.getFd(), type);
+        if (handler.isNone()) {
+            continue;
+        }
+        this->invokeSingleHandler(ctx, handler.unwrap(), shouldCallHandler);
+    }
+}
+
+void Server::invokeSingleHandler(const Context &ctx, const Ref<IEventHandler> &handler, const bool shouldCallHandler) {
+    const Event &event = ctx.getEvent();
+
+    if (event.isError()) {
+        const IEventHandler::ErrorHandleResult result = handler.get().onErrorEvent(ctx, event);
+        if (!result.actions.empty()) {
+            ActionContext actionCtx(state_);
+            executeActions(actionCtx, result.actions);
+        }
+        if (result.shouldFallback) {
+            this->onErrorEvent(event);
+            return;
+        }
+        // この場合はそのまま handler を呼ぶ
+    }
+
+    if (!shouldCallHandler) {
+        return;
+    }
+
+    const Result<std::vector<IAction *>, error::AppError> result = handler.get().invoke(ctx);
     if (result.isErr()) {
         this->onHandlerError(ctx, result.unwrapErr());
         return;
     }
-
-    ActionContext actionCtx(state_);
-    Server::executeActions(actionCtx, result.unwrap());
+    if (!result.unwrap().empty()) {
+        ActionContext actionCtx(state_);
+        executeActions(actionCtx, result.unwrap());
+    }
 }
 
 /**

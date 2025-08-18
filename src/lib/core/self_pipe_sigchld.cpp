@@ -4,7 +4,8 @@
 
 SelfPipeSigchld *SelfPipeSigchld::instance_ = NULL;
 
-SelfPipeSigchld::SelfPipeSigchld() : readFd_(-1), writeFd_(-1), prev_(SIG_DFL) {
+SelfPipeSigchld::SelfPipeSigchld()
+    : readFd_(-1), writeFd_(-1), prevSigchldHandler_(SIG_DFL), prevSigpipeHandler_(SIG_DFL) {
     int pipeFds[2];
     if (pipe(pipeFds) == -1) {
         return;
@@ -21,12 +22,13 @@ SelfPipeSigchld::SelfPipeSigchld() : readFd_(-1), writeFd_(-1), prev_(SIG_DFL) {
     // シングルトン的に、このインスタンスをハンドラから参照する
     instance_ = this;
 
-    prev_ = signal(SIGCHLD, &SelfPipeSigchld::handler);
-    signal(SIGPIPE, SIG_IGN);
+    prevSigchldHandler_ = signal(SIGCHLD, &SelfPipeSigchld::handler);
+    prevSigpipeHandler_ = signal(SIGPIPE, SIG_IGN);
 }
 
 SelfPipeSigchld::~SelfPipeSigchld() {
-    signal(SIGCHLD, prev_);
+    signal(SIGCHLD, prevSigchldHandler_);
+    signal(SIGPIPE, prevSigpipeHandler_);
     if (readFd_ != -1) {
         close(readFd_);
     }
