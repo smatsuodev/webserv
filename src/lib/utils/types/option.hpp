@@ -87,6 +87,7 @@ types::Some<T> Some(T val) {
 }
 
 // ReSharper disable once CppInconsistentNaming
+// NOLINTNEXTLINE(clang-diagnostic-unneeded-internal-declaration)
 const types::None None = types::None();
 
 template <class T>
