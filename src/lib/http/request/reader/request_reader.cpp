@@ -32,9 +32,8 @@ http::RequestReader::ReadRequestResult http::RequestReader::readRequest(ReadBuff
         }
     }
 
-    return Ok(
-        Some(TRY(RequestParser::parseRequest(readCtx_.getRequestLine(), readCtx_.getHeaders(), readCtx_.getBody())))
-    );
+    return Ok(Some(TRY(RequestParser::parseRequest(readCtx_.getRequestLine(), readCtx_.getHeaders(), readCtx_.getBody())
+    )));
 }
 
 http::IConfigResolver::~IConfigResolver() {}

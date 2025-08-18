@@ -17,12 +17,10 @@ Either<IAction *, http::Response> http::UploadFileHandler::serve(const RequestCo
     const Request &req = ctx.getRequest();
     const Option<std::string> contentTypeOpt = req.getHeader("Content-Type");
     if (contentTypeOpt.isNone()) {
-        return Right(
-            ResponseBuilder()
-                .status(kStatusUnsupportedMediaType)
-                .text("Content-Type must be multipart/form-data")
-                .build()
-        );
+        return Right(ResponseBuilder()
+                         .status(kStatusUnsupportedMediaType)
+                         .text("Content-Type must be multipart/form-data")
+                         .build());
     }
 
     // Content-Typeをセミコロン区切りでパース
@@ -31,12 +29,10 @@ Either<IAction *, http::Response> http::UploadFileHandler::serve(const RequestCo
 
     // 最初の部分がmultipart/form-dataであるか確認
     if (contentTypeParams.empty() || utils::trim(contentTypeParams[0]) != kContentTypeMultipartFormData) {
-        return Right(
-            ResponseBuilder()
-                .status(kStatusUnsupportedMediaType)
-                .text("Content-Type must be multipart/form-data")
-                .build()
-        );
+        return Right(ResponseBuilder()
+                         .status(kStatusUnsupportedMediaType)
+                         .text("Content-Type must be multipart/form-data")
+                         .build());
     }
 
     // boundaryパラメータを探す
@@ -53,8 +49,7 @@ Either<IAction *, http::Response> http::UploadFileHandler::serve(const RequestCo
         // key=valueの形式を確認
         const std::string::size_type eqPos = param.find('=');
         if (eqPos == std::string::npos) {
-            return Right(
-                ResponseBuilder().status(kStatusBadRequest).text("Invalid parameter format: " + param).build()
+            return Right(ResponseBuilder().status(kStatusBadRequest).text("Invalid parameter format: " + param).build()
             );
         }
 
@@ -82,12 +77,10 @@ Either<IAction *, http::Response> http::UploadFileHandler::serve(const RequestCo
 
         // RFC 1341に基づく境界値の検証
         if (boundary.length() > 70) {
-            return Right(
-                ResponseBuilder()
-                    .status(kStatusBadRequest)
-                    .text("Boundary parameter too long (max 70 characters)")
-                    .build()
-            );
+            return Right(ResponseBuilder()
+                             .status(kStatusBadRequest)
+                             .text("Boundary parameter too long (max 70 characters)")
+                             .build());
         }
 
         for (size_t j = 0; j < boundary.length(); j++) {
@@ -163,12 +156,10 @@ http::UploadFileHandler::findInitialBoundary(const std::string &body, const std:
     if (pos + 1 < body.length() && body[pos] == '\r' && body[pos + 1] == '\n') {
         pos += 2;
     } else {
-        return Err(
-            ResponseBuilder()
-                .status(kStatusBadRequest)
-                .text("Invalid multipart format: expected CRLF after boundary")
-                .build()
-        );
+        return Err(ResponseBuilder()
+                       .status(kStatusBadRequest)
+                       .text("Invalid multipart format: expected CRLF after boundary")
+                       .build());
     }
 
     return Ok(pos);
@@ -179,12 +170,10 @@ Result<std::string::size_type, http::Response> http::UploadFileHandler::extractA
 ) const {
     std::string::size_type nextPos = body.find(delimiter, pos);
     if (nextPos == std::string::npos) {
-        return Err(
-            ResponseBuilder()
-                .status(kStatusBadRequest)
-                .text("Invalid multipart format: closing boundary not found")
-                .build()
-        );
+        return Err(ResponseBuilder()
+                       .status(kStatusBadRequest)
+                       .text("Invalid multipart format: closing boundary not found")
+                       .build());
     }
 
     std::string part = body.substr(pos, nextPos - pos);
@@ -230,12 +219,10 @@ http::UploadFileHandler::checkBoundaryEnd(const std::string &body, std::string::
         return Ok(false); // 通常のバウンダリ（続きがある）
     }
 
-    return Err(
-        ResponseBuilder()
-            .status(kStatusBadRequest)
-            .text("Invalid multipart format: expected -- or CRLF after boundary")
-            .build()
-    );
+    return Err(ResponseBuilder()
+                   .status(kStatusBadRequest)
+                   .text("Invalid multipart format: expected -- or CRLF after boundary")
+                   .build());
 }
 
 Result<bool, http::Response>

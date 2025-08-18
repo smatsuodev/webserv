@@ -2,7 +2,7 @@
 #define EITHER_HPP
 
 #include <stdexcept>
-#include <type_traits>
+
 
 namespace types {
     template <class T>

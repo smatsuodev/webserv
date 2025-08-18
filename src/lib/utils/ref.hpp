@@ -1,7 +1,6 @@
 #ifndef SRC_LIB_UTILS_REF_HPP
 #define SRC_LIB_UTILS_REF_HPP
 
-#include <type_traits>
 
 // C++11 の std::reference_wrapper を再現
 template <typename T>
