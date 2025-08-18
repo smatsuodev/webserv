@@ -14,8 +14,6 @@ types::None tryDefault(const Option<T> &) {
     return None;
 }
 
-#ifdef __clang__
-// typeof(expr) は式を評価しないので、全体として一回だけ expr が評価される
 #define TRY(expr)                                                                  \
     ({                                                                             \
         __typeof(expr) e = (expr); /* NOLINT(*-unnecessary-copy-initialization) */ \
@@ -29,21 +27,5 @@ types::None tryDefault(const Option<T> &) {
         if (!(e).canUnwrap()) return defaultValue;                                 \
         (e).unwrap();                                                              \
     })
-#else
-#define TRY(expr)                                                                \
-    ({                                                                           \
-        typeof(expr) e = (expr); /* NOLINT(*-unnecessary-copy-initialization) */ \
-        if (!(e).canUnwrap()) return tryDefault(e);                              \
-        (e).unwrap();                                                            \
-    })
-
-#define TRY_OR(expr, defaultValue)                                               \
-    ({                                                                           \
-        typeof(expr) e = (expr); /* NOLINT(*-unnecessary-copy-initialization) */ \
-        if (!(e).canUnwrap()) return defaultValue;                               \
-        (e).unwrap();                                                            \
-    })
-#endif
-
 
 #endif
