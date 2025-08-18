@@ -115,7 +115,7 @@ namespace config {
             toml::Table errorPageTable = serverTable.getValue("error_page").unwrap().getTable().unwrap();
             std::vector<std::string> keys = errorPageTable.getKeys();
             for (size_t j = 0; j < keys.size(); ++j) {
-                int statusCode = std::atoi(keys[j].c_str());
+                int statusCode = std::strtol(keys[j].c_str(), NULL, 10);
                 Option<http::HttpStatusCode> httpStatusCode = http::httpStatusCodeFromInt(statusCode);
                 if (httpStatusCode.isNone()) {
                     LOG_WARNF("invalid HTTP status code: %d", statusCode);
