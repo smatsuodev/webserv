@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>ファイルアップロードフォーム（/example/uploads）</title>
+    <link rel="stylesheet" href="./style.css"/>
+    <script src="./index.js" defer></script>
+</head>
+<body>
+<div class="card" role="region" aria-label="ファイルアップロード">
+    <div class="header">
+        <div class="title">ファイルアップロード（POST /example/uploads）</div>
+        <p class="desc">標準のフォーム送信と、JavaScript による非同期アップロード（進捗表示）に対応したサンプルです。JavaScript
+            が無効でも通常送信できます。</p>
+    </div>
+
+    <form id="uploadForm" action="/example/uploads" method="post" enctype="multipart/form-data" novalidate>
+        <div class="field">
+            <label for="fileInput">ファイル</label>
+            <div id="dropzone" class="dropzone" tabindex="0"
+                 aria-label="ここにファイルをドラッグ＆ドロップ、またはクリックして選択">
+                <div>
+                    <strong>ドラッグ＆ドロップ</strong> または <strong>クリック</strong> してファイルを選択
+                </div>
+                <div class="small">複数選択可。ファイルサイズや拡張子の制限は必要に応じてサーバ側で検証してください。
+                </div>
+            </div>
+            <input id="fileInput" name="files" type="file" multiple hidden/>
+            <div id="fileList" class="filelist" aria-live="polite"></div>
+        </div>
+
+        <div class="controls">
+            <button id="submitBtn" type="submit">アップロード</button>
+            <div class="small">送信先: <code>/example/uploads</code>（POST, <code>multipart/form-data</code>）</div>
+        </div>
+
+        <div class="progress" aria-hidden="true" title="アップロード進捗">
+            <div id="bar" class="bar"></div>
+        </div>
+
+        <noscript>
+            <p class="small">JavaScript が無効のため、通常のフォーム送信でアップロードします（進捗表示はありません）。</p>
+        </noscript>
+    </form>
+
+    <div class="result">
+        <div style="font-weight:600; margin-bottom: 6px;">サーバ応答</div>
+        <pre id="response" class="response" aria-live="polite">—</pre>
+    </div>
+</div>
+</body>
+</html>
