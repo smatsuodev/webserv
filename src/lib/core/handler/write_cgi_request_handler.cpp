@@ -27,8 +27,17 @@ IEventHandler::InvokeResult WriteCgiRequestBodyHandler::invoke(const Context &ct
         return Ok(actions);
     }
 
-
+    errno = 0;
     const ssize_t bytesWritten = write(conn.getFd(), body_.c_str() + bytesWritten_, bytesToWrite);
+    if (bytesWritten == -1 && errno == EPIPE) {
+        // 子が読み込みを待たずに終了すると、EPIPE が起こり得る
+        LOG_DEBUG("write failed with EPIPE, likely because the CGI process has terminated");
+        shutdown(conn.getFd(), SHUT_WR);
+        std::vector<IAction *> actions;
+        actions.push_back(new UnregisterEventAction(Event(conn.getFd(), Event::kWrite)));
+        actions.push_back(new UnregisterEventHandlerAction(conn, Event::kWrite));
+        return Ok(actions);
+    }
 
     if (bytesWritten == -1) {
         LOG_WARN("failed to write CGI request body");
