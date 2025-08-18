@@ -5,6 +5,20 @@
 #include "http/response/response_builder.hpp"
 #include "utils/types/try.hpp"
 #include "utils/string.hpp"
+#include <sys/stat.h>
+
+// めんどくさくてメソッドにしてない
+static bool fileExistsUnderRoot(const std::string &docRoot, const std::string &urlPath) {
+    std::string fsPath = docRoot;
+    if (!fsPath.empty() && fsPath.back() != '/') fsPath += '/';
+    if (!urlPath.empty() && urlPath[0] == '/')
+        fsPath += urlPath.substr(1);
+    else
+        fsPath += urlPath;
+
+    struct stat st = {};
+    return ::stat(fsPath.c_str(), &st) == 0 && S_ISREG(st.st_mode);
+}
 
 namespace http {
     Either<IAction *, Response> CgiHandler::serve(const RequestContext &ctx) {
@@ -20,6 +34,7 @@ namespace http {
 
         return Left(new RunCgiAction(cgiRequest, ctx.getConnection().get().getFd()));
     }
+
 
     bool CgiHandler::isCgiRequest(const RequestContext &ctx) const {
         const std::string &path = ctx.getRequest().getRequestTarget();
@@ -37,13 +52,21 @@ namespace http {
         for (std::vector<std::string>::const_iterator it = cgiExtensions.begin(); it != cgiExtensions.end(); ++it) {
             const std::string &ext = *it;
             if (pathWithoutQuery.length() >= ext.length() &&
-                pathWithoutQuery.substr(pathWithoutQuery.length() - ext.length()) == ext) {
-                return true;
+                pathWithoutQuery.compare(pathWithoutQuery.length() - ext.length(), ext.length(), ext) == 0) {
+
+                // 拡張子は一致。スクリプト本体の存在確認（PATH_INFO を除いたもの）
+                const std::string script = this->getScriptName(ctx); // 例: /cgi/test.cgi
+
+                if (fileExistsUnderRoot(docRootConfig_.getRoot(), script)) {
+                    return true; // 実体があるので CGI
+                }
+                return false; // 実体が無ければ CGI ではない
             }
         }
 
         return false;
     }
+
 
     Result<cgi::Request, error::AppError> CgiHandler::createCgiRequest(const RequestContext &ctx) const {
         const cgi::RequestFactory::Parameter param = {
