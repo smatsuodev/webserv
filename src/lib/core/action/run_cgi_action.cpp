@@ -136,6 +136,6 @@ void RunCgiAction::parentRoutine(const ActionContext &ctx, const int socketFd, c
     ctx.getState().getEventHandlerRepository().remove(clientFd_, Event::kRead);
     ctx.getState().getEventHandlerRepository().remove(clientFd_, Event::kWrite);
 
-    CgiProcessRepository::Data data = {clientFd_, socketFd};
+    const CgiProcessRepository::Data data = {clientFd_, socketFd};
     ctx.getState().getCgiProcessRepository().set(childPid, data);
 }

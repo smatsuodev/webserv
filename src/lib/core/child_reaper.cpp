@@ -13,7 +13,7 @@ std::vector<ChildReaper::ReapedProcess> ChildReaper::onSignalEvent() const {
     while (true) {
         int status = 0;
         const pid_t pid = waitpid(-1, &status, WNOHANG);
-        ReapedProcess rp = {pid, WEXITSTATUS(status)};
+        const ReapedProcess rp = {pid, WEXITSTATUS(status)};
         result.push_back(rp);
 
         if (pid > 0) {

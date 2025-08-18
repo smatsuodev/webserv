@@ -78,7 +78,7 @@ namespace http {
         ctx_.setBody(body_);
         ctx_.changeState(NULL);
 
-        return Ok<HandleStatus>(kHandleDone);
+        return Ok(kHandleDone);
     }
 
     Result<std::size_t, error::AppError> ReadingChunkedBodyState::parseChunkSizeLine(const std::string &line) {

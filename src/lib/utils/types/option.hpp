@@ -87,7 +87,7 @@ types::Some<T> Some(T val) {
 }
 
 // ReSharper disable once CppInconsistentNaming
-const types::None None = types::None(); // NOLINT
+const types::None None = types::None();
 
 template <class T>
 class Option {
