@@ -106,7 +106,7 @@ void RunCgiAction::childRoutine(const int socketFd) const {
     std::exit(errno == ENOENT ? 127 : 126);
 }
 
-void RunCgiAction::parentRoutine(const ActionContext &ctx, const int socketFd, const pid_t) const {
+void RunCgiAction::parentRoutine(const ActionContext &ctx, const int socketFd, const pid_t childPid) const {
     // FIXME: 無理やり Connection として扱うために、ダミーのアドレスを作成している
     const Address dummyAddr("127.0.0.1", 0);
     ctx.getState().getConnectionRepository().set(socketFd, new Connection(socketFd, dummyAddr, dummyAddr));
@@ -134,4 +134,5 @@ void RunCgiAction::parentRoutine(const ActionContext &ctx, const int socketFd, c
     ctx.getState().getEventNotifier().unregisterEvent(Event(clientFd_, Event::kWrite));
     ctx.getState().getEventHandlerRepository().remove(clientFd_, Event::kRead);
     ctx.getState().getEventHandlerRepository().remove(clientFd_, Event::kWrite);
+    ctx.getState().getCgiProcessRepository().set(childPid, {clientFd_, socketFd});
 }

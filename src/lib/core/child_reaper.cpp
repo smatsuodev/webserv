@@ -5,14 +5,16 @@ void ChildReaper::attachToEventNotifier(IEventNotifier *notifier) const {
     selfPipe_.registerWithEventNotifier(notifier);
 }
 
-bool ChildReaper::onSignalEvent() const {
+std::vector<ChildReaper::ReapedProcess> ChildReaper::onSignalEvent() const {
+    std::vector<ReapedProcess> result;
+
     selfPipe_.drain();
-    bool reaped = false;
     while (true) {
         int status = 0;
         const pid_t pid = waitpid(-1, &status, WNOHANG);
+        result.push_back({pid, WEXITSTATUS(status)});
+
         if (pid > 0) {
-            reaped = true;
             continue;
         }
         if (pid == 0) break;
@@ -20,7 +22,7 @@ bool ChildReaper::onSignalEvent() const {
         if (pid == -1 && errno == EINTR) continue;
         break;
     }
-    return reaped;
+    return result;
 }
 
 int ChildReaper::getReadFd() const {

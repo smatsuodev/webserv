@@ -2,6 +2,8 @@
 #include "action/action.hpp"
 #include "event/event_notifier.hpp"
 #include "./handler/accept_handler.hpp"
+#include "handler/write_response_body_handler.hpp"
+#include "http/response/response_builder.hpp"
 #include "transport/listener.hpp"
 #include "utils/logger.hpp"
 #include <map>
@@ -66,9 +68,39 @@ void Server::start() {
             LOG_DEBUGF("event arrived for fd %d (flags: %x)", ev.getFd(), ev.getTypeFlags());
 
             // SIGCHLD を監視する self-pipe のイベント
+            // TODO: 関数切り分けて〜
             if (ev.getFd() == state_.getChildReaper().getReadFd()) {
-                const bool isReaped = state_.getChildReaper().onSignalEvent();
-                if (isReaped) LOG_DEBUG("child process reaped");
+                const std::vector<ChildReaper::ReapedProcess> result = state_.getChildReaper().onSignalEvent();
+                if (!result.empty()) LOG_DEBUG("child process reaped");
+                for (std::vector<ChildReaper::ReapedProcess>::const_iterator it = result.begin(); it != result.end();
+                     ++it) {
+                    if (it->status == 0) continue;
+                    const Option<CgiProcessRepository::Data> data = state_.getCgiProcessRepository().get(it->pid);
+                    if (data.isNone()) {
+                        LOG_WARNF(
+                            "reaped child process %d with non-zero status %d, but no client fd found",
+                            it->pid,
+                            it->status
+                        );
+                        continue;
+                    }
+                    const int clientFd = data.unwrap().clientFd;
+                    const int processSocketFd = data.unwrap().processSocketFd;
+                    // 子プロセスとのソケットの諸々を解除
+                    state_.getEventNotifier().unregisterEvent(Event(processSocketFd, Event::kRead));
+                    state_.getEventNotifier().unregisterEvent(Event(processSocketFd, Event::kWrite));
+                    state_.getEventHandlerRepository().remove(processSocketFd, Event::kRead);
+                    state_.getEventHandlerRepository().remove(processSocketFd, Event::kWrite);
+                    state_.getConnectionRepository().remove(processSocketFd);
+                    // エラーレスポンスを返す
+                    http::ResponseBuilder builder;
+                    state_.getEventNotifier().registerEvent(Event(clientFd, Event::kWrite));
+                    state_.getEventHandlerRepository().set(
+                        clientFd,
+                        Event::kWrite,
+                        new WriteResponseHandler(builder.status(http::kStatusInternalServerError).build())
+                    );
+                }
                 continue;
             }
 
