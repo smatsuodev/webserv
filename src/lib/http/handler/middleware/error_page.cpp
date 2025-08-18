@@ -23,7 +23,7 @@ Either<IAction *, http::Response> http::ErrorPage::intercept(const RequestContex
     config::ServerContext::ErrorPageMap::iterator customErrorPage = errorPage_.find(status);
 
     if (customErrorPage != errorPage_.end()) {
-        std::ifstream file(customErrorPage->second);
+        std::ifstream file(customErrorPage->second.c_str());
         std::stringstream buf;
         buf << file.rdbuf();
         body = buf.str();

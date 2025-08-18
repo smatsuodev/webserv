@@ -26,7 +26,7 @@ namespace http {
     public:
         class IState {
         public:
-            enum HandleStatus { kSuspend, kDone };
+            enum HandleStatus { kSuspend, kHandleDone };
             virtual ~IState();
             virtual Result<HandleStatus, error::AppError> handle(ReadBuffer &readBuf) = 0;
         };

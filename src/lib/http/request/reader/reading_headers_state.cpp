@@ -14,7 +14,7 @@ Result<http::RequestReader::IState::HandleStatus, error::AppError> http::Reading
         const Option<std::string> line = TRY(getLine(readBuf));
         if (line.isNone()) {
             // バッファが足りない
-            return Ok(HandleStatus::kSuspend);
+            return Ok(kSuspend);
         }
 
         /**
@@ -31,7 +31,7 @@ Result<http::RequestReader::IState::HandleStatus, error::AppError> http::Reading
     ctx_.setHeaders(headers_);
     ctx_.changeState(TRY(this->nextState()));
 
-    return Ok(HandleStatus::kDone);
+    return Ok(kHandleDone);
 }
 
 Result<http::RequestReader::IState *, error::AppError> http::ReadingHeadersState::nextState() const {

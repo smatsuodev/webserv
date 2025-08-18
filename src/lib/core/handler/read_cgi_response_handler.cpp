@@ -20,7 +20,7 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
     const ssize_t bytesRead = read(conn.getFd(), buffer, sizeof(buffer));
     if (bytesRead == -1) {
         LOG_WARN("failed to read CGI response");
-        return Err(error::AppError::kUnknown);
+        return Err(error::kUnknown);
     }
 
     if (bytesRead != 0) {
@@ -115,8 +115,8 @@ Result<cgi::Response, error::AppError> ReadCgiResponseHandler::createCgiResponse
     std::istringstream headerStream(headerPart);
     std::string line;
     while (std::getline(headerStream, line)) {
-        if (!line.empty() && line.back() == '\r') {
-            line.pop_back();
+        if (!line.empty() && line[line.length() - 1] == '\r') {
+            line = line.substr(0, line.length() - 1);
         }
         const http::RequestParser::ParseHeaderFieldLineResult result = http::RequestParser::parseHeaderFieldLine(line);
         if (result.isOk()) {

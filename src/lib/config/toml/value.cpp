@@ -246,7 +246,7 @@ namespace toml {
 
     Result<Table *, error::AppError> Table::findOrCreateTablePath(const std::vector<std::string> &keys) {
         if (keys.empty()) {
-            return Err(error::AppError::kParseUnknown);
+            return Err(error::kParseUnknown);
         }
 
         const size_t endIndex = keys.size() - 1;
@@ -271,11 +271,11 @@ namespace toml {
                         if (lastElement.getType() == Value::kTable) {
                             currentTable = &lastElement.getTableRef();
                         } else {
-                            return Err(error::AppError::kParseUnknown);
+                            return Err(error::kParseUnknown);
                         }
                     }
                 } else {
-                    return Err(error::AppError::kParseUnknown);
+                    return Err(error::kParseUnknown);
                 }
             } else {
                 Table newTable;

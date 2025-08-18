@@ -95,9 +95,7 @@ public:
     explicit Option(types::Some<T> *some) : some_(some) {}
 
     // Option<std::string> op = Some("hello"); のように注釈を不要にするために必要
-    // TODO: 提出時に消す
-    // ReSharper disable once CppUseTypeTraitAlias
-    template <class U, typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
+    template <class U>
     // NOLINTNEXTLINE(google-explicit-constructor)
     Option(types::Some<U> some) : some_(new types::Some<T>(some.val())) {}
 

@@ -9,6 +9,7 @@
 #include "../../cgi/meta_variable.hpp"
 #include "utils/fd.hpp"
 #include "utils/logger.hpp"
+#include <cstdlib>
 
 void RunCgiAction::execute(ActionContext &ctx) {
     int pair[2];
@@ -134,5 +135,7 @@ void RunCgiAction::parentRoutine(const ActionContext &ctx, const int socketFd, c
     ctx.getState().getEventNotifier().unregisterEvent(Event(clientFd_, Event::kWrite));
     ctx.getState().getEventHandlerRepository().remove(clientFd_, Event::kRead);
     ctx.getState().getEventHandlerRepository().remove(clientFd_, Event::kWrite);
-    ctx.getState().getCgiProcessRepository().set(childPid, {clientFd_, socketFd});
+
+    const CgiProcessRepository::Data data = {clientFd_, socketFd};
+    ctx.getState().getCgiProcessRepository().set(childPid, data);
 }

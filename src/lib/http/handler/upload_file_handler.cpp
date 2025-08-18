@@ -230,7 +230,8 @@ http::UploadFileHandler::processMultipartPart(const std::string &headers, std::s
     // ヘッダーをCRLFで分割
     const std::vector<std::string> headerLines = splitHeadersByNewline(headers);
 
-    for (const std::string &headerLine : headerLines) {
+    for (size_t i = 0; i < headerLines.size(); i++) {
+        const std::string &headerLine = headerLines[i];
         // 空行や不正な形式の行はスキップ
         if (headerLine.empty()) {
             continue;
@@ -286,7 +287,8 @@ void http::UploadFileHandler::processContentDispositionHeader(
     // 各パラメータをセミコロンで分割
     const std::vector<std::string> params = utils::split(headerValue, ';');
 
-    for (const std::string &param : params) {
+    for (size_t i = 0; i < params.size(); i++) {
+        const std::string &param = params[i];
         std::string trimmedParam = utils::trim(param);
 
         // name属性の処理
@@ -317,7 +319,7 @@ http::Response
 http::UploadFileHandler::saveUploadedFile(const std::string &filename, const std::string &content) const {
     const std::string filePath = docConfig_.getRoot() + "/" + filename;
 
-    std::ofstream outFile(filePath, std::ios::binary);
+    std::ofstream outFile(filePath.c_str(), std::ios::binary);
     if (!outFile) {
         return ResponseBuilder().status(kStatusConflict).text("Failed to open file for writing: " + filename).build();
     }

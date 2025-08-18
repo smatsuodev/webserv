@@ -11,7 +11,7 @@ Result<http::RequestReader::IState::HandleStatus, error::AppError> http::Reading
         const std::size_t want = contentLength_ - body_.size();
         const std::string chunk = readBuf.consume(want);
         if (chunk.empty()) {
-            return Ok(HandleStatus::kSuspend);
+            return Ok(kSuspend);
         }
         body_ += chunk;
     }
@@ -19,5 +19,5 @@ Result<http::RequestReader::IState::HandleStatus, error::AppError> http::Reading
     ctx_.setBody(body_);
     ctx_.changeState(NULL);
 
-    return Ok(HandleStatus::kDone);
+    return Ok(kHandleDone);
 }

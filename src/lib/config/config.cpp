@@ -1,12 +1,10 @@
 #include "config.hpp"
-
 #include "http/handler/middleware/logger.hpp"
 #include "toml/parser.hpp"
 #include "toml/value.hpp"
 #include "utils/logger.hpp"
-
+#include <cstdlib>
 #include <fstream>
-#include <iostream>
 
 namespace config {
     /* Config */
@@ -27,7 +25,7 @@ namespace config {
 
     Option<Config> Config::loadConfigFromFile(const std::string &path) {
         try {
-            std::ifstream configFile(path);
+            std::ifstream configFile(path.c_str());
             if (!configFile.is_open()) {
                 LOG_ERRORF("cannot open config file: %s", path.c_str());
                 return None;
@@ -117,7 +115,7 @@ namespace config {
             toml::Table errorPageTable = serverTable.getValue("error_page").unwrap().getTable().unwrap();
             std::vector<std::string> keys = errorPageTable.getKeys();
             for (size_t j = 0; j < keys.size(); ++j) {
-                int statusCode = std::stoi(keys[j]);
+                int statusCode = static_cast<int>(std::strtol(keys[j].c_str(), NULL, 10));
                 Option<http::HttpStatusCode> httpStatusCode = http::httpStatusCodeFromInt(statusCode);
                 if (httpStatusCode.isNone()) {
                     LOG_WARNF("invalid HTTP status code: %d", statusCode);
@@ -242,7 +240,7 @@ namespace config {
             for (size_t k = 0; k < methodValues.size(); ++k) {
                 std::string methodStr = methodValues[k].getString().unwrap();
                 http::HttpMethod method = http::httpMethodFromString(methodStr);
-                if (method == http::HttpMethod::kMethodUnknown) {
+                if (method == http::kMethodUnknown) {
                     LOG_ERRORF("unknown http method: %s", methodStr.c_str());
                     throw std::runtime_error("unknown method: " + methodStr);
                 }

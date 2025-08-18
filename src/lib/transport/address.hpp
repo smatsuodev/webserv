@@ -14,7 +14,7 @@ public:
 
 private:
     std::string ip_;
-    unsigned short port_{};
+    unsigned short port_;
 };
 
 #endif

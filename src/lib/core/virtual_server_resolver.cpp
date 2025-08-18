@@ -51,5 +51,5 @@ VirtualServerResolverFactory::VirtualServerResolverFactory(const VirtualServerLi
     : virtualServers_(virtualServers) {}
 
 VirtualServerResolver VirtualServerResolverFactory::create(const Ref<Connection> &conn) {
-    return VirtualServerResolver(virtualServers_, conn);
+    return VirtualServerResolver(virtualServers_, conn.toConst());
 }

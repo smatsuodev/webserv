@@ -45,7 +45,7 @@ namespace http {
     }
 
     ResponseBuilder &ResponseBuilder::file(const std::string &path, HttpStatusCode status) {
-        std::ifstream ifs(path);
+        std::ifstream ifs(path.c_str());
         if (!ifs.is_open()) {
             return this->status(kStatusNotFound);
         }

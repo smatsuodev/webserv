@@ -30,7 +30,7 @@ namespace http {
         while (state_ != kDone) {
             const Option<std::string> maybeLine = TRY(getLine(readBuf));
             if (maybeLine.isNone()) {
-                return Ok(HandleStatus::kSuspend);
+                return Ok(kSuspend);
             }
             const std::string &line = maybeLine.unwrap();
 
@@ -78,7 +78,7 @@ namespace http {
         ctx_.setBody(body_);
         ctx_.changeState(NULL);
 
-        return Ok(HandleStatus::kDone);
+        return Ok(kHandleDone);
     }
 
     Result<std::size_t, error::AppError> ReadingChunkedBodyState::parseChunkSizeLine(const std::string &line) {

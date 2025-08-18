@@ -1,5 +1,6 @@
 #include "child_reaper.hpp"
 #include <sys/wait.h>
+#include <cerrno>
 
 void ChildReaper::attachToEventNotifier(IEventNotifier *notifier) const {
     selfPipe_.registerWithEventNotifier(notifier);
@@ -12,7 +13,8 @@ std::vector<ChildReaper::ReapedProcess> ChildReaper::onSignalEvent() const {
     while (true) {
         int status = 0;
         const pid_t pid = waitpid(-1, &status, WNOHANG);
-        result.push_back({pid, WEXITSTATUS(status)});
+        const ReapedProcess rp = {pid, WEXITSTATUS(status)};
+        result.push_back(rp);
 
         if (pid > 0) {
             continue;
