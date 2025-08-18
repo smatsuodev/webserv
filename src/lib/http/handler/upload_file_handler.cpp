@@ -319,7 +319,7 @@ http::Response
 http::UploadFileHandler::saveUploadedFile(const std::string &filename, const std::string &content) const {
     const std::string filePath = docConfig_.getRoot() + "/" + filename;
 
-    std::ofstream outFile(filePath, std::ios::binary);
+    std::ofstream outFile(filePath.c_str(), std::ios::binary);
     if (!outFile) {
         return ResponseBuilder().status(kStatusConflict).text("Failed to open file for writing: " + filename).build();
     }

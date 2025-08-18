@@ -110,11 +110,11 @@ TEST(ParserOkDiscouraged, messyDottedKey) {
     const auto text = R"(
     fruit.count = 2
 
-    # fruit.*.color を代入
+#fruit.*.color を代入
     fruit.apple.color = "red"
     fruit.orange.color = "orange"
 
-    # fruit.*.price を代入
+#fruit.*.price を代入
     fruit.apple.price = 100
     fruit.orange.price = 200
     )";

@@ -1,12 +1,10 @@
 #include "config.hpp"
-
 #include "http/handler/middleware/logger.hpp"
 #include "toml/parser.hpp"
 #include "toml/value.hpp"
 #include "utils/logger.hpp"
-
+#include <cstdlib>
 #include <fstream>
-#include <iostream>
 
 namespace config {
     /* Config */
@@ -27,7 +25,7 @@ namespace config {
 
     Option<Config> Config::loadConfigFromFile(const std::string &path) {
         try {
-            std::ifstream configFile(path);
+            std::ifstream configFile(path.c_str());
             if (!configFile.is_open()) {
                 LOG_ERRORF("cannot open config file: %s", path.c_str());
                 return None;
@@ -117,7 +115,7 @@ namespace config {
             toml::Table errorPageTable = serverTable.getValue("error_page").unwrap().getTable().unwrap();
             std::vector<std::string> keys = errorPageTable.getKeys();
             for (size_t j = 0; j < keys.size(); ++j) {
-                int statusCode = std::stoi(keys[j]);
+                int statusCode = std::atoi(keys[j].c_str());
                 Option<http::HttpStatusCode> httpStatusCode = http::httpStatusCodeFromInt(statusCode);
                 if (httpStatusCode.isNone()) {
                     LOG_WARNF("invalid HTTP status code: %d", statusCode);

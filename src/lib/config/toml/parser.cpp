@@ -1,5 +1,10 @@
 #include "parser.hpp"
+
+#include "utils/fd.hpp"
+#include "utils/string.hpp"
 #include "utils/types/try.hpp"
+
+#include <cstdlib>
 
 namespace toml {
     TomlParser::TomlParser(const Tokenizer::Tokens &tokens)
@@ -200,7 +205,7 @@ namespace toml {
             value = Value(token_.getValue());
             nextToken();
         } else if (peek(kNum)) {
-            value = Value(std::stol(token_.getValue()));
+            value = Value(std::strtol(token_.getValue().c_str(), NULL, 10));
             nextToken();
         } else if (peek(kLBracket)) {
             nextToken();

@@ -10,7 +10,7 @@
 // めんどくさくてメソッドにしてない
 static bool fileExistsUnderRoot(const std::string &docRoot, const std::string &urlPath) {
     std::string fsPath = docRoot;
-    if (!fsPath.empty() && fsPath.back() != '/') fsPath += '/';
+    if (!fsPath.empty() && fsPath[fsPath.length() - 1] != '/') fsPath += '/';
     if (!urlPath.empty() && urlPath[0] == '/')
         fsPath += urlPath.substr(1);
     else

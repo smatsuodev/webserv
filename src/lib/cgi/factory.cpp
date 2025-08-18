@@ -60,7 +60,7 @@ namespace cgi {
         http::Headers headers(res.getHeaders());
 
         // 200 がデフォルト、Status ヘッダーがあればそれを使う
-        const http::Headers::const_iterator statusHeader = headers.find("Status");
+        const http::Headers::iterator statusHeader = headers.find("Status");
         http::HttpStatusCode status = http::kStatusOk;
         if (statusHeader != headers.end()) {
             status = TRY(HttpResponseFactory::statusFromHeader(statusHeader->second)).unwrapOr(http::kStatusOk);

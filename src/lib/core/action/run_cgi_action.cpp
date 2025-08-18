@@ -9,6 +9,7 @@
 #include "../../cgi/meta_variable.hpp"
 #include "utils/fd.hpp"
 #include "utils/logger.hpp"
+#include <cstdlib>
 
 void RunCgiAction::execute(ActionContext &ctx) {
     int pair[2];

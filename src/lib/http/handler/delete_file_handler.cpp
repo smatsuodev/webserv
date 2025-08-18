@@ -2,6 +2,8 @@
 #include "http/response/response_builder.hpp"
 #include "utils/logger.hpp"
 #include <sys/stat.h>
+#include <cerrno>
+#include <cstdio>
 
 namespace http {
     DeleteFileHandler::DeleteFileHandler(const config::LocationContext::DocumentRootConfig &docRootConfig)

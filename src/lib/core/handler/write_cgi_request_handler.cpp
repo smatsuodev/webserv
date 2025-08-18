@@ -1,3 +1,4 @@
+#include <cerrno>
 #include <unistd.h>
 #include <sys/socket.h>
 #include "write_cgi_request_handler.hpp"
