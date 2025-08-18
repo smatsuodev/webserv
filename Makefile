@@ -12,12 +12,17 @@ $(NAME): $(OBJS)
 
 $(BUILD_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	-$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(BUILD_DIR) $(NAME)
+	rm -rf $(BUILD_DIR)
+
+fclean: clean
+	rm -rf $(NAME)
+
+re: fclean all
 
 format:
 	clang-format -i $$(git ls-files '*.cpp' '*.hpp')
 
-.PHONY: all clean format
+.PHONY: all clean fclean re format
