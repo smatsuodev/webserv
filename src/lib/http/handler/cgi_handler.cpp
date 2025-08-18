@@ -35,7 +35,6 @@ namespace http {
         return Left(new RunCgiAction(cgiRequest, ctx.getConnection().get().getFd()));
     }
 
-
     bool CgiHandler::isCgiRequest(const RequestContext &ctx) const {
         const std::string &path = ctx.getRequest().getRequestTarget();
 
@@ -66,7 +65,6 @@ namespace http {
 
         return false;
     }
-
 
     Result<cgi::Request, error::AppError> CgiHandler::createCgiRequest(const RequestContext &ctx) const {
         const cgi::RequestFactory::Parameter param = {
