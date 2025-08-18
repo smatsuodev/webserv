@@ -7,7 +7,7 @@
 
 IEventNotifier::~IEventNotifier() {}
 
-#if defined(__linux__)
+#if defined(__linux__) && USE_EPOLL
 
 #include <sys/epoll.h>
 
