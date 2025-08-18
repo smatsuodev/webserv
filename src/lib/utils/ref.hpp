@@ -15,12 +15,6 @@ public:
 
     Ref(const Ref &ref) : ptr_(ref.ptr_) {}
 
-    // Ref<T> -> Ref<const T> を可能にする
-    // TODO: C++11 の機能を使っているので、提出時に修正
-    template <typename U = T>
-    // ReSharper disable once CppNonExplicitConvertingConstructor
-    Ref(const Ref<typename std::remove_const<U>::type> &ref) : ptr_(&ref.get()) {} // NOLINT(*-explicit-constructor)
-
     ~Ref() {
         // あくまで reference なので、delete しない
     }
@@ -44,6 +38,10 @@ public:
 
     T &get() const {
         return *ptr_;
+    }
+
+    Ref<const T> toConst() const {
+        return Ref<const T>(*ptr_);
     }
 
 private:

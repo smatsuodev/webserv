@@ -9,11 +9,11 @@ Result<http::RequestReader::IState::HandleStatus, error::AppError>
 http::ReadingRequestLineState::handle(ReadBuffer &readBuf) {
     const Option<std::string> reqLine = TRY(getLine(readBuf));
     if (reqLine.isNone()) {
-        return Ok(HandleStatus::kSuspend);
+        return Ok(kSuspend);
     }
 
     ctx_.setRequestLine(reqLine.unwrap());
     ctx_.changeState(new ReadingHeadersState(ctx_));
 
-    return Ok(HandleStatus::kDone);
+    return Ok(kHandleDone);
 }

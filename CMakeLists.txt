@@ -3,7 +3,7 @@ project(webserv)
 
 # 指定したバージョンが使用できなければエラー
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-add_compile_options(-Wall -Wextra)
+add_compile_options(-Wall -Wextra -Werror)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_options(-fno-omit-frame-pointer -fsanitize=address,undefined)
     add_link_options(-fsanitize=address,undefined)

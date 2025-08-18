@@ -12,8 +12,7 @@ namespace types {
 
         // コピーコンストラクタではない
         // Either<T, R>(Left<U>) のコンストラクタで Left<U> -> Left<T> に変換するために必要
-        // TODO: 提出時に消す
-        template <class U, typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
+        template <class U>
         explicit Left(Left<U> &other) : val_(other.val()) {}
 
         Left(const Left &other) : val_(other.val_) {}
@@ -50,8 +49,7 @@ namespace types {
 
         // コピーコンストラクタではない
         // Either<T, R>(Right<U>) のコンストラクタで Right<U> -> Right<T> に変換するために必要
-        // TODO: 提出時に消す
-        template <class U, typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
+        template <class U>
         explicit Right(Right<U> &other) : val_(other.val()) {}
 
         Right(const Right &other) : val_(other.val_) {}
@@ -114,14 +112,12 @@ public:
      * Either<std::string, E> r2 = Left("hello");
      */
     // U -> T に変換可能であるという制約を付けないと、IDE 上でエラーが出ない (コンパイル時に出る)
-    // TODO: std::is_convertible などは C++11 以降なので、提出時に消す
-    template <class U, typename = typename std::enable_if<std::is_convertible<U, L>::value>::type>
+    template <class U>
     // NOLINTNEXTLINE(google-explicit-constructor)
     Either(types::Left<U> left) : left_(new types::Left<L>(left)), right_(NULL) {}
 
     // either.map(Some<L>) の型 Either<Some<L>, E> から Either<Option<L>, E> に変換するために必要
-    // TODO: 提出時に消す
-    template <class U, typename = typename std::enable_if<std::is_convertible<U, L>::value>::type>
+    template <class U>
     // NOLINTNEXTLINE(google-explicit-constructor)
     Either(const Either<U, R> &other) {
         if (other.isLeft()) {

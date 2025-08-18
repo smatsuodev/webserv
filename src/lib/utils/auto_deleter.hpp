@@ -9,7 +9,7 @@
 template <typename T>
 class AutoDeleter : public NonCopyable {
 public:
-    using Deleter = void (*)(T *);
+    typedef void (*Deleter)(T *);
 
     explicit AutoDeleter(T *ptr = NULL, const Deleter deleter = NULL) : ptr_(ptr), deleter_(deleter) {}
 

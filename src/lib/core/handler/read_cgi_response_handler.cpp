@@ -20,7 +20,7 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
     const ssize_t bytesRead = read(conn.getFd(), buffer, sizeof(buffer));
     if (bytesRead == -1) {
         LOG_WARN("failed to read CGI response");
-        return Err(error::AppError::kUnknown);
+        return Err(error::kUnknown);
     }
 
     if (bytesRead != 0) {

@@ -32,8 +32,9 @@ http::RequestReader::ReadRequestResult http::RequestReader::readRequest(ReadBuff
         }
     }
 
-    return Ok(Some(TRY(RequestParser::parseRequest(readCtx_.getRequestLine(), readCtx_.getHeaders(), readCtx_.getBody())
-    )));
+    return Ok(
+        Some(TRY(RequestParser::parseRequest(readCtx_.getRequestLine(), readCtx_.getHeaders(), readCtx_.getBody())))
+    );
 }
 
 http::IConfigResolver::~IConfigResolver() {}
@@ -51,7 +52,7 @@ Result<http::RequestReader::IState::HandleStatus, error::AppError>
 http::RequestReader::ReadContext::handle(ReadBuffer &readBuf) const {
     if (state_ == NULL) {
         // 終了状態で呼び出したら、何もしない
-        return Ok(IState::kDone);
+        return Ok(IState::kHandleDone);
     }
     return state_->handle(readBuf);
 }

@@ -34,7 +34,7 @@ namespace toml {
             return Ok(t);
         }
 
-        return Err(error::AppError::kParseUnknown);
+        return Err(error::kParseUnknown);
     }
 
     void TomlParser::consumeNewlines() {
@@ -80,7 +80,7 @@ namespace toml {
         TRY(expect(kRBracket));
 
         if (keys.empty()) {
-            return Err(error::AppError::kParseUnknown);
+            return Err(error::kParseUnknown);
         }
 
         Table *currentTable = TRY(table.findOrCreateTablePath(keys));
@@ -93,12 +93,12 @@ namespace toml {
             if (value.getType() == Value::kArray) {
                 Array &array = value.getArrayRef();
                 if (array.size() == 0) {
-                    return Err(error::AppError::kParseUnknown);
+                    return Err(error::kParseUnknown);
                 }
                 array.addElement(Value(newTable));
                 currentTable = &array.getElementRef(array.size() - 1).getTableRef();
             } else {
-                return Err(error::AppError::kParseUnknown);
+                return Err(error::kParseUnknown);
             }
         } else {
             Array array;
@@ -116,7 +116,7 @@ namespace toml {
         TRY(expect(kRBracket));
 
         if (keys.empty()) {
-            return Err(error::AppError::kParseUnknown);
+            return Err(error::kParseUnknown);
         }
 
         Table *currentTable = TRY(table.findOrCreateTablePath(keys));
@@ -124,7 +124,7 @@ namespace toml {
         const Table newTable;
 
         if (currentTable->getValue(lastKey).isSome()) {
-            return Err(error::AppError::kParseUnknown);
+            return Err(error::kParseUnknown);
         }
 
         currentTable->setValue(lastKey, Value(newTable));
@@ -140,7 +140,7 @@ namespace toml {
         Value val = TRY(parseVal());
 
         if (keys.empty()) {
-            return Err(error::AppError::kParseUnknown);
+            return Err(error::kParseUnknown);
         }
 
         if (keys.size() == 1) {
@@ -246,7 +246,7 @@ namespace toml {
             table = table.readOnly();
             value = Value(table);
         } else {
-            return Err(error::AppError::kParseUnknown);
+            return Err(error::kParseUnknown);
         }
 
         return Ok(value);

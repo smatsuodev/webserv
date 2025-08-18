@@ -242,7 +242,7 @@ namespace config {
             for (size_t k = 0; k < methodValues.size(); ++k) {
                 std::string methodStr = methodValues[k].getString().unwrap();
                 http::HttpMethod method = http::httpMethodFromString(methodStr);
-                if (method == http::HttpMethod::kMethodUnknown) {
+                if (method == http::kMethodUnknown) {
                     LOG_ERRORF("unknown http method: %s", methodStr.c_str());
                     throw std::runtime_error("unknown method: " + methodStr);
                 }

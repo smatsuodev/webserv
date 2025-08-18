@@ -115,7 +115,9 @@ void Server::start() {
 void Server::invokeHandlers(const Context &ctx) {
     const Event &event = ctx.getEvent();
 
-    const std::vector<Event::EventType> types = {Event::kRead, Event::kWrite};
+    std::vector<Event::EventType> types;
+    types.push_back(Event::kRead);
+    types.push_back(Event::kWrite);
     // TODO: handler の呼び方が壊れてる
     for (std::vector<Event::EventType>::const_iterator it = types.begin(); it != types.end(); ++it) {
         const Event::EventType type = *it;
