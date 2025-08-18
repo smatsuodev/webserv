@@ -7,6 +7,7 @@
 #include "transport/listener.hpp"
 #include "utils/logger.hpp"
 #include <map>
+#include <cerrno>
 
 Server::Server(const config::Config &config) : config_(config) {
     const config::ServerContextList &servers = config_.getServers();
