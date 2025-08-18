@@ -87,6 +87,23 @@ void EventHandlerRepository::remove(const int fd, Event::EventType type) {
     LOG_DEBUGF("event handler removed from fd %d (type: %d)", fd, type);
 }
 
+Option<CgiProcessRepository::Data> CgiProcessRepository::get(const pid_t pid) {
+    const std::map<int, Data>::iterator it = pidToData_.find(pid);
+    if (it == pidToData_.end()) {
+        return None;
+    }
+    return Some(it->second);
+}
+
+void CgiProcessRepository::set(const pid_t pid, const Data data) {
+    // TODO: 上書きしてよいのか?
+    pidToData_[pid] = data;
+}
+
+void CgiProcessRepository::remove(const pid_t pid) {
+    pidToData_.erase(pid);
+}
+
 ServerState::ServerState() {
     // self-pipe の読み端を監視対象にする
     reaper_.attachToEventNotifier(&getEventNotifier());
@@ -102,6 +119,10 @@ ConnectionRepository &ServerState::getConnectionRepository() {
 
 EventHandlerRepository &ServerState::getEventHandlerRepository() {
     return handlerRepo_;
+}
+
+CgiProcessRepository &ServerState::getCgiProcessRepository() {
+    return cgiProcessRepo_;
 }
 
 ChildReaper &ServerState::getChildReaper() {

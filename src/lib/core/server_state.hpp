@@ -42,6 +42,24 @@ private:
     std::map<Key, IEventHandler *> handlers_;
 };
 
+// 名前が微妙
+class CgiProcessRepository : public NonCopyable {
+public:
+    struct Data {
+        int clientFd;
+        int processSocketFd;
+    };
+
+    CgiProcessRepository() {}
+
+    Option<Data> get(pid_t pid);
+    void set(pid_t pid, Data data);
+    void remove(pid_t pid);
+
+private:
+    std::map<pid_t, Data> pidToData_;
+};
+
 class ServerState {
 public:
     ServerState();
@@ -49,6 +67,7 @@ public:
     IEventNotifier &getEventNotifier();
     ConnectionRepository &getConnectionRepository();
     EventHandlerRepository &getEventHandlerRepository();
+    CgiProcessRepository &getCgiProcessRepository();
     ChildReaper &getChildReaper();
 
 private:
@@ -63,6 +82,7 @@ private:
 
     ConnectionRepository connRepo_;
     EventHandlerRepository handlerRepo_;
+    CgiProcessRepository cgiProcessRepo_;
 };
 
 #endif
