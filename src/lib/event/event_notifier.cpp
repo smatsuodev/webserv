@@ -52,7 +52,7 @@ void EpollEventNotifier::unregisterEvent(const Event &event) {
     }
 
     const uint32_t oldFlags = it->second.getTypeFlags();
-    const uint32_t rmFlags  = event.getTypeFlags();
+    const uint32_t rmFlags = event.getTypeFlags();
     const uint32_t newFlags = oldFlags & ~rmFlags;
 
     if (newFlags == 0) {
