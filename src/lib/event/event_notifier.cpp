@@ -4,6 +4,7 @@
 #include <cerrno>
 #include <map>
 #include <string>
+#include <sys/socket.h>
 
 IEventNotifier::~IEventNotifier() {}
 
@@ -180,6 +181,13 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
         if (pfd.revents == 0) {
             continue;
         }
+        int soerr = 0;
+        socklen_t sl = sizeof(soerr);
+        if (getsockopt(pfd.fd, SOL_SOCKET, SO_ERROR, &soerr, &sl) == 0 && soerr != 0) {
+            // POLLERR を消化する。 ないと主に Linux でエラーになることがある。
+            continue;
+        }
+
         const uint32_t flags = PollEventNotifier::toEventTypeFlags(pfd.revents);
         if (flags == 0) {
             continue;
