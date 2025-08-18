@@ -15,51 +15,52 @@ void testErr(const std::string &text) {
 }
 
 TEST(TokenizerOk, empty) {
-    const auto text = R "()";
+    const auto text = R"()";
     testOk(text, {Token(kEof, "")});
 }
 
 TEST(TokenizerOk, comment) {
-    const auto text = R "(# comment)";
+    const auto text = R"(# comment)";
     testOk(text, {Token(kEof, "")});
 }
 
 TEST(TokenizerOk, integer) {
-    const auto text = R "(42)";
+    const auto text = R"(42)";
     testOk(text, {Token(kNum, "42"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, key) {
-    const auto text = R "(key)";
+    const auto text = R"(key)";
     testOk(text, {Token(kKey, "key"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, keyStartWithNumberEndWithAlphabet) {
-    const auto text = R "(42key)";
+    const auto text = R"(42key)";
     testOk(text, {Token(kKey, "42key"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, keyStartWithAlphabetEndWithNumber) {
-    const auto text = R "(key42)";
+    const auto text = R"(key42)";
     testOk(text, {Token(kKey, "key42"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, keyWithUnderscore) {
-    const auto text = R "(_key_42_)";
+    const auto text = R"(_key_42_)";
     testOk(text, {Token(kKey, "_key_42_"), Token(kEof, "")});
 }
 
-TEST(TokenizerOk, singleQuotedString){
-    const auto text = R "('ke" y')"; testOk(text, {Token(kString, "ke\"y"), Token(kEof, "")});
+TEST(TokenizerOk, singleQuotedString) {
+    const auto text = R"('ke"y')";
+    testOk(text, {Token(kString, "ke\"y"), Token(kEof, "")});
 }
 
-TEST(TokenizerOk, doubleQuotedString){
-    const auto text = R "(" ke 'y")"; testOk(text, {Token(kString, "ke' y "), Token(kEof, "
-                                                                          ")});
+TEST(TokenizerOk, doubleQuotedString) {
+    const auto text = R"("ke'y")";
+    testOk(text, {Token(kString, "ke'y"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, commentAfterValue) {
-    const auto text = R "(key = " value " # comment)";
+    const auto text = R"(key = "value" # comment)";
     testOk(
         text,
         {
@@ -72,7 +73,7 @@ TEST(TokenizerOk, commentAfterValue) {
 }
 
 TEST(TokenizerOk, notComment) {
-    const auto text = R "(key = " #this is not comment ")";
+    const auto text = R"(key = "# this is not comment")";
     testOk(
         text,
         {
@@ -85,7 +86,7 @@ TEST(TokenizerOk, notComment) {
 }
 
 TEST(TokenizerOk, keyValue) {
-    const auto text = R "(key = 0)";
+    const auto text = R"(key = 0)";
     testOk(
         text,
         {
@@ -98,7 +99,7 @@ TEST(TokenizerOk, keyValue) {
 }
 
 TEST(TokenizerOk, intKey) {
-    const auto text = R "(123 = 0)";
+    const auto text = R"(123 = 0)";
     testOk(
         text,
         {
@@ -111,7 +112,7 @@ TEST(TokenizerOk, intKey) {
 }
 
 TEST(TokenizerOk, quotedKey) {
-    const auto text = R "(" 127.0.0.1 " = 0)";
+    const auto text = R"("127.0.0.1" = 0)";
     testOk(
         text,
         {
@@ -124,7 +125,7 @@ TEST(TokenizerOk, quotedKey) {
 }
 
 TEST(TokenizerOk, keyContainsEq) {
-    const auto text = R "(" a = b " = 0)";
+    const auto text = R"("a=b" = 0)";
     testOk(
         text,
         {
@@ -137,7 +138,7 @@ TEST(TokenizerOk, keyContainsEq) {
 }
 
 TEST(TokenizerOk, unicodeKey) {
-    const auto text = R "("ʎ ǝʞ " = 0)";
+    const auto text = R"("ʎǝʞ" = 0)";
     testOk(
         text,
         {
@@ -150,7 +151,7 @@ TEST(TokenizerOk, unicodeKey) {
 }
 
 TEST(TokenizerOk, singleQuotedKey) {
-    const auto text = R "('key' = 0)";
+    const auto text = R"('key' = 0)";
     testOk(
         text,
         {
@@ -163,11 +164,11 @@ TEST(TokenizerOk, singleQuotedKey) {
 }
 
 TEST(TokenizerOk, quotedQuoteKey) {
-    const auto text = R "('" quoted key "' = 0)";
+    const auto text = R"('"quoted key"' = 0)";
     testOk(
         text,
         {
-            Token(kString, R "(" quoted key ")"),
+            Token(kString, R"("quoted key")"),
             Token(kAssignment, "="),
             Token(kNum, "0"),
             Token(kEof, ""),
@@ -177,8 +178,7 @@ TEST(TokenizerOk, quotedQuoteKey) {
 
 // 有効だが非推奨
 TEST(TokenizerOkDiscouraged, emptyKey) {
-    const auto text = R "("
-                        " = 0)";
+    const auto text = R"("" = 0)";
     testOk(
         text,
         {
@@ -192,7 +192,7 @@ TEST(TokenizerOkDiscouraged, emptyKey) {
 //
 // 有効だが非推奨
 TEST(TokenizerOkDiscouraged, emptyKeySingle) {
-    const auto text = R "('' = 0)";
+    const auto text = R"('' = 0)";
     testOk(
         text,
         {
@@ -205,7 +205,7 @@ TEST(TokenizerOkDiscouraged, emptyKeySingle) {
 }
 
 TEST(TokenizerOk, dottedKey) {
-    const auto text = R "(k1.k2 = 0)";
+    const auto text = R"(k1.k2 = 0)";
     testOk(
         text,
         {
@@ -220,7 +220,7 @@ TEST(TokenizerOk, dottedKey) {
 }
 
 TEST(TokenizerOk, dottedQuotedKey) {
-    const auto text = R "(k1." k2.k3 ".k4 = 0)";
+    const auto text = R"(k1."k2.k3".k4 = 0)";
     testOk(
         text,
         {Token(kKey, "k1"),
@@ -235,7 +235,7 @@ TEST(TokenizerOk, dottedQuotedKey) {
 }
 
 TEST(TokenizerOk, spaceAroudDot) {
-    const auto text = R "(k1 . k2 = 0)";
+    const auto text = R"(k1 . k2 = 0)";
     testOk(
         text,
         {
@@ -250,7 +250,7 @@ TEST(TokenizerOk, spaceAroudDot) {
 }
 
 TEST(TokenizerOk, notFloat) {
-    const auto text = R "(3 . 14 = " pi ")";
+    const auto text = R"(3 . 14 = "pi")";
     testOk(
         text,
         {
@@ -265,22 +265,22 @@ TEST(TokenizerOk, notFloat) {
 }
 
 TEST(TokenizerOk, plusInteger) {
-    const auto text = R "(+99)";
+    const auto text = R"(+99)";
     testOk(text, {Token(kNum, "+99"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, minusInteger) {
-    const auto text = R "(-17)";
+    const auto text = R"(-17)";
     testOk(text, {Token(kNum, "-17"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, emptyArray) {
-    const auto text = R "([])";
+    const auto text = R"([])";
     testOk(text, {Token(kLBracket, "["), Token(kRBracket, "]"), Token(kEof, "")});
 }
 
 TEST(TokenizerOk, intArray) {
-    const auto text = R "([1, 2])";
+    const auto text = R"([1, 2])";
     testOk(
         text,
         {
@@ -295,7 +295,7 @@ TEST(TokenizerOk, intArray) {
 }
 
 TEST(TokenizerOk, stringArray) {
-    const auto text = R "([" foo ", 'bar'])";
+    const auto text = R"(["foo", 'bar'])";
     testOk(
         text,
         {
@@ -311,7 +311,7 @@ TEST(TokenizerOk, stringArray) {
 
 
 TEST(TokenizerOk, nestedArray) {
-    const auto text = R "([[1, 2], [3, 4]])";
+    const auto text = R"([[1, 2], [3, 4]])";
     testOk(
         text,
         {
@@ -334,7 +334,7 @@ TEST(TokenizerOk, nestedArray) {
 }
 
 TEST(TokenizerOk, nestedMixedArray) {
-    const auto text = R "([[1, 2], [" a ", " b "]])";
+    const auto text = R"([[1, 2], ["a", "b"]])";
     testOk(
         text,
         {
@@ -357,7 +357,7 @@ TEST(TokenizerOk, nestedMixedArray) {
 }
 
 TEST(TokenizerOk, mixedArray) {
-    const auto text = R "(k = [1, " value ", [1], { key = " value " }, ])";
+    const auto text = R"(k = [1, "value", [1], { key = "value" }, ])";
     testOk(
         text,
         {Token(kKey, "k"),
@@ -383,7 +383,7 @@ TEST(TokenizerOk, mixedArray) {
 }
 
 TEST(TokenizerOk, justStringArray) {
-    const auto text = R "(k1.k2 = ["[1] ", " {a.b = 0} "])";
+    const auto text = R"(k1.k2 = ["[1]", "{a.b=0}"])";
     testOk(
         text,
         {
@@ -402,7 +402,7 @@ TEST(TokenizerOk, justStringArray) {
 }
 
 TEST(TokenizerOk, table) {
-    const auto text = R "([table])";
+    const auto text = R"([table])";
     testOk(
         text,
         {
@@ -415,7 +415,7 @@ TEST(TokenizerOk, table) {
 }
 
 TEST(TokenizerOk, dottedTable) {
-    const auto text = R "([a.b.c])";
+    const auto text = R"([a.b.c])";
     testOk(
         text,
         {
@@ -432,7 +432,7 @@ TEST(TokenizerOk, dottedTable) {
 }
 
 TEST(TokenizerOk, dottedSpaceTable) {
-    const auto text = R "([ a.b.c ])";
+    const auto text = R"([ a.b.c ])";
     testOk(
         text,
         {
@@ -449,7 +449,7 @@ TEST(TokenizerOk, dottedSpaceTable) {
 }
 
 TEST(TokenizerOk, dottedSpaceTable2) {
-    const auto text = R "([ a . b . c ])";
+    const auto text = R"([ a . b . c ])";
     testOk(
         text,
         {
@@ -466,8 +466,7 @@ TEST(TokenizerOk, dottedSpaceTable2) {
 }
 
 TEST(TokenizerOk, dottedSpaceTable3) {
-    const auto text = R "([ j . "ʞ
-                        " . 'l' ])";
+    const auto text = R"([ j . "ʞ" . 'l' ])";
     testOk(
         text,
         {
@@ -484,7 +483,7 @@ TEST(TokenizerOk, dottedSpaceTable3) {
 }
 
 TEST(TokenizerOk, inlineTable) {
-    const auto text = R "({x=0, y=1})";
+    const auto text = R"({x=0, y=1})";
     testOk(
         text,
         {
@@ -503,7 +502,7 @@ TEST(TokenizerOk, inlineTable) {
 }
 
 TEST(TokenizerOk, dottedKeyInInlineTable) {
-    const auto text = R "({ a.b = 0 })";
+    const auto text = R"({ a.b = 0 })";
     testOk(
         text,
         {
@@ -520,7 +519,7 @@ TEST(TokenizerOk, dottedKeyInInlineTable) {
 }
 
 TEST(TokenizerOk, arrayOfTable) {
-    const auto text = R "([[array]])";
+    const auto text = R"([[array]])";
     testOk(
         text,
         {
@@ -535,7 +534,7 @@ TEST(TokenizerOk, arrayOfTable) {
 }
 
 TEST(TokenizerOk, dottedArrayOfTable) {
-    const auto text = R "([[a.b]])";
+    const auto text = R"([[a.b]])";
     testOk(
         text,
         {
@@ -577,7 +576,7 @@ key = 0)";
 }
 
 TEST(TokenizerOk, boolean) {
-    const auto text = R "(true false)";
+    const auto text = R"(true false)";
     testOk(
         text,
         {
@@ -589,7 +588,7 @@ TEST(TokenizerOk, boolean) {
 }
 
 TEST(TokenizerErr, invalidChar) {
-    const auto text = R "(%)";
+    const auto text = R"(%)";
     testErr(text);
 }
 
