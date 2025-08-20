@@ -45,6 +45,10 @@ void ConnectionRepository::remove(const int fd) {
     LOG_DEBUGF("connection removed from server");
 }
 
+std::map<int, Connection *> ConnectionRepository::getAllConnections() const {
+    return connections_;
+}
+
 EventHandlerRepository::EventHandlerRepository() {}
 
 EventHandlerRepository::~EventHandlerRepository() {
@@ -102,6 +106,10 @@ void CgiProcessRepository::set(const pid_t pid, const Data data) {
 
 void CgiProcessRepository::remove(const pid_t pid) {
     pidToData_.erase(pid);
+}
+
+std::map<pid_t, CgiProcessRepository::Data> CgiProcessRepository::getAllProcesses() const {
+    return pidToData_;
 }
 
 ServerState::ServerState() {

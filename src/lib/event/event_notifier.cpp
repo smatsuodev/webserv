@@ -72,9 +72,9 @@ void EpollEventNotifier::unregisterEvent(const Event &event) {
     }
 }
 
-EpollEventNotifier::WaitEventsResult EpollEventNotifier::waitEvents() {
+EpollEventNotifier::WaitEventsResult EpollEventNotifier::waitEvents(int timeoutMs) {
     epoll_event evs[1024];
-    const int numEvents = epoll_wait(epollFd_.get(), evs, 1024, -1);
+    const int numEvents = epoll_wait(epollFd_.get(), evs, 1024, timeoutMs);
     if (numEvents == -1) {
         LOG_ERRORF("epoll_wait failed: %s", std::strerror(errno));
         return Err(error::kUnknown);
@@ -160,7 +160,7 @@ void PollEventNotifier::unregisterEvent(const Event &event) {
     }
 }
 
-IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
+IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents(int timeoutMs) {
     std::vector<pollfd> fds;
     for (EventMap::const_iterator it = registeredEvents_.begin(); it != registeredEvents_.end(); ++it) {
         pollfd pfd = {};
@@ -169,7 +169,7 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents() {
         fds.push_back(pfd);
     }
 
-    const int result = poll(fds.data(), fds.size(), -1);
+    const int result = poll(fds.data(), fds.size(), timeoutMs);
     if (result == -1) {
         LOG_ERRORF("poll failed: %s", std::strerror(errno));
         return Err(error::kUnknown);

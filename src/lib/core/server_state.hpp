@@ -7,6 +7,7 @@
 #include "transport/connection.hpp"
 #include "utils/types/option.hpp"
 #include <map>
+#include <ctime>
 
 // TODO: 共通化するべき?
 
@@ -22,6 +23,7 @@ public:
      */
     void set(int fd, Connection *conn);
     void remove(int fd);
+    std::map<int, Connection *> getAllConnections() const;
 
 private:
     std::map<int, Connection *> connections_;
@@ -48,6 +50,7 @@ public:
     struct Data {
         int clientFd;
         int processSocketFd;
+        std::time_t startTime;
     };
 
     CgiProcessRepository() {}
@@ -55,6 +58,7 @@ public:
     Option<Data> get(pid_t pid);
     void set(pid_t pid, Data data);
     void remove(pid_t pid);
+    std::map<pid_t, Data> getAllProcesses() const;
 
 private:
     std::map<pid_t, Data> pidToData_;
