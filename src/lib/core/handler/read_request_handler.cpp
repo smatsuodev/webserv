@@ -17,7 +17,7 @@ IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
 
     // アクティビティを更新
     ctx.getConnection().unwrap().get().updateActivity();
-    
+
     ReadBuffer &readBuf = ctx.getConnection().unwrap().get().getReadBuffer();
     const Option<http::Request> req = TRY(reqReader_.readRequest(readBuf));
     if (req.isNone()) {
