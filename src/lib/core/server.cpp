@@ -112,7 +112,7 @@ void Server::start() {
 
             invokeHandlers(ctx);
         }
-        
+
         // タイムアウトチェック
         checkTimeouts();
     }
@@ -224,74 +224,66 @@ void Server::checkTimeouts() {
 
 void Server::checkRequestTimeouts() {
     const std::time_t currentTime = utils::Time::getCurrentTime();
-    const std::map<int, Connection *> connections = state_.getConnectionRepository().getAllConnections();
-    
-    for (std::map<int, Connection *>::const_iterator it = connections.begin(); it != connections.end(); ++it) {
-        const int fd = it->first;
-        Connection *conn = it->second;
-        
-        // Listener の fd はスキップ
-        if (listenerFds_.count(fd) > 0) {
-            continue;
-        }
-        
+
+    const std::vector<int> timedOutFds =
+        state_.getConnectionRepository().getTimedOutConnectionFds(currentTime, REQUEST_TIMEOUT_SECONDS, listenerFds_);
+
+    for (std::vector<int>::const_iterator it = timedOutFds.begin(); it != timedOutFds.end(); ++it) {
+        const int fd = *it;
+
         // Read ハンドラーが登録されているかチェック（リクエスト待ち状態）
         const Option<Ref<IEventHandler> > readHandler = state_.getEventHandlerRepository().get(fd, Event::kRead);
         if (readHandler.isNone()) {
             continue;
         }
-        
-        const double elapsed = utils::Time::diffTimeSeconds(currentTime, conn->getLastActivityTime());
-        if (elapsed > REQUEST_TIMEOUT_SECONDS) {
-            LOG_INFOF("Request timeout for fd %d (elapsed: %.0f seconds)", fd, elapsed);
-            
-            // タイムアウトレスポンスを設定
-            http::ResponseBuilder builder;
-            http::Response response = builder.status(http::kStatusRequestTimeout).build();
-            
-            // Read ハンドラーを削除し、Write ハンドラーを設定
-            state_.getEventNotifier().unregisterEvent(Event(fd, Event::kRead));
-            state_.getEventHandlerRepository().remove(fd, Event::kRead);
-            state_.getEventNotifier().registerEvent(Event(fd, Event::kWrite));
-            state_.getEventHandlerRepository().set(fd, Event::kWrite, new WriteResponseHandler(response));
-        }
+
+        LOG_INFOF("Request timeout for fd %d", fd);
+
+        // タイムアウトレスポンスを設定
+        http::ResponseBuilder builder;
+        http::Response response = builder.status(http::kStatusRequestTimeout).build();
+
+        // Read ハンドラーを削除し、Write ハンドラーを設定
+        state_.getEventNotifier().unregisterEvent(Event(fd, Event::kRead));
+        state_.getEventHandlerRepository().remove(fd, Event::kRead);
+        state_.getEventNotifier().registerEvent(Event(fd, Event::kWrite));
+        state_.getEventHandlerRepository().set(fd, Event::kWrite, new WriteResponseHandler(response));
     }
 }
 
 void Server::checkCgiTimeouts() {
     const std::time_t currentTime = utils::Time::getCurrentTime();
-    const std::map<pid_t, CgiProcessRepository::Data> processes = state_.getCgiProcessRepository().getAllProcesses();
-    
-    for (std::map<pid_t, CgiProcessRepository::Data>::const_iterator it = processes.begin(); 
-         it != processes.end(); ++it) {
+    const std::vector<std::pair<pid_t, CgiProcessRepository::Data> > timedOutProcesses =
+        state_.getCgiProcessRepository().getTimedOutProcesses(currentTime, CGI_TIMEOUT_SECONDS);
+
+    for (std::vector<std::pair<pid_t, CgiProcessRepository::Data> >::const_iterator it = timedOutProcesses.begin();
+         it != timedOutProcesses.end();
+         ++it) {
         const pid_t pid = it->first;
         const CgiProcessRepository::Data &data = it->second;
-        
-        const double elapsed = utils::Time::diffTimeSeconds(currentTime, data.startTime);
-        if (elapsed > CGI_TIMEOUT_SECONDS) {
-            LOG_INFOF("CGI timeout for pid %d (elapsed: %.0f seconds)", pid, elapsed);
-            
-            // CGI プロセスを強制終了
-            if (kill(pid, SIGKILL) == -1) {
-                LOG_WARNF("Failed to kill CGI process %d: %s", pid, std::strerror(errno));
-            }
-            
-            // プロセスソケットをクリーンアップ
-            const int processSocketFd = data.processSocketFd;
-            const int clientFd = data.clientFd;
-            
-            state_.getEventNotifier().unregisterEvent(Event(processSocketFd, Event::kRead));
-            state_.getEventNotifier().unregisterEvent(Event(processSocketFd, Event::kWrite));
-            state_.getEventHandlerRepository().remove(processSocketFd, Event::kRead);
-            state_.getEventHandlerRepository().remove(processSocketFd, Event::kWrite);
-            state_.getConnectionRepository().remove(processSocketFd);
-            state_.getCgiProcessRepository().remove(pid);
-            
-            // Gateway Timeout レスポンスを返す
-            http::ResponseBuilder builder;
-            http::Response response = builder.status(http::kStatusGatewayTimeout).build();
-            state_.getEventNotifier().registerEvent(Event(clientFd, Event::kWrite));
-            state_.getEventHandlerRepository().set(clientFd, Event::kWrite, new WriteResponseHandler(response));
+
+        LOG_INFOF("CGI timeout for pid %d", pid);
+
+        // CGI プロセスを強制終了
+        if (kill(pid, SIGKILL) == -1) {
+            LOG_WARNF("Failed to kill CGI process %d: %s", pid, std::strerror(errno));
         }
+
+        // プロセスソケットをクリーンアップ
+        const int processSocketFd = data.processSocketFd;
+        const int clientFd = data.clientFd;
+
+        state_.getEventNotifier().unregisterEvent(Event(processSocketFd, Event::kRead));
+        state_.getEventNotifier().unregisterEvent(Event(processSocketFd, Event::kWrite));
+        state_.getEventHandlerRepository().remove(processSocketFd, Event::kRead);
+        state_.getEventHandlerRepository().remove(processSocketFd, Event::kWrite);
+        state_.getConnectionRepository().remove(processSocketFd);
+        state_.getCgiProcessRepository().remove(pid);
+
+        // Gateway Timeout レスポンスを返す
+        http::ResponseBuilder builder;
+        http::Response response = builder.status(http::kStatusGatewayTimeout).build();
+        state_.getEventNotifier().registerEvent(Event(clientFd, Event::kWrite));
+        state_.getEventHandlerRepository().set(clientFd, Event::kWrite, new WriteResponseHandler(response));
     }
 }

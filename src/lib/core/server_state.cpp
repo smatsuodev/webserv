@@ -1,6 +1,9 @@
 #include "server_state.hpp"
 #include "utils/logger.hpp"
 #include "utils/ref.hpp"
+#include "utils/time.hpp"
+#include <vector>
+#include <set>
 
 ConnectionRepository::ConnectionRepository() {}
 
@@ -45,8 +48,31 @@ void ConnectionRepository::remove(const int fd) {
     LOG_DEBUGF("connection removed from server");
 }
 
-std::map<int, Connection *> ConnectionRepository::getAllConnections() const {
-    return connections_;
+std::vector<int> ConnectionRepository::getTimedOutConnectionFds(
+    std::time_t currentTime,
+    double timeoutSeconds,
+    const std::set<int>& excludeFds
+) const {
+    std::vector<int> timedOutFds;
+    
+    for (std::map<int, Connection *>::const_iterator it = connections_.begin(); 
+         it != connections_.end(); ++it) {
+        const int fd = it->first;
+        Connection *conn = it->second;
+        
+        // 除外リストに含まれるFDはスキップ
+        if (excludeFds.count(fd) > 0) {
+            continue;
+        }
+        
+        // タイムアウトチェック
+        const double elapsed = utils::Time::diffTimeSeconds(currentTime, conn->getLastActivityTime());
+        if (elapsed > timeoutSeconds) {
+            timedOutFds.push_back(fd);
+        }
+    }
+    
+    return timedOutFds;
 }
 
 EventHandlerRepository::EventHandlerRepository() {}
@@ -108,8 +134,24 @@ void CgiProcessRepository::remove(const pid_t pid) {
     pidToData_.erase(pid);
 }
 
-std::map<pid_t, CgiProcessRepository::Data> CgiProcessRepository::getAllProcesses() const {
-    return pidToData_;
+std::vector<std::pair<pid_t, CgiProcessRepository::Data> > CgiProcessRepository::getTimedOutProcesses(
+    std::time_t currentTime,
+    double timeoutSeconds
+) const {
+    std::vector<std::pair<pid_t, CgiProcessRepository::Data> > timedOutProcesses;
+    
+    for (std::map<pid_t, Data>::const_iterator it = pidToData_.begin(); 
+         it != pidToData_.end(); ++it) {
+        const pid_t pid = it->first;
+        const Data &data = it->second;
+        
+        const double elapsed = utils::Time::diffTimeSeconds(currentTime, data.startTime);
+        if (elapsed > timeoutSeconds) {
+            timedOutProcesses.push_back(std::make_pair(pid, data));
+        }
+    }
+    
+    return timedOutProcesses;
 }
 
 ServerState::ServerState() {
