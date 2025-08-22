@@ -35,9 +35,9 @@ private:
     static void executeActions(ActionContext &actionCtx, std::vector<IAction *> actions);
     void invokeHandlers(const Context &ctx);
     void invokeSingleHandler(const Context &ctx, const Ref<IEventHandler> &handler, bool shouldCallHandler);
-    void checkTimeouts();
-    void checkRequestTimeouts();
-    void checkCgiTimeouts();
+    void removeTimeoutHandlers();
+    void removeTimeoutRequestHandlers();
+    void removeTimeoutCgiProcesses();
 };
 
 #endif

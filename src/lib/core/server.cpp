@@ -114,7 +114,7 @@ void Server::start() {
         }
 
         // タイムアウトチェック
-        checkTimeouts();
+        removeTimeoutHandlers();
     }
 }
 
@@ -217,12 +217,12 @@ void Server::executeActions(ActionContext &actionCtx, std::vector<IAction *> act
     }
 }
 
-void Server::checkTimeouts() {
-    checkRequestTimeouts();
-    checkCgiTimeouts();
+void Server::removeTimeoutHandlers() {
+    removeTimeoutRequestHandlers();
+    removeTimeoutCgiProcesses();
 }
 
-void Server::checkRequestTimeouts() {
+void Server::removeTimeoutRequestHandlers() {
     const std::time_t currentTime = utils::Time::getCurrentTime();
 
     const std::vector<int> timedOutFds =
@@ -251,7 +251,7 @@ void Server::checkRequestTimeouts() {
     }
 }
 
-void Server::checkCgiTimeouts() {
+void Server::removeTimeoutCgiProcesses() {
     const std::time_t currentTime = utils::Time::getCurrentTime();
     const std::vector<std::pair<pid_t, CgiProcessRepository::Data> > timedOutProcesses =
         state_.getCgiProcessRepository().getTimedOutProcesses(currentTime, CGI_TIMEOUT_SECONDS);
