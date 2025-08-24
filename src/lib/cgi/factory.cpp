@@ -46,7 +46,15 @@ namespace cgi {
         variables.push_back(MetaVariable("REMOTE_ADDR", param.foreignAddress.getIp()));
         variables.push_back(MetaVariable("SERVER_NAME", param.serverName));
         variables.push_back(MetaVariable("SERVER_PORT", param.serverPort));
+
+        // 独自実装?
         variables.push_back(MetaVariable("DOCUMENT_ROOT", param.documentRoot));
+
+        // Cookie 対応
+        const Option<std::string> cookieHeader = req.getHeader("Cookie");
+        if (cookieHeader.isSome()) {
+            variables.push_back(MetaVariable("HTTP_COOKIE", cookieHeader.unwrap()));
+        }
 
         return cgi::Request::create(variables, body);
     }
