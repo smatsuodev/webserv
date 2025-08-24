@@ -265,7 +265,7 @@ void Server::removeTimeoutCgiProcesses() {
         LOG_INFOF("CGI timeout for pid %d", pid);
 
         // CGI プロセスを強制終了
-        if (kill(pid, SIGKILL) == -1) {
+        if (kill(pid, SIGTERM) == -1) {
             LOG_WARNF("Failed to kill CGI process %d: %s", pid, std::strerror(errno));
         }
 
