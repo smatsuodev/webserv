@@ -15,7 +15,7 @@ ReadRequestHandler::ReadRequestHandler(const VirtualServerResolver &vsResolver)
 
 IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start ReadRequestHandler");
-    const auto conn = ctx.getConnection().unwrap();
+    const Ref<Connection> conn = ctx.getConnection().unwrap();
 
     // アクティビティを更新
     ctx.getConnection().unwrap().get().updateActivity();
