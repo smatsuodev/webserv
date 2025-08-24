@@ -18,6 +18,8 @@ add_library(webserv_lib STATIC
         lib/utils/logger.hpp
         lib/utils/string.cpp
         lib/utils/string.hpp
+        lib/utils/time.cpp
+        lib/utils/time.hpp
         lib/utils/types/option.hpp
         lib/utils/types/result.hpp
         lib/utils/types/unit.hpp

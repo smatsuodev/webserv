@@ -6,7 +6,10 @@
 #include "http/response/response_builder.hpp"
 #include "transport/listener.hpp"
 #include "utils/logger.hpp"
+#include "utils/time.hpp"
 #include <map>
+#include <signal.h>
+#include <cstring>
 
 Server::Server(const config::Config &config) : config_(config) {
     const config::ServerContextList &servers = config_.getServers();
@@ -74,8 +77,12 @@ void Server::start() {
                 if (!result.empty()) LOG_DEBUG("child process reaped");
                 for (std::vector<ChildReaper::ReapedProcess>::const_iterator it = result.begin(); it != result.end();
                      ++it) {
-                    if (it->status == 0) continue;
                     const Option<CgiProcessRepository::Data> data = state_.getCgiProcessRepository().get(it->pid);
+                    state_.getCgiProcessRepository().remove(it->pid);
+
+                    if (it->status == 0) continue;
+
+                    // CGI スクリプトがエラーで終わった場合
                     if (data.isNone()) {
                         LOG_WARNF(
                             "reaped child process %d with non-zero status %d, but no client fd found",
@@ -109,6 +116,9 @@ void Server::start() {
 
             invokeHandlers(ctx);
         }
+
+        // タイムアウトチェック
+        removeTimeoutHandlers();
     }
 }
 
@@ -208,5 +218,76 @@ void Server::executeActions(ActionContext &actionCtx, std::vector<IAction *> act
         IAction *action = *it;
         action->execute(actionCtx);
         delete action;
+    }
+}
+
+void Server::removeTimeoutHandlers() {
+    removeTimeoutRequestHandlers();
+    removeTimeoutCgiProcesses();
+}
+
+void Server::removeTimeoutRequestHandlers() {
+    const std::time_t currentTime = utils::Time::getCurrentTime();
+
+    const std::vector<int> timedOutFds =
+        state_.getConnectionRepository().getTimedOutConnectionFds(currentTime, REQUEST_TIMEOUT_SECONDS, listenerFds_);
+
+    for (std::vector<int>::const_iterator it = timedOutFds.begin(); it != timedOutFds.end(); ++it) {
+        const int fd = *it;
+
+        // Read ハンドラーが登録されているかチェック（リクエスト待ち状態）
+        const Option<Ref<IEventHandler> > readHandler = state_.getEventHandlerRepository().get(fd, Event::kRead);
+        if (readHandler.isNone()) {
+            continue;
+        }
+
+        LOG_INFOF("Request timeout for fd %d", fd);
+
+        // タイムアウトレスポンスを設定
+        http::ResponseBuilder builder;
+        http::Response response = builder.status(http::kStatusRequestTimeout).build();
+
+        // Read ハンドラーを削除し、Write ハンドラーを設定
+        state_.getEventNotifier().unregisterEvent(Event(fd, Event::kRead));
+        state_.getEventHandlerRepository().remove(fd, Event::kRead);
+        state_.getEventNotifier().registerEvent(Event(fd, Event::kWrite));
+        state_.getEventHandlerRepository().set(fd, Event::kWrite, new WriteResponseHandler(response));
+    }
+}
+
+void Server::removeTimeoutCgiProcesses() {
+    const std::time_t currentTime = utils::Time::getCurrentTime();
+    const std::vector<std::pair<pid_t, CgiProcessRepository::Data> > timedOutProcesses =
+        state_.getCgiProcessRepository().getTimedOutProcesses(currentTime, CGI_TIMEOUT_SECONDS);
+
+    for (std::vector<std::pair<pid_t, CgiProcessRepository::Data> >::const_iterator it = timedOutProcesses.begin();
+         it != timedOutProcesses.end();
+         ++it) {
+        const pid_t pid = it->first;
+        const CgiProcessRepository::Data &data = it->second;
+
+        LOG_INFOF("CGI timeout for pid %d", pid);
+
+        // CGI プロセスを強制終了
+        if (kill(pid, SIGTERM) == -1) {
+            LOG_WARNF("Failed to terminate CGI process %d: %s", pid, std::strerror(errno));
+        }
+
+        // プロセスソケットをクリーンアップ
+        const int processSocketFd = data.processSocketFd;
+        const int clientFd = data.clientFd;
+
+        state_.getEventNotifier().unregisterEvent(Event(processSocketFd, Event::kRead));
+        state_.getEventNotifier().unregisterEvent(Event(processSocketFd, Event::kWrite));
+        state_.getEventHandlerRepository().remove(processSocketFd, Event::kRead);
+        state_.getEventHandlerRepository().remove(processSocketFd, Event::kWrite);
+        state_.getConnectionRepository().remove(processSocketFd);
+        state_.getCgiProcessRepository().remove(pid);
+
+        // Gateway Timeout レスポンスを返す
+        http::ResponseBuilder builder;
+        http::Response response = builder.status(http::kStatusGatewayTimeout).build();
+        state_.getEventNotifier().registerEvent(Event(clientFd, Event::kWrite));
+        state_.getEventHandlerRepository().set(clientFd, Event::kWrite, new WriteResponseHandler(response));
     }
 }

@@ -19,6 +19,9 @@ private:
     // VirtualServer は http::Router を持っていて、コピー不可なのでポインタで持つ
     typedef std::vector<VirtualServer *> VirtualServerList;
 
+    static const int REQUEST_TIMEOUT_SECONDS = 5;
+    static const int CGI_TIMEOUT_SECONDS = 5;
+
     config::Config config_;
     VirtualServerList virtualServers_;
 
@@ -32,6 +35,9 @@ private:
     static void executeActions(ActionContext &actionCtx, std::vector<IAction *> actions);
     void invokeHandlers(const Context &ctx);
     void invokeSingleHandler(const Context &ctx, const Ref<IEventHandler> &handler, bool shouldCallHandler);
+    void removeTimeoutHandlers();
+    void removeTimeoutRequestHandlers();
+    void removeTimeoutCgiProcesses();
 };
 
 #endif

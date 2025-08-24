@@ -17,6 +17,9 @@ IEventHandler::InvokeResult ReadRequestHandler::invoke(const Context &ctx) {
     LOG_DEBUG("start ReadRequestHandler");
     const auto conn = ctx.getConnection().unwrap();
 
+    // アクティビティを更新
+    ctx.getConnection().unwrap().get().updateActivity();
+
     ReadBuffer &readBuf = conn.get().getReadBuffer();
     const Result<Option<http::Request>, error::AppError> result = reqReader_.readRequest(readBuf);
     if (result.isErr()) {

@@ -7,6 +7,9 @@
 #include "transport/connection.hpp"
 #include "utils/types/option.hpp"
 #include <map>
+#include <set>
+#include <vector>
+#include <ctime>
 
 // TODO: 共通化するべき?
 
@@ -22,6 +25,10 @@ public:
      */
     void set(int fd, Connection *conn);
     void remove(int fd);
+
+    // タイムアウトしたコネクションのFDを取得
+    std::vector<int>
+    getTimedOutConnectionFds(std::time_t currentTime, double timeoutSeconds, const std::set<int> &excludeFds) const;
 
 private:
     std::map<int, Connection *> connections_;
@@ -48,6 +55,7 @@ public:
     struct Data {
         int clientFd;
         int processSocketFd;
+        std::time_t startTime;
     };
 
     CgiProcessRepository() {}
@@ -55,6 +63,9 @@ public:
     Option<Data> get(pid_t pid);
     void set(pid_t pid, Data data);
     void remove(pid_t pid);
+
+    // タイムアウトしたプロセスを取得
+    std::vector<std::pair<pid_t, Data> > getTimedOutProcesses(std::time_t currentTime, double timeoutSeconds) const;
 
 private:
     std::map<pid_t, Data> pidToData_;
