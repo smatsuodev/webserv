@@ -171,7 +171,8 @@ IEventNotifier::WaitEventsResult PollEventNotifier::waitEvents(int timeoutMs) {
 
     const int result = poll(fds.data(), fds.size(), timeoutMs);
     if (result == -1) {
-        LOG_ERRORF("poll failed: %s", std::strerror(errno));
+        // EINTR が起こりがちなので、debug にしておく
+        LOG_DEBUGF("poll failed: %s", std::strerror(errno));
         return Err(error::kUnknown);
     }
 

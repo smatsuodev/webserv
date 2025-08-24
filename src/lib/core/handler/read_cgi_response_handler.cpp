@@ -36,7 +36,8 @@ IEventHandler::InvokeResult ReadCgiResponseHandler::invoke(const Context &ctx) {
 }
 
 IEventHandler::ErrorHandleResult ReadCgiResponseHandler::onErrorEvent(const Context &, const Event &event) {
-    LOG_WARNF("ReadCgiResponseHandler received an error event %d", event.getTypeFlags());
+    // 結構うるさいので debug にする
+    LOG_DEBUGF("ReadCgiResponseHandler received an error event %d", event.getTypeFlags());
 
     if (event.getTypeFlags() & Event::kHangUp) {
         return ErrorHandleResult(false, std::vector<IAction *>());
