@@ -14,12 +14,7 @@ http::RequestReader::ReadRequestResult http::RequestReader::readRequest(ReadBuff
     const std::size_t bytesLoaded = TRY(readBuf.load());
     // ReadingBodyState などが state を NULL に遷移させる
     while (readCtx_.getState() != NULL) {
-        const Result<IState::HandleStatus, error::AppError> result = readCtx_.handle(readBuf);
-        if (result.isErr()) {
-            return Err(result.unwrapErr());
-        }
-
-        const IState::HandleStatus status = result.unwrap();
+        const IState::HandleStatus status = TRY(readCtx_.handle(readBuf));
         if (status == IState::kSuspend) {
             // バッファが足りない
             if (bytesLoaded == 0) {
@@ -32,8 +27,9 @@ http::RequestReader::ReadRequestResult http::RequestReader::readRequest(ReadBuff
         }
     }
 
-    return Ok(Some(TRY(RequestParser::parseRequest(readCtx_.getRequestLine(), readCtx_.getHeaders(), readCtx_.getBody())
-    )));
+    return Ok(
+        Some(TRY(RequestParser::parseRequest(readCtx_.getRequestLine(), readCtx_.getHeaders(), readCtx_.getBody())))
+    );
 }
 
 http::IConfigResolver::~IConfigResolver() {}

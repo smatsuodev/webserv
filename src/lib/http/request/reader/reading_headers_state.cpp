@@ -8,8 +8,8 @@
 
 http::ReadingHeadersState::ReadingHeadersState(RequestReader::ReadContext &ctx) : ctx_(ctx) {}
 
-Result<http::RequestReader::IState::HandleStatus, error::AppError> http::ReadingHeadersState::handle(ReadBuffer &readBuf
-) {
+Result<http::RequestReader::IState::HandleStatus, error::AppError>
+http::ReadingHeadersState::handle(ReadBuffer &readBuf) {
     while (true) {
         const Option<std::string> line = TRY(getLine(readBuf));
         if (line.isNone()) {
@@ -53,7 +53,7 @@ Result<http::RequestReader::IState *, error::AppError> http::ReadingHeadersState
         const std::size_t len = contentLength.unwrap();
         if (len > clientMaxBodySize) {
             LOG_WARN("content-length too large");
-            return Err(error::kParseUnknown);
+            return Err(error::kHttpPayloadTooLarge);
         }
         return Ok(new ReadingBodyState(ctx_, len));
     }
