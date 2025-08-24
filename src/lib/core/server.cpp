@@ -266,7 +266,7 @@ void Server::removeTimeoutCgiProcesses() {
 
         // CGI プロセスを強制終了
         if (kill(pid, SIGTERM) == -1) {
-            LOG_WARNF("Failed to kill CGI process %d: %s", pid, std::strerror(errno));
+            LOG_WARNF("Failed to terminate CGI process %d: %s", pid, std::strerror(errno));
         }
 
         // プロセスソケットをクリーンアップ
