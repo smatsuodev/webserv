@@ -26,7 +26,6 @@ int main(const int argc, char *argv[]) {
     while (true) {
         try {
             return startServer(argc, argv);
-        } catch (std::exception &e) {
-        }
+        } catch (std::exception &e) {}
     }
 }
