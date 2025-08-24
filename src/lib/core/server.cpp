@@ -77,8 +77,12 @@ void Server::start() {
                 if (!result.empty()) LOG_DEBUG("child process reaped");
                 for (std::vector<ChildReaper::ReapedProcess>::const_iterator it = result.begin(); it != result.end();
                      ++it) {
-                    if (it->status == 0) continue;
                     const Option<CgiProcessRepository::Data> data = state_.getCgiProcessRepository().get(it->pid);
+                    state_.getCgiProcessRepository().remove(it->pid);
+
+                    if (it->status == 0) continue;
+
+                    // CGI スクリプトがエラーで終わった場合
                     if (data.isNone()) {
                         LOG_WARNF(
                             "reaped child process %d with non-zero status %d, but no client fd found",
