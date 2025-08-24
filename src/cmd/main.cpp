@@ -10,6 +10,8 @@ int main(const int argc, char *argv[]) {
         return 1;
     }
 
+    SET_LOG_LEVEL(Logger::kWarn);
+
     const Option<Config> config = Config::loadConfigFromFile(argv[1]);
     if (config.isNone()) {
         return 1;
