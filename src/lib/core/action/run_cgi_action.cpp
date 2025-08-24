@@ -8,6 +8,7 @@
 #include "core/handler/write_cgi_request_handler.hpp"
 #include "../../cgi/meta_variable.hpp"
 #include "utils/fd.hpp"
+#include "utils/time.hpp"
 #include "utils/logger.hpp"
 #include <cstdlib>
 
@@ -136,6 +137,6 @@ void RunCgiAction::parentRoutine(const ActionContext &ctx, const int socketFd, c
     ctx.getState().getEventHandlerRepository().remove(clientFd_, Event::kRead);
     ctx.getState().getEventHandlerRepository().remove(clientFd_, Event::kWrite);
 
-    const CgiProcessRepository::Data data = {clientFd_, socketFd};
+    const CgiProcessRepository::Data data = {clientFd_, socketFd, utils::Time::getCurrentTime()};
     ctx.getState().getCgiProcessRepository().set(childPid, data);
 }

@@ -19,7 +19,7 @@ public:
     virtual void unregisterEvent(const Event &event) = 0;
 
     typedef Result<std::vector<Event>, error::AppError> WaitEventsResult;
-    virtual WaitEventsResult waitEvents() = 0;
+    virtual WaitEventsResult waitEvents(int timeoutMs = 1000) = 0;
 };
 
 // epoll の抽象
@@ -29,7 +29,7 @@ public:
 
     void registerEvent(const Event &event);
     void unregisterEvent(const Event &event);
-    WaitEventsResult waitEvents();
+    WaitEventsResult waitEvents(int timeoutMs = 1000);
 
 private:
     AutoFd epollFd_;
@@ -46,7 +46,7 @@ public:
 
     void registerEvent(const Event &event);
     void unregisterEvent(const Event &event);
-    WaitEventsResult waitEvents();
+    WaitEventsResult waitEvents(int timeoutMs = 1000);
 
 private:
     typedef std::map<int, Event> EventMap;
